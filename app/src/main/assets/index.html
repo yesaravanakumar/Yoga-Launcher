@@ -845,7 +845,7 @@ html.bg *{animation-play-state:paused!important}
   <div class="pg" id="pgW" aria-label="Widgets"><div class="pg-h"><h2>Widgets</h2><button data-pg="pgW" aria-pressed="true">Widgets</button><button data-pg="pgF">Home</button><button class="pgx" aria-label="Close">&#10005;</button></div><div class="pg-b" id="wgBody"></div></div>
   <div class="pg" id="pgF" aria-label="Home screen"><div class="pg-h"><h2>Home</h2><button data-pg="pgW">Widgets</button><button data-pg="pgF" aria-pressed="true">Home</button><button class="pgx" aria-label="Close">&#10005;</button></div><div class="pg-b"><div class="hg" id="hgrid"></div></div></div>
   <div class="drawer" id="drawer" aria-label="All apps">
-    <div class="row"><input class="in" id="q" placeholder="Search apps" autocomplete="off"><button class="mini ghost" id="dclose" aria-label="Close apps">&#10005;</button></div>
+    <div class="row"><input class="in" id="q" placeholder="Search apps" autocomplete="off" enterkeyhint="search"><button class="mini ghost" id="dclose" aria-label="Close apps">&#10005;</button></div>
     <div class="cats" id="dcats"></div>
     <div class="grid" id="grid"></div>
     <div class="rail" id="rail"></div>
@@ -867,7 +867,7 @@ html.bg *{animation-play-state:paused!important}
 
   <div class="command" id="command" aria-hidden="true">
     <div class="command-box">
-      <input class="command-input" id="commandInput" placeholder="Search apps, actions or the web…" autocomplete="off">
+      <input class="command-input" id="commandInput" placeholder="Search apps, actions or the web…" autocomplete="off" enterkeyhint="search">
       <button id="cmdMic" type="button" aria-label="Voice search" hidden>&#127908;</button>
       <div class="eng-row" id="engRow"></div>
       <div class="command-results" id="commandResults"></div>
@@ -1065,12 +1065,18 @@ const cs=document.createElement('div');R.appendChild(cs);
 function rollCell(cell,txt){
   if(cell._v===txt)return;
   const first=cell._v===undefined;cell._v=txt;
-  const old=cell.firstElementChild,n=document.createElement('span');
+  /* the span on screen right now is the LAST one; anything older is stale and is dropped at once */
+  const kids=[...cell.children],old=kids.pop();
+  kids.forEach(k=>k.remove());
+  const n=document.createElement('span');
   n.textContent=txt;cell.appendChild(n);
   if(first||!old){if(old)old.remove();return}
-  if(!n.animate){old.remove();return}
+  if(!n.animate||document.hidden||phone.classList.contains('cov')){old.remove();return}
   const o={duration:320,easing:'cubic-bezier(.2,.8,.2,1)',fill:'both'};
-  old.animate([{transform:'translateY(0)',opacity:1},{transform:'translateY(-100%)',opacity:0}],o).onfinish=()=>old.remove();
+  const rm=()=>old.remove();
+  const a=old.animate([{transform:'translateY(0)',opacity:1},{transform:'translateY(-100%)',opacity:0}],o);
+  a.onfinish=a.oncancel=rm;
+  setTimeout(rm,480);                       /* safety: never let the previous digits stay behind */
   n.animate([{transform:'translateY(100%)',opacity:0},{transform:'translateY(0)',opacity:1}],o);
 }
 function refreshText(n){
@@ -1138,7 +1144,7 @@ function frame(){
   requestAnimationFrame(frame);
 }
 refreshText(new Date());requestAnimationFrame(frame);
-document.addEventListener('visibilitychange',()=>{document.documentElement.classList.toggle('bg',document.hidden);if(!document.hidden){gT=0;if(!running){running=true;requestAnimationFrame(frame)}try{if(arc.classList.contains('open'))skyGo(true)}catch(e){}}});
+document.addEventListener('visibilitychange',()=>{document.documentElement.classList.toggle('bg',document.hidden);if(!document.hidden){[cells.m,cells.s].forEach(c=>{while(c.children.length>1)c.firstElementChild.remove()})}if(!document.hidden){gT=0;if(!running){running=true;requestAnimationFrame(frame)}try{if(arc.classList.contains('open'))skyGo(true)}catch(e){}}});
 
 /* ── Themes ── */
 const THEMES=[
@@ -1279,7 +1285,7 @@ $('amHome').onclick=()=>{const p=menuApp.p;home=home.includes(p)?home.filter(x=>
 const bridge=(f,msg)=>{const a=menuApp;closeMenu();try{if(window.Android&&typeof Android[f]==='function')Android[f](a.p);else toast(msg)}catch(e){toast('Action failed')}};
 $('amInfo').onclick=()=>bridge('appInfo','App info needs the Android app');
 $('amUn').onclick=()=>bridge('uninstall','Uninstall needs the Android app');
-const webSearch=q=>{try{if(window.Android&&typeof Android.search==='function'){Android.search(q);return}window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank','noopener,noreferrer')}catch(e){toast('Could not open search')}};
+const webSearch=q=>{try{if(window.ENG){const pf=ENG.prefix(q);ENG.go(pf?pf.e:ENG.cur(),pf?pf.q:q);return}if(window.Android&&typeof Android.search==='function'){Android.search(q);return}window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank','noopener,noreferrer')}catch(e){toast('Could not open search')}};
 function hold(el,a){let t,long=false;
   el.addEventListener('pointerdown',()=>{long=false;clearTimeout(t);t=setTimeout(()=>{long=true;openMenu(a)},550)});
   ['pointerup','pointerleave','pointercancel'].forEach(ev=>el.addEventListener(ev,()=>clearTimeout(t)));
@@ -1339,7 +1345,7 @@ const openDrawer=()=>{$('q').value='';DC='All';renderGrid();const d=$('drawer');
 const openApps=()=>S.ds==='arc'?openArc():openDrawer();
 const closeAll=()=>{['drawer','sheet','arc','command','amenu','pgW','pgF'].forEach(i=>$(i).classList.remove('open'));phone.classList.remove('arc-open');ARC.tok++;ARC.sp=1;arc.classList.remove('leave');$('q').blur();clearTimeout(ARC.pt);ARC.pt=setTimeout(()=>{if(!arc.classList.contains('open'))skyGo(false)},700)};
 let qRaf=0;$('q').oninput=()=>{cancelAnimationFrame(qRaf);qRaf=requestAnimationFrame(renderGrid)};
-$('q').onkeydown=e=>{if(e.key==='Enter'){const a=sortApps(matches())[0];if(a){closeAll();launch(a)}else if($('q').value.trim())webSearch($('q').value.trim())}};
+$('q').onkeydown=e=>{if(e.key==='Enter'||e.keyCode===13){const a=sortApps(matches())[0];if(a){closeAll();launch(a)}else if($('q').value.trim())webSearch($('q').value.trim())}};
 $('dclose').onclick=closeAll;
 ['drawer','sheet','arc'].forEach(id=>{const el=$(id),f=()=>{el.inert=!el.classList.contains('open')};f();new MutationObserver(f).observe(el,{attributes:true,attributeFilter:['class']})});
 ['arc','drawer','pgW','pgF'].forEach(id=>new MutationObserver(()=>{COV=['arc','drawer','pgW','pgF'].some(i=>$(i).classList.contains('open'));phone.classList.toggle('cov',COV)}).observe($(id),{attributes:true,attributeFilter:['class']}));
@@ -1875,7 +1881,7 @@ window.ENG=(()=>{
       const u=e.id==='c'?e.u.replace('%s',encodeURIComponent(q)):e.u+encodeURIComponent(q);
       if(hist){H=[q].concat(H.filter(x=>x!==q)).slice(0,8);sv('mdc-sh',H)}
       api.open(u)},
-    open(u){if(!/^(https?:\/\/|tel:)/i.test(String(u))){toast('Blocked: unsafe link');return}closeAll();$('command').classList.remove('open');try{if(window.Android&&typeof Android.openUrl==='function')Android.openUrl(u);else window.open(u,'_blank','noopener')}catch(x){}},
+    open(u){if(!/^(https?:\/\/|tel:)/i.test(String(u))){toast('Blocked: unsafe link');return}closeAll();$('command').classList.remove('open');try{if(window.Android&&typeof Android.openUrl==='function')Android.openUrl(u);else if(window.Android)toast('Links need the latest YogaBridge.kt (openUrl)');else window.open(u,'_blank','noopener')}catch(x){}},
     sync(){const e=get(cur),h=$('hsEng');if(h)h.textContent=e.g;document.querySelectorAll('#engRow button,#engSet button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.id===cur)))},
     row(){['engRow','engSet'].forEach(id=>{const r=$(id);r.textContent='';all().forEach(e=>{const b=document.createElement('button');b.type='button';b.dataset.id=e.id;b.textContent=e.n;b.onclick=ev=>{ev.stopPropagation();api.set(e.id);try{window.cmdRefresh()}catch(x){}};r.appendChild(b)})});api.sync()},
     init(){
