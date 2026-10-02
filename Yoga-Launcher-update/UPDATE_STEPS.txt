@@ -1,0 +1,21 @@
+Yoga Launcher - update bundle (v18 metal)
+
+This folder mirrors your repo paths. Copy the "app" and "docs" folders
+INTO your cloned Yoga-Launcher folder and choose "Replace/Merge" when asked.
+
+What it updates:
+  app/src/main/assets/index.html   -> launcher page (v18 metal)
+  app/src/main/res/...             -> new metallic app icons
+  docs/                            -> setup guide + logo source images
+
+Not included on purpose (so nothing in your project is overwritten):
+  YogaBridge.kt, colors.xml, build files, .github/workflows
+
+Terminal commands (run inside your cloned Yoga-Launcher folder):
+
+  git pull
+  (copy the app and docs folders in here, merge/replace)
+  git status
+  git add app docs
+  git commit -m "Update launcher to v18 metal and new icons"
+  git push
