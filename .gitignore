@@ -1,0 +1,19 @@
+# Gradle and build output
+.gradle/
+build/
+*.apk
+*.aab
+
+# Local machine files
+local.properties
+.idea/
+*.iml
+.DS_Store
+
+# Signing keys and secrets. Never commit these.
+*.jks
+*.keystore
+*.p12
+*.pem
+keystore.properties
+.env
