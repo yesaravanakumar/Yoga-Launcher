@@ -1,0 +1,48 @@
+<!-- Edit app/src/main/AndroidManifest.xml. Keep everything you already have (icon, label, theme)
+     and add / replace ONLY the three blocks below. -->
+
+<!-- BLOCK 1: inside <manifest>, ABOVE <application> -->
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.READ_CONTACTS" />
+<queries>
+    <intent>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+    </intent>
+</queries>
+
+<!-- BLOCK 2: inside <application>. Replace your existing <activity ...MainActivity...> with this
+     (the second intent-filter is what makes the app a Home app) -->
+<activity
+    android:name=".MainActivity"
+    android:exported="true"
+    android:launchMode="singleTask"
+    android:stateNotNeeded="true"
+    android:windowSoftInputMode="adjustResize"
+    android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|keyboard|uiMode|density|fontScale|locale|layoutDirection"
+    android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+
+    <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+    </intent-filter>
+
+    <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.HOME" />
+        <category android:name="android.intent.category.DEFAULT" />
+    </intent-filter>
+</activity>
+
+<!-- BLOCK 3: inside <application>, next to the activity (notification dots + lock gesture) -->
+<service android:name=".BadgeService"
+    android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+    android:exported="true">
+    <intent-filter><action android:name="android.service.notification.NotificationListenerService" /></intent-filter>
+</service>
+<service android:name=".LockService"
+    android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+    android:exported="true">
+    <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>
+    <meta-data android:name="android.accessibilityservice" android:resource="@xml/lock_service" />
+</service>
