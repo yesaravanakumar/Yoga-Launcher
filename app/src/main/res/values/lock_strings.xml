@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="lock_desc">Lets the launcher lock the screen with a double tap.</string>
+    <string name="lock_desc">Lets the launcher lock the screen, open the notification shade and quick settings, show recent apps and take screenshots when you use those gestures. It does not read your screen.</string>
 </resources>
