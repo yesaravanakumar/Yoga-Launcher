@@ -569,7 +569,7 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
                 "qs" -> glob(AccessibilityService.GLOBAL_ACTION_QUICK_SETTINGS)
                 "recents" -> glob(AccessibilityService.GLOBAL_ACTION_RECENTS)
                 "shot" -> if (Build.VERSION.SDK_INT >= 28) glob(AccessibilityService.GLOBAL_ACTION_TAKE_SCREENSHOT) else "fail"
-                "camera" -> { ui { act.startActivity(Intent(MediaStore.ACTION_STILL_IMAGE_CAMERA)) }; "ok" }
+                "camera" -> { ui { act.startActivity(Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)) }; "ok" }
                 "torch" -> {
                     val cm = act.getSystemService(Context.CAMERA_SERVICE) as CameraManager
                     val id = cm.cameraIdList.firstOrNull { cm.getCameraCharacteristics(it).get(CameraCharacteristics.FLASH_INFO_AVAILABLE) == true }
