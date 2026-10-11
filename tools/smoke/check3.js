@@ -17,10 +17,10 @@ const w=dom.window;let p=0,f=0;const ok=(c,m)=>{c?p++:f++;console.log((c?'PASS '
  ok(w.eval("CONTACTS.find(c=>c.n==='Evil').u")==='','non-contacts uri dropped');
  console.log('  getContactPhoto asked for:',asked);
  ok(asked.length===1&&/photo/.test(asked[0]),'photo requested only for contacts that have one');
- const rows=w.document.querySelectorAll('#awWave .awi .awr');ok(rows.length===3,'every contact row has the icons: '+rows.length);ok(rows[0].querySelectorAll('.cab').length===3,'3 icons per row');rows[1].querySelector('.cab-msg').click();ok(calls.some(c=>c[0]==='waChat'&&c[1]==='222'),'row icon acts on its own contact (Bala=222): '+JSON.stringify(calls.slice(-1)));
+ ok(w.document.querySelectorAll('#awWave .awr').length===0,'no pill on the other contact rows');
  const ca=w.document.getElementById('awCa');
  ok(ca&&!ca.hidden,'action row visible for a selected contact');
- ok(ca&&ca.querySelectorAll('button').length===3,'3 buttons: call, WhatsApp message, WhatsApp call');
+ ok(ca&&ca.querySelectorAll('button').length===4,'4 buttons incl. SMS');ok(!!ca.querySelector('.cab-sms'),'SMS button present');
  ca.querySelector('.cab-call').click();ok(calls.some(c=>c[0]==='openUrl'&&/^tel:/.test(c[1])),'Call opens dialer: '+JSON.stringify(calls.slice(-1)));
  ca.querySelector('.cab-msg').click();ok(calls.some(c=>c[0]==='waChat'),'WhatsApp message -> waChat');
  ca.querySelector('.cab-wac').click();ok(calls.some(c=>c[0]==='waCall'),'WhatsApp call -> waCall');

@@ -287,6 +287,41 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
         try { act.startActivity(i); true } catch (e: Exception) { toast("No app can open that link"); false }
     }
 
+    // ---------- edit / delete a contact (looked up by phone number) ----------
+    private fun contactLookup(number: String): Pair<Long, String>? {
+        if (!hasContactsPerm()) return null
+        return try {
+            var out: Pair<Long, String>? = null
+            act.contentResolver.query(Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number)),
+                arrayOf(ContactsContract.PhoneLookup._ID, ContactsContract.PhoneLookup.LOOKUP_KEY), null, null, null)?.use {
+                if (it.moveToFirst()) out = Pair(it.getLong(0), it.getString(1) ?: "")
+            }
+            out
+        } catch (_: Exception) { null }
+    }
+    /** Opens the phone's own contact editor for this number. */
+    @JavascriptInterface fun editContact(number: String): Boolean = uiResult(false) {
+        val c = contactLookup(number)
+        if (c == null) { toast("Contact not found"); return@uiResult false }
+        try {
+            act.startActivity(Intent(Intent.ACTION_EDIT).setDataAndType(ContactsContract.Contacts.getLookupUri(c.first, c.second), ContactsContract.Contacts.CONTENT_ITEM_TYPE))
+            true
+        } catch (e: Exception) { toast("No app can edit contacts"); false }
+    }
+    /** Deletes the contact from the phone. Needs "Contacts" write permission; the page asks the person to confirm first. */
+    @JavascriptInterface fun deleteContact(number: String): Boolean = uiResult(false) {
+        if (act.checkSelfPermission(Manifest.permission.WRITE_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            askRuntime(arrayOf(Manifest.permission.WRITE_CONTACTS), 8)
+            toast("Allow Contacts, then tap delete again")
+            return@uiResult false
+        }
+        val c = contactLookup(number)
+        if (c == null) { toast("Contact not found"); return@uiResult false }
+        try {
+            act.contentResolver.delete(Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, c.second), null, null) > 0
+        } catch (e: Exception) { toast("Could not delete"); false }
+    }
+
     // ---------- WhatsApp shortcuts for a contact (no WhatsApp data is read) ----------
     private fun waDigits(num: String): String {
         val raw = num.filter { it.isDigit() || it == '+' }

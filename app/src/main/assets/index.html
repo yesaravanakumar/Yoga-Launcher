@@ -2044,7 +2044,7 @@ const launch=a=>{
   };
   openApp();
 };
-const menu=$('amenu');let menuApp=null;let home=ls('mdc-home',null);
+const menu=$('amenu');let menuApp=null;let home=ls('mdc-home',null);let HCT=ls('mdc-hcts',{});if(!HCT||typeof HCT!=='object'||Array.isArray(HCT))HCT={};const appOf=p=>apps.find(a=>a.p===p)||HCT[p]||null;
 const closeMenu=()=>menu.classList.remove('open');
 const SCUT={camera:['Selfie','Record video','Scan QR'],messages:['New message','Search chats'],chrome:['New tab','Incognito tab'],maps:['Navigate home','Navigate to work'],phone:['Recent calls','Dial pad'],gmail:['Compose','Search mail'],spotify:['Liked songs','Search'],clock:['Set alarm','Start timer'],notes:['New note','New checklist']};
 function appShortcuts(a){
@@ -2086,8 +2086,9 @@ function renderDock(){
   g.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 L17 7 M17 7 L9 7 M17 7 L17 15"></path></svg>';
   g.onclick=openApps;if(S.dab)d.appendChild(g);
 }
+const ALLQ=()=>{const s=document.getElementById('awSearch');return !!(s&&s.classList.contains('on')&&$('q').value.trim())};   /* drawer search bar open + something typed: look in apps AND contacts */
 const matches=()=>{
-  const POOL=DC==='Contacts'?CONTACTS:apps,q=norm($('q').value.trim());if(!q)return POOL.slice();
+  const POOL=ALLQ()?apps.concat(CONTACTS):DC==='Contacts'?CONTACTS:apps,q=norm($('q').value.trim());if(!q)return POOL.slice();
   const qc=q.replace(/\s+/g,''),u=ls('mdc-use',{});
   const sub=(h,t)=>{let j=0;for(let i=0;i<h.length&&j<t.length;i++)if(h[i]===t[j])j++;return j===t.length};
   return POOL.map(a=>{
@@ -2153,7 +2154,7 @@ const appCat=a=>{
 const setCatOv=(p,c)=>{if(c)CATOV[p]=c;else delete CATOV[p];sv('mdc-catov',CATOV);_cc.delete(p)};
 let DC='All';
 const catIs=(a,n)=>n==='Contacts'?!!a.ct:n==='All'||(n==='Pinned'?favs.includes(a.p):n==='Recent'?recent().includes(a.p):n==='Top'?!!(ls('mdc-use',{})[a.p]):n==='Suggested'?suggSet().has(a.p):appCat(a)===n);
-const inCat=a=>catIs(a,DC);
+const inCat=a=>ALLQ()||catIs(a,DC);
 function renderCats(){
   const b=$('dcats');b.textContent='';if(DC==='Suggested'&&!suggSet().size)DC='All';const names=['All','Pinned','Contacts','Recent','Top',...(suggSet().size?['Suggested']:[]),'Games',...CATS.map(c=>c[0]),'Other'];
   loadContacts();$('q').placeholder=DC==='Contacts'?'Search contacts':'Search apps';
@@ -2950,7 +2951,7 @@ $('wpFile').onchange=e=>{const f=e.target.files&&e.target.files[0];if(!f)return;
 /* ── App refresh + package monitoring ── */
 if(!Array.isArray(home))home=['phone','messages','camera','chrome','maps','photos','youtube','spotify'].map(n=>apps.find(a=>norm(a.n)===n)).filter(Boolean).map(a=>a.p);
 home=home.filter(p=>typeof p==='string');
-function refreshApps(){seedFavs();home=home.filter(p=>apps.some(a=>a.p===p));renderDock();renderChips();renderHome();if($('drawer').classList.contains('open'))renderGrid()}
+function refreshApps(){seedFavs();home=home.filter(p=>apps.some(a=>a.p===p)||HCT[p]);renderDock();renderChips();renderHome();if($('drawer').classList.contains('open'))renderGrid()}
 window.onPackageAdded=a=>{if(!a||a.p==null||a.n==null)return;a=Object.assign({},a,{n:String(a.n),p:String(a.p)});const ex=apps.find(x=>x.p===a.p);if(ex)Object.assign(ex,a);else{apps.push(a);if(S.pmon)markNew(a.p)}refreshApps();if(S.pmon)toast(a.n+(ex?' updated':' installed'))};
 window.onPackageChanged=window.onPackageAdded;
 window.onPackageRemoved=p=>{p=String(p);const a=apps.find(x=>x.p===p);apps=apps.filter(x=>x.p!==p);favs=favs.filter(x=>x!==p);sv('mdc-favs',favs);clearNew(p);refreshApps();if(S.pmon)toast((a?a.n:'App')+' uninstalled')};
@@ -2962,8 +2963,8 @@ $('pkUn').onclick=()=>{const a=[...apps].reverse().find(x=>POOL.includes(x.n));i
 
 /* ── Home screen grid page ── */
 function renderHome(){
-  const g=$('hgrid');g.textContent='';const slots=(+S.gcol)*(+S.grow),list=home.map(p=>apps.find(a=>a.p===p)).filter(Boolean).slice(0,slots);
-  list.forEach(a=>{const b=document.createElement('button');b.className='app';b.appendChild(icon(a));const s=document.createElement('span');s.textContent=a.n;b.appendChild(s);b.onclick=()=>{closeAll();launch(a)};hold(b,a);g.appendChild(b)});
+  const g=$('hgrid');g.textContent='';const slots=(+S.gcol)*(+S.grow),list=home.map(appOf).filter(Boolean).slice(0,slots);
+  list.forEach(a=>{const b=document.createElement('button');b.className='app';b.appendChild(icon(a));const s=document.createElement('span');s.textContent=a.n;b.appendChild(s);b.onclick=()=>{closeAll();launch(a)};if(!a.ct)hold(b,a);g.appendChild(b)});
   if(list.length<slots){const b=document.createElement('button');b.className='app add';const i=document.createElement('div');i.className='ic';i.textContent='+';b.appendChild(i);const s=document.createElement('span');s.textContent='Add app';b.appendChild(s);b.onclick=()=>{closeAll();openDrawer();toast('Hold an app, then Add to home screen')};g.appendChild(b)}
 }
 
@@ -4024,15 +4025,15 @@ try{ENG.init()}catch(e){console.error(e)}
   const saveP=()=>sv('mdc-hpos',hpos);
   const blockers=()=>[$('hour'),$('read'),document.querySelector('.date')].filter(e=>e&&e.offsetWidth).map(rc);
   const blocked=(c,r,bl)=>{const cr=cellR(c,r);return bl.some(b=>ov(cr,b,-6))};
-  const occupied=(c,r,except)=>Object.keys(hpos).some(p=>p!==except&&hpos[p]&&hpos[p].c===c&&hpos[p].r===r&&apps.some(a=>a.p===p));
+  const occupied=(c,r,except)=>Object.keys(hpos).some(p=>p!==except&&hpos[p]&&hpos[p].c===c&&hpos[p].r===r&&!!appOf(p));
   function freeCells(except){const bl=blockers(),R=rows(),o=[];for(let r=0;r<R;r++)for(let c=0;c<HC;c++)if(!blocked(c,r,bl)&&!occupied(c,r,except))o.push({c:c,r:r});return o}
   function render(popP){
     hic.textContent='';if(!S.hic)return;const R=rows();
     Object.keys(hpos).forEach(p=>{
-      const v=hpos[p],a=apps.find(x=>x.p===p);if(!a||!v||v.c>=HC||v.r>=R)return;
+      const v=hpos[p],a=appOf(p);if(!a||!v||v.c>=HC||v.r>=R)return;
       const b=document.createElement('button');b.className='hic'+(p===popP?' pop':'');b.style.left=v.c*CW+'px';b.style.top=(TOP+v.r*CH)+'px';b.setAttribute('aria-label',a.n);
       b.appendChild(icon(a));const s=document.createElement('span');s.textContent=a.n;b.appendChild(s);
-      b.onclick=()=>launch(a);hold(b,a);hic.appendChild(b);
+      b.onclick=()=>launch(a);if(!a.ct)hold(b,a);hic.appendChild(b);
     });
   }
   function place(p,c,r){hpos[p]={c:c,r:r};saveP();if(!lst().includes(p)){home.push(p);sv('mdc-home',home)}render(p);try{renderHome()}catch(_){ERR(_,"c57")}}
@@ -6469,9 +6470,9 @@ background:#030304 linear-gradient(rgba(var(--c1rgb),.05) 1px,transparent 1px) 0
 @keyframes awPop{from{scale:.7;opacity:0}}
 #awNm{position:absolute;font:500 25px/1.05 "Roboto Condensed","Arial Narrow",var(--f),sans-serif;letter-spacing:-.4px;color:rgba(255,255,255,.62);text-shadow:0 0 14px rgba(255,255,255,.28),0 2px 6px #000;transform:translate(-50%,-50%);white-space:nowrap;max-width:62%;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 #aw .awb,#aw .awb:focus,#aw .awb:focus-visible{outline:none}
+#awSr.on{color:#fff}#awSr.on svg{filter:drop-shadow(0 0 7px var(--c1))}
 #awCt.on{color:#fff}#awCt.on svg{filter:drop-shadow(0 0 7px var(--c1))}
 #awCt.on::before{content:"";position:absolute;inset:4px;border-radius:50%;border:1.5px solid var(--c1);box-shadow:0 0 12px rgba(var(--c1rgb),.6),inset 0 0 8px rgba(var(--c1rgb),.3)}
-#aw.ctm #awEdit,#aw.ctm #awStar,#aw.ctm #awHome,#aw.ctm #awDel{opacity:.28;pointer-events:none}
 #awTab{color:var(--c1)}#awTab svg{fill:currentColor;stroke:none;width:20px;height:34px}
 #awRail{position:absolute;display:flex;flex-direction:column;justify-content:space-between;align-items:center;touch-action:none}
 #awRail div{font:700 14px/1 "Roboto Condensed","Arial Narrow",var(--f),sans-serif;color:#fff;transition:transform .15s,color .15s,text-shadow .15s;padding:1px 0}
@@ -6502,12 +6503,13 @@ background:#030304 linear-gradient(rgba(var(--c1rgb),.05) 1px,transparent 1px) 0
 .awi .ic{box-shadow:0 0 0 1.5px rgba(var(--c1rgb),.35),0 0 12px rgba(var(--c1rgb),.25)}
 .drawer:not(.open) #aw *{animation-play-state:paused}
 .phone.performance #aw .jv-spin,.phone.performance #aw .jv-spinr,.phone.performance #aw .jv-pulse,.phone.performance #awScan,html.minimal #aw .jv-spin,html.minimal #aw .jv-spinr,html.minimal #aw .jv-pulse,html.minimal #awScan,html.minimal #awHud i{animation:none}
-#awCa{position:absolute;z-index:6;display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:16px;border:1.5px solid rgba(var(--c1rgb),.5);background:rgba(8,20,28,.85);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transform:translateX(-50%);touch-action:manipulation}
+#awCa{position:absolute;z-index:6;display:flex;align-items:center;gap:3px;padding:3px 7px;border-radius:16px;border:1.5px solid rgba(var(--c1rgb),.5);background:rgba(8,20,28,.85);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);touch-action:manipulation}
 #awCa[hidden]{display:none}
-#awCa .cab{width:36px;height:30px;border:0;border-radius:10px;background:none;color:var(--c1);display:grid;place-items:center;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#awCa .cab{width:var(--bw,34px);height:30px;border:0;border-radius:10px;background:none;color:var(--c1);display:grid;place-items:center;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
 #awCa .cab:active{background:rgba(255,255,255,.14)}
-#awCa .cab svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+#awCa .cab svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 #awCa .cab-msg,#awCa .cab-wac{color:#25D366}
+#awCa .cab-sms{color:#ffd76b}
 #awCa .cab:focus-visible{outline:2px solid var(--c1);outline-offset:2px}
 @media(prefers-reduced-motion:reduce),(update:slow){.jv-spin,.jv-spinr,.jv-pulse,#awScan,#awHud i{animation:none!important}}
 </style>
@@ -6517,14 +6519,14 @@ background:#030304 linear-gradient(rgba(var(--c1rgb),.05) 1px,transparent 1px) 0
 const dr=document.getElementById('drawer');if(!dr||!window.YD||dr.dataset.aw)return;dr.dataset.aw='1';dr.classList.add('aw');
 let STEP=.123;const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
 const ic=d=>'<svg viewBox="0 0 24 24">'+d+'</svg>';
-const G={edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',star:'<path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.7 6.6 19.7l1.1-6.1L3.2 9.4l6.1-.8z"/>',home:'<path d="M3.5 11 12 3.5 20.5 11"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/>',play:'<path d="M5 3.5v17l14-8.5z"/>',info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/>',del:'<path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/>',tab:'<path d="M2 2l16 15L2 32z" />',ct:'<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c.6-4 3.7-6 7.5-6s6.9 2 7.5 6"/>'};
+const G={edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',star:'<path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.7 6.6 19.7l1.1-6.1L3.2 9.4l6.1-.8z"/>',home:'<path d="M3.5 11 12 3.5 20.5 11"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/>',play:'<path d="M5 3.5v17l14-8.5z"/>',info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/>',del:'<path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/>',tab:'<path d="M2 2l16 15L2 32z" />',sr:'<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',ct:'<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c.6-4 3.7-6 7.5-6s6.9 2 7.5 6"/>'};
 const root=document.createElement('div');root.id='aw';
 root.innerHTML='<svg id="awArt" aria-hidden="true"></svg><div id="awScan"></div><div id="awWave"></div><div id="awFocus"><div id="awFi" role="button" aria-label="Open app"></div><div id="awNm"></div></div>'
-+'<button class="awb" id="awCt" aria-label="Contacts" aria-pressed="false">'+ic(G.ct)+'</button><button class="awb" id="awEdit" aria-label="App options">'+ic(G.edit)+'</button><button class="awb" id="awStar" aria-label="Pin to favourites">'+ic(G.star)+'</button><button class="awb" id="awHome" aria-label="Add to home screen">'+ic(G.home)+'</button>'
++'<button class="awb" id="awSr" aria-label="Search apps and contacts" aria-pressed="false">'+ic(G.sr)+'</button><button class="awb" id="awCt" aria-label="Contacts" aria-pressed="false">'+ic(G.ct)+'</button><button class="awb" id="awEdit" aria-label="App options">'+ic(G.edit)+'</button><button class="awb" id="awStar" aria-label="Pin to favourites">'+ic(G.star)+'</button><button class="awb" id="awHome" aria-label="Add to home screen">'+ic(G.home)+'</button>'
 +'<button class="awb" id="awPlay" aria-label="Open in Play Store">'+ic(G.play)+'</button><button class="awb" id="awInfo" aria-label="App info">'+ic(G.info)+'</button><button class="awb" id="awDel" aria-label="Uninstall">'+ic(G.del)+'</button>'
 +'<button class="awb" id="awTab" aria-label="Close apps"><svg viewBox="0 0 20 34"><path d="M2 2l16 15L2 32z"/></svg></button>'
 +'<div id="awRail" role="group" aria-label="A to Z"></div><div id="awBub"></div>'
-+'<div id="awSearch"><input id="awQ" placeholder="Search apps" autocomplete="off" enterkeyhint="search" aria-label="Search apps"></div><div id="awEmpty">No apps found</div>';
++'<div id="awSearch"><input id="awQ" placeholder="Search apps &amp; contacts" autocomplete="off" enterkeyhint="search" aria-label="Search apps and contacts"></div><div id="awEmpty">No apps found</div>';
 dr.appendChild(root);
 const wave=$('awWave'),art=$('awArt'),fi=$('awFi'),nm=$('awNm'),rail=$('awRail'),bub=$('awBub'),sbar=$('awSearch'),qi=$('awQ');
 let list=[],pos=0,vel=0,mode='',tgt=0,raf=0,last=0,foc=-1,W=360,H=780,drag=null,moved=false,lets=[],cells=[],stagger=false;const els=new Map(),RMo=matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -6533,7 +6535,7 @@ const geo=()=>{W=root.clientWidth||360;H=root.clientHeight||780};
 /* ONE curve for the whole drawer: trk(y) is the x of the flow line at height y. Apps, the focused app and the red line all use it, so nothing can drift off the line. */
 const CFG0={lineX:.80,lineC:1.9,step:.123,dialX:.40,dialR:.40,ltrR:.50,ltrX:0,ltrS:1,icS:1,nmS:1,names:true,rail:true,scan:true,anim:true,acc:'',minimal:false,shape:'auto',gloss:true,dof:true,float:true,lines:true,rings:true,wedge:true,bub:true,hapx:true,glide:.05,snapS:13,tapSel:false,openAnim:true,dim:0,btnS:1,focS:1,bCt:true,bEdit:true,bStar:true,bHome:true,bPlay:true,bInfo:true,bDel:true};
 const CFG=Object.assign({},CFG0,(()=>{try{const o=JSON.parse(localStorage.getItem('aw-cfg'));return o&&typeof o==='object'?o:{}}catch(e){return {}}})());STEP=CFG.step;
-const FOC=.56,PUSH=.065;
+const FOC=.56;let PUSH=.065;
 const trk=y=>{const t=y/H-.56;return(CFG.lineX-CFG.lineC*t*t)*W};
 const dyr=r=>r*STEP+Math.sign(r)*PUSH*(1-Math.exp(-Math.abs(r)*1.6));
 const slot=r=>{const y=(FOC+dyr(r))*H;return[trk(y),y]};
@@ -6568,31 +6570,30 @@ function hud(){
 function arcPts(rad,d1,d2,n){const xc=FX()-R(),yc=YD0(),o=[];for(let i=0;i<=n;i++){const dy=(d1+(d2-d1)*i/n)*H;o.push([xc+Math.sqrt(rad*rad-dy*dy),yc+dy])}return o}
 const P=a=>a.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
 function band(d1,d2){const bw=.034*H,o=arcPts(R()+bw,d1,d2,12),i=arcPts(R()-bw,d1,d2,12).reverse();return el('polygon',{points:P(o.concat(i)),fill:'rgba(var(--c1rgb),.10)',stroke:'rgba(var(--c1rgb),.55)','stroke-width':1.3,'stroke-linejoin':'round'})}
-function ctSync(){const on=DC==='Contacts',c=$('awCt');try{if(!on)ca.hidden=true}catch(_){}root.classList.toggle('ctm',on);c.classList.toggle('on',on);c.setAttribute('aria-pressed',on);c.setAttribute('aria-label',on?'Back to apps':'Contacts');$('awPlay').setAttribute('aria-label',on?'Call':'Open in Play Store');$('awInfo').setAttribute('aria-label',on?'Message':'App info');qi.placeholder=on?'Search contacts':'Search apps'}
+function ctSync(){const on=DC==='Contacts',c=$('awCt');PUSH=on?.115:.065;try{if(!on)ca.hidden=true}catch(_){}try{const so=sbar.classList.contains('on');$('awSr').classList.toggle('on',so);$('awSr').setAttribute('aria-pressed',String(so))}catch(_){}root.classList.toggle('ctm',on);c.classList.toggle('on',on);c.setAttribute('aria-pressed',on);c.setAttribute('aria-label',on?'Back to apps':'Contacts');$('awPlay').setAttribute('aria-label',on?'Call':'Open in Play Store');$('awInfo').setAttribute('aria-label',on?'Message':'App info');qi.placeholder=on?'Search contacts':'Search apps'}
 function placeNm(){const fx=trk(FOC*H),w=nm.offsetWidth||0;nm.style.left=clamp(fx,w/2+6,.975*W-w/2)+'px';nm.style.top=(FOC*H+62)+'px';placeCa()}
 /* contact quick actions: small Call, WhatsApp message and WhatsApp call buttons under the selected contact */
 const ca=document.createElement('div');ca.id='awCa';ca.hidden=true;ca.setAttribute('role','group');ca.setAttribute('aria-label','Contact actions');
 const CAI={call:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/>',
  msg:'<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/>',
+ sms:'<rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3.5 7.5l8.5 6 8.5-6"/>',
  wac:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/><circle cx="18" cy="6" r="3.2"/>'};
-[['call','Call'],['msg','WhatsApp message'],['wac','WhatsApp call']].forEach(([k,t])=>{const b=document.createElement('button');b.type='button';b.className='cab cab-'+k;b.dataset.k=k;b.setAttribute('aria-label',t);b.title=t;
+[['call','Call'],['wac','WhatsApp call'],['msg','WhatsApp message'],['sms','SMS']].forEach(([k,t])=>{const b=document.createElement('button');b.type='button';b.className='cab cab-'+k;b.dataset.k=k;b.setAttribute('aria-label',t);b.title=t;
   b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+CAI[k]+'</svg>';ca.appendChild(b)});
 root.appendChild(ca);
 ['pointerdown','pointerup','touchstart'].forEach(t=>ca.addEventListener(t,e=>e.stopPropagation()));
 function caAct(k,a){if(!a||!a.ct)return;try{vib(8)}catch(_){}
   const n=a.ph;if(!n){toast('No number for '+a.n);return}const A=window.Android;
   if(k==='call'){ENG.open('tel:'+n);return}
+  if(k==='sms'){ENG.open('sms:'+n);return}
   if(k==='msg'){if(A&&typeof A.waChat==='function')A.waChat(n);else ENG.open('https://wa.me/'+n.replace(/\D/g,''));return}
   if(A&&typeof A.waCall==='function')A.waCall(n);else toast('WhatsApp calls need the Android app')}
 ca.addEventListener('click',e=>{const b=e.target.closest('.cab');if(!b)return;e.stopPropagation();caAct(b.dataset.k,cur())});
-/* the same three icons on every contact row in the arc */
-const CAT={call:'Call',msg:'WhatsApp message',wac:'WhatsApp call'};
-function rowActs(a,b){const r=document.createElement('div');r.className='awr';
-  Object.keys(CAT).forEach(k=>{const i=document.createElement('i');i.className='cab cab-'+k;i.setAttribute('role','button');i.setAttribute('aria-label',CAT[k]+' '+a.n);i.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+CAI[k]+'</svg>';
-    i.onclick=e=>{e.stopPropagation();e.preventDefault();caAct(k,a)};r.appendChild(i)});
-  ['pointerdown','pointerup','touchstart','contextmenu'].forEach(t=>r.addEventListener(t,e=>e.stopPropagation()));b.appendChild(r)}
 function placeCa(){const a=cur(),on=!!(a&&a.ct&&a.ph)&&isOpen();ca.hidden=!on;if(!on)return;
-  const w=ca.offsetWidth||120,fx=trk(FOC*H);ca.style.left=clamp(fx,w/2+6,.975*W-w/2)+'px';ca.style.top=(FOC*H+62+(nm.offsetHeight||28)+8)+'px'}
+  /* sits under the name, to the RIGHT of the A-Z arc so the letters stay clear; buttons shrink a little on narrow phones */
+  const yc=FOC*H+62+(nm.offsetHeight||28)+8,railR=LX(yc)+12+10,avail=Math.max(90,W-6-railR),bw=clamp(Math.floor((avail-14)/4),26,36);
+  ca.style.setProperty('--bw',bw+'px');const w=4*bw+3*3+14;
+  ca.style.left=Math.max(railR,railR+(avail-w)/2)+'px';ca.style.top=yc+'px'}
 
 function layout(){geo();art.setAttribute('viewBox','0 0 '+W+' '+H);art.textContent='';
  const df=el('defs',{});df.innerHTML='<linearGradient id="awg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--c1)" stop-opacity="0"/><stop offset=".25" style="stop-color:var(--c1)"/><stop offset=".75" style="stop-color:var(--c1)"/><stop offset="1" style="stop-color:var(--c1)" stop-opacity="0"/></linearGradient>';art.appendChild(df);
@@ -6602,19 +6603,19 @@ function layout(){geo();art.setAttribute('viewBox','0 0 '+W+' '+H);art.textConte
  const lt=.16*H,lb=.96*H;art.appendChild(el('polyline',{points:P(Array.from({length:31},(_,k)=>{const y=lt+(lb-lt)*k/30;return[LX(y)-17,y]})),fill:'none',stroke:'var(--c1)','stroke-width':1,'stroke-dasharray':'2 6','stroke-linecap':'round',opacity:.3}));
  art.appendChild(el('polyline',{points:P(Array.from({length:31},(_,k)=>{const y=lt+(lb-lt)*k/30;return[LX(y)+17,y]})),fill:'none',stroke:'var(--c1)','stroke-width':1.6,opacity:.7,class:'awo'}));
  const put=(e,dy,x)=>{e.style.left=(x==null?AX(dy*H):x)+'px';e.style.top=(YD0()+dy*H)+'px'};
- put($('awCt'),-.226);put($('awEdit'),-.163);put(fi,FOC-.56,trk(FOC*H));put($('awStar'),-.1);put($('awHome'),0);put($('awPlay'),.1);put($('awInfo'),.163);put($('awDel'),.225);
+ put($('awSr'),-.29);put($('awCt'),-.226);put($('awEdit'),-.163);put(fi,FOC-.56,trk(FOC*H));put($('awStar'),-.1);put($('awHome'),0);put($('awPlay'),.1);put($('awInfo'),.163);put($('awDel'),.225);
  nm.style.fontSize=clamp(H*.03,17,25)*CFG.nmS+'px';nm.style.maxWidth=(.8*W)+'px';placeNm();
  const tb=$('awTab');tb.style.left=.06*W+'px';tb.style.top=YD0()+'px';
  rail.style.width='24px';rail.style.left=(LX(YD0())-12)+'px';rail.style.top=(lt+.01*H)+'px';rail.style.height=(lb-lt-.02*H)+'px';arcRail();
  bub.style.left=.17*W+'px';bub.style.top=YD0()+'px';
  art.appendChild(hud());root.style.setProperty('--awH',H+'px');
 }
-function mk(a){const b=document.createElement('button');b.className='awi'+(stagger?' in':'');b.type='button';b.appendChild(icon(a));const s=document.createElement('span');s.textContent=a.n;b.appendChild(s);if(a.ct&&a.ph)rowActs(a,b);
+function mk(a){const b=document.createElement('button');b.className='awi'+(stagger?' in':'');b.type='button';b.appendChild(icon(a));const s=document.createElement('span');s.textContent=a.n;b.appendChild(s);
  hold(b,a);b.onclick=()=>{const i=list.indexOf(a);if(CFG.tapSel&&i>=0&&i!==foc){glide(i);return}closeAll();launch(a)};return b}
 function setFocus(f){foc=f;const a=list[f];if(!a)return;fi.replaceChildren(icon(a));nm.textContent=a.n;placeNm();
  [fi,nm].forEach(e=>{e.classList.remove('pop');void e.offsetWidth;if(!RMo)e.classList.add('pop')});
  
- const pin=!!(window.vf&&vf().includes(a.p));$('awStar').style.color=pin?'#ffd76b':'';
+ starPaint(a);
  const L=letter(a);[...rail.children].forEach(c=>c.classList.toggle('on',c.dataset.l===L));if(CFG.hapx!==false)try{vib(5)}catch(_){}}
 function paint(){const N=list.length;if(!N)return;const lo=Math.floor(pos)-5,hi=Math.ceil(pos)+6;
  els.forEach((e,i)=>{if(i<lo||i>hi){e.remove();els.delete(i)}});
@@ -6634,14 +6635,14 @@ function build(){if(!isOpen())return;const q=$('q').value.trim(),keep=cur();list
  rail.textContent='';const d0=document.createElement('div');d0.textContent='\u2022';d0.dataset.l='';rail.appendChild(d0);lets.forEach(x=>{const d=document.createElement('div');d.textContent=x.c;d.dataset.l=x.c;rail.appendChild(d)});arcRail();
  const k=keep?list.findIndex(a=>a.p===keep.p):-1;pos=k>=0?k:0;tgt=pos;vel=0;mode='';
  root.classList.toggle('empty',!list.length);
- if(!list.length){$('awEmpty').firstChild.textContent=DC==='Contacts'?(q?'No contacts found':'No contacts'):(q?'No apps found':'No apps');const o=$('awEmpty').querySelector('button');if(o)o.remove();if(q&&DC!=='Contacts'){const b=document.createElement('button');b.type='button';b.textContent='Search the web';b.onclick=()=>webSearch(q);$('awEmpty').appendChild(b)}}
+ if(!list.length){$('awEmpty').firstChild.textContent=ALLQ()?'No apps or contacts found':DC==='Contacts'?(q?'No contacts found':'No contacts'):(q?'No apps found':'No apps');const o=$('awEmpty').querySelector('button');if(o)o.remove();if(q&&DC!=='Contacts'){const b=document.createElement('button');b.type='button';b.textContent='Search the web';b.onclick=()=>webSearch(q);$('awEmpty').appendChild(b)}}
  paint()}
 function open(){$('q').value='';qi.value='';sbar.classList.remove('on');DC='All';ctSync();dr.classList.add('open');layout();stagger=!RMo&&CFG.openAnim!==false;foc=-1;build();stagger=false;try{vib(12)}catch(_){}}
 function stop(){mode='';cancelAnimationFrame(raf);raf=0;drag=null;sbar.classList.remove('on');bub.classList.remove('on')}
 YD.open=open;YD.stop=stop;YD.build=build;YD.relayout=()=>{if(isOpen()){layout();paint()}};YD.glide=glide;YD.cur=()=>cur();YD.fx=()=>{};YD.st={foc:-1,els:[]};
 new ResizeObserver(()=>{if(isOpen()){layout();paint()}}).observe(root);
 /* drag the wave */
-root.addEventListener('pointerdown',e=>{moved=false;if(e.target.closest('.awb,#awRail,#awSearch,#awFi,#awNm,#awCa,.awr,#awCfg,#awCfgBtn'))return;drag={y:e.clientY,p:pos,t:e.timeStamp,ly:e.clientY,lt:e.timeStamp,v:0};mode='';});
+root.addEventListener('pointerdown',e=>{moved=false;if(e.target.closest('.awb,#awRail,#awSearch,#awFi,#awNm,#awCa,#awCfg,#awCfgBtn'))return;drag={y:e.clientY,p:pos,t:e.timeStamp,ly:e.clientY,lt:e.timeStamp,v:0};mode='';});
 root.addEventListener('pointermove',e=>{if(window.DRG&&DRG.on){drag=null;return}if(!drag)return;const dy=e.clientY-drag.y;if(Math.abs(dy)>7)moved=true;if(!moved)return;const N=list.length;pos=clamp(drag.p-dy/(STEP*H),-.35,N-.65);
  const dt=e.timeStamp-drag.lt;if(dt>0){drag.v=.6*drag.v+.4*(-(e.clientY-drag.ly)/(STEP*H)/(dt/1000));drag.ly=e.clientY;drag.lt=e.timeStamp}paint()});
 const end=()=>{if(!drag)return;const d=drag;drag=null;if(!moved)return;vel=clamp(d.v,-26,26);if(Math.abs(vel)>3)go('fling');else glide(Math.round(pos))};
@@ -6663,8 +6664,30 @@ qi.oninput=()=>{$('q').value=qi.value;build()};
 qi.onkeydown=e=>{if(e.key==='Enter'){const a=list[0];if(a){closeAll();launch(a)}else if(qi.value.trim())webSearch(qi.value.trim())}};
 /* actions */
 const on=(id,fn)=>$(id).addEventListener('click',()=>{const a=cur();if(!a)return;menuApp=a;fn(a)});
-on('awEdit',a=>openMenu(a));on('awStar',a=>{try{toggleFav(a)}catch(e){ERR(e,'aw1')}$('awStar').style.color=vf().includes(a.p)?'#ffd76b':''});
-on('awHome',()=>$('amHome').onclick());on('awInfo',a=>{if(a.ct){if(a.ph)ENG.open('sms:'+a.ph);return}$('amInfo').onclick()});on('awDel',()=>$('amUn').onclick());
+/* contacts: Edit opens the phone's editor, Star keeps a launcher favourite, Home puts the contact on the home screen, Delete removes it from the phone */
+const CF=()=>{const l=ls('mdc-cfav',[]);return Array.isArray(l)?l:[]};
+const cStar=a=>!!(a&&a.ct&&CF().includes(a.ph||a.p));
+const starPaint=a=>{$('awStar').style.color=a&&a.ct?(cStar(a)?'#ffd76b':''):(window.vf&&a&&vf().includes(a.p)?'#ffd76b':'')};
+window.cStar=cStar;
+on('awEdit',a=>{if(a.ct){const A=window.Android;if(!a.ph){toast('No number for '+a.n)}else if(A&&typeof A.editContact==='function')A.editContact(a.ph);else toast('Editing contacts needs the Android app');return}openMenu(a)});
+on('awStar',a=>{if(a.ct){const k=a.ph||a.p,l=CF(),i=l.indexOf(k);if(i>=0)l.splice(i,1);else l.push(k);sv('mdc-cfav',l);starPaint(a);toast(i>=0?a.n+' removed from favourites':a.n+' added to favourites');return}
+  try{toggleFav(a)}catch(e){ERR(e,'aw1')}starPaint(a)});
+$('awSr').onclick=()=>{const open=sbar.classList.contains('on');try{vib(6)}catch(_){}
+  if(open){sbar.classList.remove('on');qi.value='';qi.blur();qi.dispatchEvent(new Event('input'))}
+  else{try{loadContacts()}catch(e){ERR(e,'awsr')}sbar.classList.add('on');qi.focus()}
+  $('awSr').classList.toggle('on',!open);$('awSr').setAttribute('aria-pressed',String(!open))};
+on('awHome',a=>{if(a.ct){const had=home.includes(a.p);
+    if(!had)HCT[a.p]={n:a.n,p:a.p,ph:a.ph,u:a.u||'',c:'Contact',ct:true};
+    $('amHome').onclick();
+    if(had){delete HCT[a.p]}sv('mdc-hcts',HCT);return}
+  $('amHome').onclick()});on('awInfo',a=>{if(a.ct){if(a.ph)ENG.open('sms:'+a.ph);return}$('amInfo').onclick()});on('awDel',a=>{if(a.ct){const A=window.Android;if(!a.ph){toast('No number for '+a.n);return}
+    if(!(A&&typeof A.deleteContact==='function')){toast('Deleting contacts needs the Android app');return}
+    if(!confirm('Delete '+a.n+' from your phone? This cannot be undone.'))return;
+    let ok=false;try{ok=!!A.deleteContact(a.ph)}catch(e){ERR(e,'awdel')}
+    if(ok){CONTACTS=CONTACTS.filter(c=>c.ph!==a.ph);if(HCT[a.p]){delete HCT[a.p];home=home.filter(x=>x!==a.p);sv('mdc-home',home);sv('mdc-hcts',HCT);try{renderHome()}catch(_){}}
+      toast(a.n+' deleted');renderCats();build()}
+    return}
+  $('amUn').onclick()});
 on('awPlay',a=>{if(a.ct){if(a.ph)ENG.open('tel:'+a.ph);else toast('No number for '+a.n);return}const u='https://play.google.com/store/apps/details?id='+encodeURIComponent(a.p);try{ENG.open(u)}catch(_){window.open(u,'_blank','noopener')}});
 fi.onclick=nm.onclick=()=>{const a=cur();if(a){closeAll();launch(a)}};
 $('awTab').onclick=()=>closeAll();
