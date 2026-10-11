@@ -1531,7 +1531,7 @@ addEventListener('error',ev=>ERR(ev.error||ev.message,'uncaught'));
 var ASET={pre:[],post:[]};
 addEventListener('unhandledrejection',ev=>ERR(ev.reason,'promise'));
 /* single source of truth for the version label: window title, Settings footer, About, and the Android build (window.APP_VER / <meta name="app-version">) */
-const APP_VER='v1.55';
+const APP_VER='v1.56';
 window.APP_VER=APP_VER;document.title='Yoga Launcher \u2022 '+APP_VER;
 {const m=document.createElement('meta');m.name='app-version';m.content=APP_VER;document.head.appendChild(m)}
 const NS='http://www.w3.org/2000/svg', $=id=>document.getElementById(id), p2=v=>String(v).padStart(2,'0');
@@ -4813,7 +4813,7 @@ try{ENG.init()}catch(e){console.error(e)}
     pane.classList.remove('on');btn.setAttribute('aria-pressed',false);
     $('arcSave').onclick=()=>{const l=mine();if(l.length>=12){toast('Delete one of your themes first');return}
       const n=($('arcName').value.trim()||('My theme '+(l.length+1))).slice(0,20);l.push({id:'u'+Date.now(),n:n,s:snap()});sv('mdc-arct',l);S.arctn=n;saveS();$('arcName').value='';draw();toast('Saved \u201c'+n+'\u201d')};
-    $('arcUse').onclick=()=>{try{drawerStyle.set('arc')}catch(e){ERR(e,'v50u')}pvDraw()};
+    $('arcUse').onclick=()=>{try{(window.drawerLayout?drawerLayout.set('crescent'):drawerStyle.set('arc'))}catch(e){ERR(e,'v50u')}pvDraw()};
     $('arcReset').onclick=()=>{AK.forEach(k=>S[k]=SD[k]);S.arctn='';saveS();applySettings();toast('Arc look reset')};
     draw();uiSync();
   });
@@ -4845,7 +4845,7 @@ try{ENG.init()}catch(e){console.error(e)}
         o+='<text x="'+(left?q[0]+r+18:q[0]-r-18)+'" y="'+(q[1]-2)+'" text-anchor="'+(left?'start':'end')+'" font-size="15" font-weight="700" fill="currentColor">'+nm+'</text><text x="'+(left?q[0]+r+18:q[0]-r-18)+'" y="'+(q[1]+14)+'" text-anchor="'+(left?'start':'end')+'" font-size="9" font-weight="700" letter-spacing="1.2" fill="'+c1+'">APPS</text>'}
       else if(S.dlb!==false&&dist>.2)o+='<text x="'+(left?q[0]+r+6:q[0]-r-6)+'" y="'+(q[1]+3)+'" text-anchor="'+(left?'start':'end')+'" font-size="8" fill="currentColor" fill-opacity=".5">'+nm+'</text>'});
     host.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Live preview of the app drawer arc">'+o+'</svg>';
-    const n=$('arcNote');if(n){const g=window.drawerStyle&&drawerStyle.get()!=='arc';n.hidden=!g}
+    const n=$('arcNote');if(n){const g=window.drawerLayout?drawerLayout.get()==='grid':(window.drawerStyle&&drawerStyle.get()!=='arc');n.hidden=!g}
   }
   function use(n,s){AK.forEach(k=>{S[k]=(k in s)?s[k]:SD[k]});S.arctn=n;normS();saveS();applySettings();pv()}
   function card(n,sub,c,s,del){
@@ -6526,14 +6526,19 @@ root.innerHTML='<svg id="awArt" aria-hidden="true"></svg><div id="awScan"></div>
 +'<button class="awb" id="awPlay" aria-label="Open in Play Store">'+ic(G.play)+'</button><button class="awb" id="awInfo" aria-label="App info">'+ic(G.info)+'</button><button class="awb" id="awDel" aria-label="Uninstall">'+ic(G.del)+'</button>'
 +'<button class="awb" id="awTab" aria-label="Close apps"><svg viewBox="0 0 20 34"><path d="M2 2l16 15L2 32z"/></svg></button>'
 +'<div id="awRail" role="group" aria-label="A to Z"></div><div id="awBub"></div>'
-+'<div id="awSearch"><input id="awQ" placeholder="Search apps &amp; contacts" autocomplete="off" enterkeyhint="search" aria-label="Search apps and contacts"></div><div id="awEmpty">No apps found</div>';
++'<div id="awSearch"><input id="awQ" placeholder="Search apps &amp; contacts" autocomplete="off" enterkeyhint="search" aria-label="Search apps and contacts"></div><div id="awEmpty">No apps found</div>'
++'<div id="awTools" role="toolbar" aria-label="Drawer tools"><button type="button" id="awSort" aria-haspopup="true" aria-expanded="false">Sort</button><button type="button" id="awRe" aria-pressed="false">Reorder</button><button type="button" id="awSl" aria-pressed="false">Select</button></div>'
++'<div id="awSortMenu" role="menu" aria-label="Sort apps" hidden></div>'
++'<div id="awMv" role="group" aria-label="Reorder the selected app" hidden><button type="button" id="awMvU" aria-label="Move up">&#9650; Up</button><button type="button" id="awMvD" aria-label="Move down">&#9660; Down</button><button type="button" id="awMvX">Done</button></div>'
++'<div id="awSb" role="toolbar" aria-label="Selected apps" hidden><b id="awSbN" aria-live="polite">0 selected</b><button type="button" id="awSbAll">All</button><button type="button" id="awSbHome">Home</button><button type="button" id="awSbHide">Hide</button><button type="button" id="awSbDel">Uninstall</button><button type="button" id="awSbX">Done</button></div>';
 dr.appendChild(root);
 const wave=$('awWave'),art=$('awArt'),fi=$('awFi'),nm=$('awNm'),rail=$('awRail'),bub=$('awBub'),sbar=$('awSearch'),qi=$('awQ');
 let list=[],pos=0,vel=0,mode='',tgt=0,raf=0,last=0,foc=-1,W=360,H=780,drag=null,moved=false,lets=[],cells=[],stagger=false;const els=new Map(),RMo=matchMedia('(prefers-reduced-motion:reduce)').matches;
+let selOn=false,reOn=false;const SELS=new Set();
 const isOpen=()=>dr.classList.contains('open'),cur=()=>list[foc],clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const geo=()=>{W=root.clientWidth||360;H=root.clientHeight||780};
 /* ONE curve for the whole drawer: trk(y) is the x of the flow line at height y. Apps, the focused app and the red line all use it, so nothing can drift off the line. */
-const CFG0={lineX:.80,lineC:1.9,step:.123,dialX:.40,dialR:.40,ltrR:.50,ltrX:0,ltrS:1,icS:1,nmS:1,names:true,rail:true,scan:true,anim:true,acc:'',minimal:false,shape:'auto',gloss:true,dof:true,float:true,lines:true,rings:true,wedge:true,bub:true,hapx:true,glide:.05,snapS:13,tapSel:false,openAnim:true,dim:0,btnS:1,focS:1,bCt:true,bEdit:true,bStar:true,bHome:true,bPlay:true,bInfo:true,bDel:true,bdot:true,bnew:true};
+const CFG0={lineX:.80,lineC:1.9,step:.123,dialX:.40,dialR:.40,ltrR:.50,ltrX:0,ltrS:1,icS:1,nmS:1,names:true,rail:true,scan:true,anim:true,acc:'',minimal:false,shape:'auto',gloss:true,dof:true,float:true,lines:true,rings:true,wedge:true,bub:true,hapx:true,glide:.05,snapS:13,tapSel:false,openAnim:true,dim:0,btnS:1,focS:1,bCt:true,bEdit:true,bStar:true,bHome:true,bPlay:true,bInfo:true,bDel:true,bdot:true,bnew:true,tools:true};
 const CFG=Object.assign({},CFG0,(()=>{try{const o=JSON.parse(localStorage.getItem('aw-cfg'));return o&&typeof o==='object'?o:{}}catch(e){return {}}})());STEP=CFG.step;
 const FOC=.56;let PUSH=.065;
 const trk=y=>{const t=y/H-.56;return(CFG.lineX-CFG.lineC*t*t)*W};
@@ -6570,8 +6575,11 @@ function hud(){
 function arcPts(rad,d1,d2,n){const xc=FX()-R(),yc=YD0(),o=[];for(let i=0;i<=n;i++){const dy=(d1+(d2-d1)*i/n)*H;o.push([xc+Math.sqrt(rad*rad-dy*dy),yc+dy])}return o}
 const P=a=>a.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
 function band(d1,d2){const bw=.034*H,o=arcPts(R()+bw,d1,d2,12),i=arcPts(R()-bw,d1,d2,12).reverse();return el('polygon',{points:P(o.concat(i)),fill:'rgba(var(--c1rgb),.10)',stroke:'rgba(var(--c1rgb),.55)','stroke-width':1.3,'stroke-linejoin':'round'})}
-function ctSync(){const on=DC==='Contacts',c=$('awCt');PUSH=on?.115:.065;try{if(!on)ca.hidden=true}catch(_){}try{const so=sbar.classList.contains('on');$('awSr').classList.toggle('on',so);$('awSr').setAttribute('aria-pressed',String(so))}catch(_){}root.classList.toggle('ctm',on);c.classList.toggle('on',on);c.setAttribute('aria-pressed',on);c.setAttribute('aria-label',on?'Back to apps':'Contacts');$('awPlay').setAttribute('aria-label',on?'Call':'Open in Play Store');$('awInfo').setAttribute('aria-label',on?'Message':'App info');qi.placeholder=on?'Search contacts':'Search apps'}
-function placeNm(){const fx=trk(FOC*H),w=nm.offsetWidth||0;nm.style.left=clamp(fx,w/2+6,.975*W-w/2)+'px';nm.style.top=(FOC*H+62)+'px';placeCa()}
+function ctSync(){const on=DC==='Contacts',c=$('awCt');PUSH=on?.17:.065;if(on)modeOff();try{if(!on)ca.hidden=true}catch(_){}try{const so=sbar.classList.contains('on');$('awSr').classList.toggle('on',so);$('awSr').setAttribute('aria-pressed',String(so))}catch(_){}root.classList.toggle('ctm',on);c.classList.toggle('on',on);c.setAttribute('aria-pressed',on);c.setAttribute('aria-label',on?'Back to apps':'Contacts');$('awPlay').setAttribute('aria-label',on?'Call':'Open in Play Store');$('awInfo').setAttribute('aria-label',on?'Message':'App info');qi.placeholder=on?'Search contacts':'Search apps'}
+function placeNm(){const fx=trk(FOC*H);nm.style.fontSize=clamp(H*.03,17,25)*CFG.nmS*(DC==='Contacts'?.86:1)+'px';
+ /* contacts: the name wraps inside the space to the right of the A-Z arc instead of running over it */
+ if(DC==='Contacts'){const rr=LX(FOC*H+62)+22,av=Math.max(110,W-6-rr);nm.style.maxWidth=Math.min(av,.8*W)+'px';nm.style.whiteSpace='normal'}else{nm.style.maxWidth=(.8*W)+'px';nm.style.whiteSpace=''}
+ const w=nm.offsetWidth||0;nm.style.left=clamp(fx,w/2+6,.975*W-w/2)+'px';nm.style.top=(FOC*H+62+(DC==='Contacts'?Math.max(0,(nm.offsetHeight||0)-28)/2:0))+'px';placeCa();placeMv()}
 /* contact quick actions: small Call, WhatsApp message and WhatsApp call buttons under the selected contact */
 const ca=document.createElement('div');ca.id='awCa';ca.hidden=true;ca.setAttribute('role','group');ca.setAttribute('aria-label','Contact actions');
 const CAI={call:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/>',
@@ -6591,9 +6599,9 @@ function caAct(k,a){if(!a||!a.ct)return;try{vib(8)}catch(_){}
 ca.addEventListener('click',e=>{const b=e.target.closest('.cab');if(!b)return;e.stopPropagation();caAct(b.dataset.k,cur())});
 function placeCa(){const a=cur(),on=!!(a&&a.ct&&a.ph)&&isOpen();ca.hidden=!on;if(!on)return;
   /* sits under the name, to the RIGHT of the A-Z arc so the letters stay clear; buttons shrink a little on narrow phones */
-  const yc=FOC*H+62+(nm.offsetHeight||28)+8,railR=LX(yc)+12+10,avail=Math.max(90,W-6-railR),bw=clamp(Math.floor((avail-14)/4),26,36);
-  ca.style.setProperty('--bw',bw+'px');const w=4*bw+3*3+14;
-  ca.style.left=Math.max(railR,railR+(avail-w)/2)+'px';ca.style.top=yc+'px'}
+  const yc=FOC*H+62+(nm.offsetHeight||28)+8,railR=LX(yc)+12+10,avail=Math.max(90,W-6-railR),bw=clamp(Math.floor((avail-27)/4),24,36);
+  ca.style.setProperty('--bw',bw+'px');const w=4*bw+3*3+14+3;
+  ca.style.left=Math.min(Math.max(railR,railR+(avail-w)/2),W-4-w)+'px';ca.style.top=yc+'px'}
 
 function layout(){geo();art.setAttribute('viewBox','0 0 '+W+' '+H);art.textContent='';
  const df=el('defs',{});df.innerHTML='<linearGradient id="awg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--c1)" stop-opacity="0"/><stop offset=".25" style="stop-color:var(--c1)"/><stop offset=".75" style="stop-color:var(--c1)"/><stop offset="1" style="stop-color:var(--c1)" stop-opacity="0"/></linearGradient>';art.appendChild(df);
@@ -6605,7 +6613,7 @@ function layout(){geo();art.setAttribute('viewBox','0 0 '+W+' '+H);art.textConte
  const put=(e,dy,x)=>{e.style.left=(x==null?AX(dy*H):x)+'px';e.style.top=(YD0()+dy*H)+'px'};
  put($('awSr'),-.252);put($('awCt'),-.19);put($('awEdit'),-.128);put(fi,FOC-.56,trk(FOC*H));put($('awStar'),-.066);put($('awHome'),0);put($('awPlay'),.066);put($('awInfo'),.128);put($('awDel'),.19);
  {const gb=$('awCfgBtn');if(gb)put(gb,.252,AX(Math.min(.252*H,.96*R())))}
- nm.style.fontSize=clamp(H*.03,17,25)*CFG.nmS+'px';nm.style.maxWidth=(.8*W)+'px';placeNm();
+ placeNm();
  const tb=$('awTab');tb.style.left=.06*W+'px';tb.style.top=YD0()+'px';
  rail.style.width='24px';rail.style.left=(LX(YD0())-12)+'px';rail.style.top=(lt+.01*H)+'px';rail.style.height=(lb-lt-.02*H)+'px';arcRail();
  bub.style.left=.17*W+'px';bub.style.top=YD0()+'px';
@@ -6633,8 +6641,8 @@ function bdSr(a){const o=nm.querySelector('.awsr');if(o)o.remove();const x=bdTxt
 function bdRefresh(){bdSnap();els.forEach((e,i)=>bdDecor(e,list[i]));const a=cur();if(a){bdDecor(fi,a);bdSr(a)}}
 function bdStart(){clearInterval(bdT);bdT=setInterval(()=>{if(!isOpen()){clearInterval(bdT);return}if(document.hidden)return;bdPull();bdRefresh()},8000)}
 function mk(a){const b=document.createElement('button');b.className='awi'+(stagger?' in':'');b.type='button';b.appendChild(icon(a));const s=document.createElement('span');s.textContent=a.n;b.appendChild(s);
- hold(b,a);b.onclick=()=>{const i=list.indexOf(a);if(CFG.tapSel&&i>=0&&i!==foc){glide(i);return}closeAll();launch(a)};bdDecor(b,a);return b}
-function setFocus(f){foc=f;const a=list[f];if(!a)return;fi.replaceChildren(icon(a));nm.textContent=a.n;bdDecor(fi,a);bdSr(a);placeNm();
+ hold(b,a);b.onclick=()=>{if(selOn){toggleSel(a);return}if(reOn){const i=list.indexOf(a);if(i>=0&&i!==foc)glide(i);return}const i=list.indexOf(a);if(CFG.tapSel&&i>=0&&i!==foc){glide(i);return}closeAll();launch(a)};bdDecor(b,a);selMark(b,a);return b}
+function setFocus(f){foc=f;const a=list[f];if(!a)return;fi.replaceChildren(icon(a));nm.textContent=a.n;bdDecor(fi,a);selMark(fi,a);bdSr(a);placeNm();
  [fi,nm].forEach(e=>{e.classList.remove('pop');void e.offsetWidth;if(!RMo)e.classList.add('pop')});
  
  starPaint(a);
@@ -6651,29 +6659,30 @@ function loop(t){const dt=Math.min(.034,(t-last)/1000)||.016;last=t;const N=list
  paint();raf=mode?requestAnimationFrame(loop):0}
 const go=m=>{mode=m;if(!raf){last=performance.now();raf=requestAnimationFrame(loop)}};
 const glide=i=>{tgt=clamp(i,0,Math.max(0,list.length-1));go('snap')};
+function railBuild(){lets=[];list.forEach((a,i)=>{const L=letter(a);if(!lets.length||lets[lets.length-1].c!==L){if(!lets.some(x=>x.c===L))lets.push({c:L,i})}});
+ rail.textContent='';const d0=document.createElement('div');d0.textContent='\u2022';d0.dataset.l='';rail.appendChild(d0);lets.forEach(x=>{const d=document.createElement('div');d.textContent=x.c;d.dataset.l=x.c;rail.appendChild(d)});arcRail();const a=cur();if(a){const L=letter(a);[...rail.children].forEach(c=>c.classList.toggle('on',c.dataset.l===L))}}
 function build(){if(!isOpen())return;const q=$('q').value.trim(),keep=cur();list=ranked(matches().filter(inCat));
  els.forEach(e=>e.remove());els.clear();foc=-1;
- lets=[];cells=[];list.forEach((a,i)=>{const L=letter(a);if(!lets.length||lets[lets.length-1].c!==L){if(!lets.some(x=>x.c===L))lets.push({c:L,i})}});
- rail.textContent='';const d0=document.createElement('div');d0.textContent='\u2022';d0.dataset.l='';rail.appendChild(d0);lets.forEach(x=>{const d=document.createElement('div');d.textContent=x.c;d.dataset.l=x.c;rail.appendChild(d)});arcRail();
+ cells=[];railBuild();
  const k=keep?list.findIndex(a=>a.p===keep.p):-1;pos=k>=0?k:0;tgt=pos;vel=0;mode='';
  root.classList.toggle('empty',!list.length);
  if(!list.length){$('awEmpty').firstChild.textContent=ALLQ()?'No apps or contacts found':DC==='Contacts'?(q?'No contacts found':'No contacts'):(q?'No apps found':'No apps');const o=$('awEmpty').querySelector('button');if(o)o.remove();if(q&&DC!=='Contacts'){const b=document.createElement('button');b.type='button';b.textContent='Search the web';b.onclick=()=>webSearch(q);$('awEmpty').appendChild(b)}}
  paint()}
-function open(){$('q').value='';qi.value='';sbar.classList.remove('on');DC='All';ctSync();dr.classList.add('open');layout();stagger=!RMo&&CFG.openAnim!==false;foc=-1;bdPull();bdSnap();build();stagger=false;bdStart();try{vib(12)}catch(_){}}
-function stop(){mode='';clearInterval(bdT);cancelAnimationFrame(raf);raf=0;drag=null;sbar.classList.remove('on');bub.classList.remove('on')}
+function open(){modeOff();menuOff();$('q').value='';qi.value='';sbar.classList.remove('on');DC='All';ctSync();dr.classList.add('open');layout();stagger=!RMo&&CFG.openAnim!==false;foc=-1;bdPull();bdSnap();build();stagger=false;bdStart();try{vib(12)}catch(_){}}
+function stop(){modeOff();menuOff();mode='';clearInterval(bdT);cancelAnimationFrame(raf);raf=0;drag=null;sbar.classList.remove('on');bub.classList.remove('on')}
 /* v1.55: repaint the arc badges when the page is handed new notification counts */
 ['setBadges','onBadges'].forEach(k=>{const f=window[k];if(typeof f==='function')window[k]=function(){const r=f.apply(this,arguments);try{if(isOpen())bdRefresh()}catch(e){}return r}});
 YD.open=open;YD.stop=stop;YD.build=build;YD.relayout=()=>{if(isOpen()){layout();paint()}};YD.glide=glide;YD.cur=()=>cur();YD.fx=()=>{};YD.st={foc:-1,els:[]};
 new ResizeObserver(()=>{if(isOpen()){layout();paint()}}).observe(root);
 /* drag the wave */
-root.addEventListener('pointerdown',e=>{moved=false;if(e.target.closest('.awb,#awRail,#awSearch,#awFi,#awNm,#awCa,#awCfg,#awCfgBtn'))return;drag={y:e.clientY,p:pos,t:e.timeStamp,ly:e.clientY,lt:e.timeStamp,v:0};mode='';});
+root.addEventListener('pointerdown',e=>{moved=false;if(e.target.closest('.awb,#awRail,#awSearch,#awFi,#awNm,#awCa,#awCfg,#awCfgBtn,#awTools,#awSortMenu,#awMv,#awSb'))return;drag={y:e.clientY,p:pos,t:e.timeStamp,ly:e.clientY,lt:e.timeStamp,v:0};mode='';});
 root.addEventListener('pointermove',e=>{if(window.DRG&&DRG.on){drag=null;return}if(!drag)return;const dy=e.clientY-drag.y;if(Math.abs(dy)>7)moved=true;if(!moved)return;const N=list.length;pos=clamp(drag.p-dy/(STEP*H),-.35,N-.65);
  const dt=e.timeStamp-drag.lt;if(dt>0){drag.v=.6*drag.v+.4*(-(e.clientY-drag.ly)/(STEP*H)/(dt/1000));drag.ly=e.clientY;drag.lt=e.timeStamp}paint()});
 const end=()=>{if(!drag)return;const d=drag;drag=null;if(!moved)return;vel=clamp(d.v,-26,26);if(Math.abs(vel)>3)go('fling');else glide(Math.round(pos))};
 root.addEventListener('pointerup',end);root.addEventListener('pointercancel',end);
 root.addEventListener('click',e=>{if(moved){e.stopPropagation();e.preventDefault();moved=false}},true);
 root.addEventListener('wheel',e=>{e.preventDefault();glide(Math.round(tgt||pos)+(e.deltaY>0?1:-1))},{passive:false});
-addEventListener('keydown',e=>{if(!isOpen()||e.target.closest&&e.target.closest('input'))return;if(e.key==='ArrowDown')glide(Math.round(pos)+1);else if(e.key==='ArrowUp')glide(Math.round(pos)-1);else if(e.key==='Enter'&&cur()){closeAll();launch(cur())}});
+addEventListener('keydown',e=>{if(!isOpen()||e.target.closest&&e.target.closest('input'))return;if(e.key==='ArrowDown')glide(Math.round(pos)+1);else if(e.key==='ArrowUp')glide(Math.round(pos)-1);else if(e.key==='Enter'&&cur()){if(selOn)toggleSel(cur());else if(!reOn){closeAll();launch(cur())}}});
 /* A-Z rail: press or slide */
 let lastL=null;
 const scrub=e=>{const r=rail.getBoundingClientRect(),n=rail.children.length;if(!n)return;const i=clamp(Math.floor((e.clientY-r.top)/(r.height/n)),0,n-1),c=rail.children[i];if(!c)return;
@@ -6713,7 +6722,7 @@ on('awHome',a=>{if(a.ct){const had=home.includes(a.p);
     return}
   $('amUn').onclick()});
 on('awPlay',a=>{if(a.ct){if(a.ph)ENG.open('tel:'+a.ph);else toast('No number for '+a.n);return}const u='https://play.google.com/store/apps/details?id='+encodeURIComponent(a.p);try{ENG.open(u)}catch(_){window.open(u,'_blank','noopener')}});
-fi.onclick=nm.onclick=()=>{const a=cur();if(a){closeAll();launch(a)}};
+fi.onclick=nm.onclick=()=>{const a=cur();if(!a)return;if(selOn){toggleSel(a);return}if(reOn)return;closeAll();launch(a)};
 $('awTab').onclick=()=>closeAll();
 /* contacts: toggle the wave between apps and people */
 $('awCt').onclick=()=>{try{vib(8)}catch(_){}
@@ -6722,6 +6731,68 @@ $('awCt').onclick=()=>{try{vib(8)}catch(_){}
   if(CT_NEED&&window.Android&&typeof Android.askContacts==='function'){toast('Allow Contacts to see your people here');Android.askContacts();return}
   DC='Contacts'}
  $('q').value='';qi.value='';sbar.classList.remove('on');ctSync();build()};
+
+
+/* ===== v1.56: Sort, Reorder and multi-select in the arc ===== */
+const tools=$('awTools'),sortBtn=$('awSort'),reBtn=$('awRe'),slBtn=$('awSl'),sortMenu=$('awSortMenu'),mvBar=$('awMv'),selBar=$('awSb');
+const SORTS=[['az','A to Z'],['used','Most used'],['new','Newest'],['custom','Custom order']];
+const sortName=()=>(SORTS.find(x=>x[0]===window.XSORT)||SORTS[0])[1];
+['pointerdown','pointerup','touchstart'].forEach(t=>[tools,sortMenu,mvBar,selBar].forEach(e=>e.addEventListener(t,ev=>ev.stopPropagation())));
+const redraw=()=>{try{renderGrid()}catch(e){try{build()}catch(_){}}};
+/* ---- sort ---- */
+function menuOff(){sortMenu.hidden=true;sortBtn.setAttribute('aria-expanded','false')}
+function sortPaint(){sortMenu.textContent='';SORTS.forEach(([k,t])=>{const b=document.createElement('button');b.type='button';b.setAttribute('role','menuitemradio');b.setAttribute('aria-checked',String((window.XSORT||'az')===k));b.dataset.k=k;b.textContent=t;sortMenu.appendChild(b)});sortBtn.title='Sort: '+sortName()}
+sortBtn.onclick=()=>{try{vib(6)}catch(_){}if(!sortMenu.hidden){menuOff();return}sortPaint();sortMenu.hidden=false;sortBtn.setAttribute('aria-expanded','true')};
+sortMenu.onclick=e=>{const b=e.target.closest('button');if(!b)return;const k=b.dataset.k;
+ if(k==='custom'&&!(Array.isArray(ls('mdc-xord',[]))&&ls('mdc-xord',[]).length)){sv('mdc-xord',sortApps(apps).map(a=>a.p))}   /* first time: start from the order you see now */
+ window.XSORT=k;sv('mdc-xsort',k);try{window.XPAINT&&XPAINT()}catch(_){}
+ menuOff();sortPaint();redraw();toast('Sorted: '+sortName())};
+document.addEventListener('pointerdown',e=>{if(!sortMenu.hidden&&!e.target.closest('#awSortMenu,#awSort'))menuOff()},true);
+/* ---- select ---- */
+function selMark(host,a){const ic=host&&host.querySelector('.ic');if(!ic)return;const on=!!(selOn&&a&&!a.ct&&SELS.has(a.p));let k=ic.querySelector('.awck');
+ if(on){if(!k){k=document.createElement('i');k.className='awck';k.setAttribute('aria-hidden','true');k.textContent='✓';ic.appendChild(k)}}else if(k)k.remove();
+ ic.classList.toggle('awsl',on);host.classList.toggle('awsel',on);if(host!==fi&&selOn)host.setAttribute('aria-pressed',String(on));else host.removeAttribute('aria-pressed')}
+function selPaint(){els.forEach((e,i)=>selMark(e,list[i]));const a=cur();if(a)selMark(fi,a);
+ $('awSbN').textContent=SELS.size+' selected';root.classList.toggle('sel',selOn);slBtn.setAttribute('aria-pressed',String(selOn));slBtn.textContent=selOn?'Cancel':'Select';
+ [...selBar.querySelectorAll('button:not(#awSbX):not(#awSbAll)')].forEach(b=>b.disabled=!SELS.size)}
+function toggleSel(a){if(!a||a.ct)return;if(SELS.has(a.p))SELS.delete(a.p);else SELS.add(a.p);try{vib(6)}catch(_){}selPaint()}
+function selMode(on){if(on===selOn)return;if(on&&DC==='Contacts'){toast('Select works with apps');return}
+ if(on){reMode(false);menuOff()}selOn=on;SELS.clear();selBar.hidden=!on;selPaint();if(on)toast('Tap apps to select them')}
+slBtn.onclick=()=>selMode(!selOn);
+const picked=()=>apps.filter(a=>SELS.has(a.p));
+$('awSbX').onclick=()=>selMode(false);
+$('awSbAll').onclick=()=>{const all=list.filter(a=>!a.ct);if(all.every(a=>SELS.has(a.p)))SELS.clear();else all.forEach(a=>SELS.add(a.p));selPaint()};
+$('awSbHide').onclick=()=>{const l=picked();if(!l.length){toast('Select apps first');return}let n=0;const H=window.HID||(window.HID=[]);l.forEach(a=>{if(!H.includes(a.p)){H.push(a.p);n++}});sv('mdc-hid',H);
+ toast(n?n+(n===1?' app hidden':' apps hidden')+' • find them by typing the exact name in search':'Already hidden');selMode(false);try{refreshApps()}catch(e){ERR(e,'aw-hide')}};
+$('awSbHome').onclick=()=>{const l=picked();if(!l.length){toast('Select apps first');return}let n=0;
+ l.forEach(a=>{if(home.includes(a.p))return;menuApp=a;try{$('amHome').onclick();n++}catch(e){ERR(e,'aw-home')}});
+ toast(n?n+(n===1?' app added to home screen':' apps added to home screen'):'Already on the home screen');selMode(false)};
+$('awSbDel').onclick=()=>{const l=picked();if(!l.length){toast('Select apps first');return}
+ if(!(window.Android&&typeof Android.uninstall==='function')){toast('Uninstall needs the Android app');return}
+ if(!confirm(l.length===1?'Uninstall "'+l[0].n+'"?':'Uninstall '+l.length+' apps?'))return;
+ l.forEach(a=>{try{Android.uninstall(a.p)}catch(e){ERR(e,'aw-un')}});selMode(false)};
+/* ---- reorder: the selected app moves along the list (arrows, or drag the big icon up and down) ---- */
+function placeMv(){mvBar.hidden=!reOn}
+function reWhy(){if(DC==='Contacts')return 'Reorder works with apps';if($('q').value.trim())return 'Clear the search to reorder';if(selOn)return 'Finish selecting first';return ''}
+function reMode(on){if(on===reOn)return;
+ if(on){const w=reWhy();if(w){toast(w);return}menuOff();
+  if(window.XSORT!=='custom'){sv('mdc-xord',sortApps(apps).map(a=>a.p));window.XSORT='custom';sv('mdc-xsort','custom');try{window.XPAINT&&XPAINT()}catch(_){}}   /* the custom order starts exactly as the drawer looks now */
+  toast('Drag the big icon up or down, or use the arrows')}
+ reOn=on;root.classList.toggle('ro',on);reBtn.setAttribute('aria-pressed',String(on));reBtn.textContent=on?'Done':'Reorder';placeMv()}
+function modeOff(){try{if(selOn){selOn=false;SELS.clear();selBar.hidden=true;selPaint()}if(reOn)reMode(false);}catch(e){}}
+reBtn.onclick=()=>reMode(!reOn);$('awMvX').onclick=()=>reMode(false);
+function moveApp(dir){const i=mode==='snap'?Math.round(tgt):foc,j=i+dir,N=list.length;
+ if(i<0||j<0||j>=N){try{vib(14)}catch(_){}return false}
+ [list[i],list[j]]=[list[j],list[i]];
+ /* the visible apps' new order goes into the full list, in the slots they already occupy */
+ const vis=list.map(a=>a.p),V=new Set(vis),full=sortApps(apps).map(a=>a.p);let k=0;
+ sv('mdc-xord',full.map(p=>V.has(p)?vis[k++]:p));_sg=null;
+ els.forEach(e=>e.remove());els.clear();foc=-1;railBuild();paint();glide(j);try{vib(10)}catch(_){}return true}
+$('awMvU').onclick=()=>moveApp(-1);$('awMvD').onclick=()=>moveApp(1);
+{let rd=null;
+ fi.addEventListener('pointerdown',e=>{if(!reOn)return;e.preventDefault();rd={y:e.clientY,a:0};try{fi.setPointerCapture(e.pointerId)}catch(_){}fi.classList.add('grab')});
+ fi.addEventListener('pointermove',e=>{if(!rd)return;const dy=e.clientY-rd.y,st=Math.max(40,.7*STEP*H);let g=0;while(Math.abs(dy-rd.a)>=st&&g++<4){const d=dy-rd.a>0?1:-1;rd.a+=d*st;if(!moveApp(d))break}});
+ const rdEnd=()=>{rd=null;fi.classList.remove('grab')};fi.addEventListener('pointerup',rdEnd);fi.addEventListener('pointercancel',rdEnd)}
 
 /* ===== Settings tab inside the Arc Wave panel: live, saved to localStorage ('aw-cfg') ===== */
 (()=>{
@@ -6768,7 +6839,7 @@ const SH=[
  ['Apps',[['lineX','Line position',.5,.95,.01],['lineC','Line curve',0,3.5,.05],['step','App spacing',.07,.2,.002],['icS','Icon size',.6,1.5,.05],['focS','Selected icon size',.7,1.6,.05],['nmS','Name size',.6,1.5,.05],['glide','Scroll glide',.01,.3,.01],['snapS','Snap speed',6,24,1]],[['names','Show app names'],['tapSel','Tap selects before opening'],['openAnim','Open animation']],[['shape','Icon shape',[['auto','Mixed'],['ci','Circle'],['sq','Squircle'],['rs','Square']]]]],
  ['Dial',[['dialX','Dial position',.15,.65,.01],['dialR','Dial size',.25,.65,.01],['btnS','Button size',.7,1.4,.05]],[['scan','Scan line'],['anim','Animations'],['wedge','Dial strip'],['rings','Dial rings and marks'],['bCt','Contacts button'],['bEdit','Options button'],['bStar','Pin button'],['bHome','Add-to-home button'],['bPlay','Play Store button'],['bInfo','App info button'],['bDel','Uninstall button']],[]],
  ['Letters',[['ltrR','Letters curve',.3,.9,.01],['ltrX','Letters shift',-40,80,1],['ltrS','Letters size',.6,1.6,.05]],[['rail','Show A-Z'],['bub','Letter bubble']],[]],
- ['Look',[['dim','Background dim',0,.7,.02]],[['gloss','Glossy icons'],['dof','Depth blur'],['float','Floating selected icon'],['lines','Arc lines'],['hapx','Haptic ticks'],['bdot','Notification dots and counts'],['bnew','NEW badges']],[]]];
+ ['Look',[['dim','Background dim',0,.7,.02]],[['gloss','Glossy icons'],['dof','Depth blur'],['float','Floating selected icon'],['lines','Arc lines'],['hapx','Haptic ticks'],['tools','Sort, Reorder and Select buttons'],['bdot','Notification dots and counts'],['bnew','NEW badges']],[]]];
 const QK=['lineX','step','icS','dialX','dialR','btnS'],QS=[];SH.forEach(g=>g[1].forEach(r=>{if(QK.includes(r[0]))QS[QK.indexOf(r[0])]=r}));
 SH.unshift(['Quick',QS,[['names','Show app names'],['rail','Show A-Z']],[],1]);SH[SH.findIndex(g=>g[0]==='Look')].push(1);
 const ACC=['','#ff6b6b','#ffb347','#f0c75e','#7df97f','#5ec8ff','#b58cff','#ff7ad9'];
@@ -6781,7 +6852,7 @@ const tb=pn.querySelector('.tb'),bd=pn.querySelector('.bd');let tab=0,scT=0;
 const save=()=>{try{localStorage.setItem('aw-cfg',JSON.stringify(CFG))}catch(e){}};
 function apply(){
  STEP=CFG.step;
- root.classList.toggle('nonames',!CFG.names);root.classList.toggle('noscan',!CFG.scan);root.classList.toggle('noanim',!CFG.anim);root.classList.toggle('norail',!CFG.rail);
+ root.classList.toggle('notools',CFG.tools===false);root.classList.toggle('nonames',!CFG.names);root.classList.toggle('noscan',!CFG.scan);root.classList.toggle('noanim',!CFG.anim);root.classList.toggle('norail',!CFG.rail);
  root.classList.toggle('min',!!CFG.minimal);root.dataset.shape=CFG.shape||'auto';[['gloss','nogloss',1],['dof','nodof',1],['float','nofloat',1],['wedge','nowedge',1],['bub','nobub',1],['lines','lines',0],['rings','rings',0]].forEach(([k,c,inv])=>root.classList.toggle(c,inv?CFG[k]===false:!!CFG[k]));
  [['bCt','hCt'],['bEdit','hEdit'],['bStar','hStar'],['bHome','hHome'],['bPlay','hPlay'],['bInfo','hInfo'],['bDel','hDel']].forEach(([k,c])=>root.classList.toggle(c,CFG[k]===false));
  root.style.setProperty('--awbs',CFG.btnS||1);root.style.setProperty('--awf',CFG.focS||1);root.style.setProperty('--awdim',CFG.dim||0);
@@ -6996,45 +7067,51 @@ html.nbdoff #aw .awbd,html.shin #aw .awbd,html.shin #aw .awnw{display:none}
  const sh=document.getElementById('sheet');if(sh)new MutationObserver(sync).observe(sh,{attributes:true,attributeFilter:['class']});
 }catch(e){try{ERR(e,'v66b')}catch(_){}}})();
 </script>
-<style id="v74-drawer-layout-css">#drawer:not(.aw) #aw{display:none!important}#dLay .seg{margin:4px 0 8px}#dLay .seg button{padding:8px 4px;font-size:11px}#dLay [hidden]{display:none}</style>
+<style id="v74-drawer-layout-css">#drawer:not(.aw) #aw{display:none!important}#dLay .seg{margin:4px 0 8px;flex-wrap:wrap;gap:6px}#dLay .seg button{flex:1 1 28%;padding:8px 4px;font-size:11px}#dLay [hidden]{display:none}</style>
 <script id="v74-drawer-layout">
-/* v74: Settings > App drawer > Drawer layout: Arc Wave (default) or Grid. Grid is the classic drawer (icon grid, A-Z rail, categories, search)
-   with its own styles (Grid, List, Smart, Pages). The Arc Wave functions and the classic ones are swapped on YD, so both stay intact. */
+/* v74 / v1.56: Settings > App drawer > Drawer layout.
+   Arc Wave (default), Crescent (the original curved wheel), and the flat styles Grid, List, Smart, Pages.
+   The Arc Wave functions and the classic ones are swapped on YD, so both stay intact. Crescent, Grid, List, Smart and Pages are all
+   styles of the classic drawer (drawerStyle: 'arc' is Crescent). The choice is saved in 'yoga-dlay' ('arc' | 'crescent' | 'grid') and the flat style in 'mdc-dstl'. */
 (function(){try{
  const $=id=>document.getElementById(id),dr=$('drawer'),O=window.__YD0,box=$('drawerOpts');
  if(!dr||!O||!window.YD||!box)return;
  const A=Object.assign({},YD),K='yoga-dlay';
- let LAY='arc';try{LAY=localStorage.getItem(K)==='grid'?'grid':'arc'}catch(e){}
- const ST=[['grid','Grid'],['list','List'],['smart','Smart'],['pages','Pages']];
+ let LAY='arc';try{const v=localStorage.getItem(K);LAY=v==='grid'||v==='crescent'?v:'arc'}catch(e){}
+ const OPT=[['arc','Arc Wave'],['crescent','Crescent'],['grid','Grid'],['list','List'],['smart','Smart'],['pages','Pages']];
  const wrap=document.createElement('div');wrap.id='dLay';
- wrap.innerHTML='<div class="sl">Drawer layout</div><div class="seg" id="dLaySeg" role="group" aria-label="Drawer layout"><button type="button" data-v="arc">Arc Wave</button><button type="button" data-v="grid">Grid</button></div>'
-  +'<div id="dGridBox" hidden><div class="sl">Grid style</div><div class="seg" id="dGridSt" role="group" aria-label="Grid style">'+ST.map(([v,t])=>'<button type="button" data-v="'+v+'">'+t+'</button>').join('')+'</div></div>';
+ wrap.innerHTML='<div class="sl">Drawer layout</div><div class="seg" id="dLaySeg" role="group" aria-label="Drawer layout">'+OPT.map(([v,t])=>'<button type="button" data-v="'+v+'">'+t+'</button>').join('')+'</div>'
+  +'<div class="sl" id="dLayNote" style="opacity:.7">Arc Wave: apps flow along a curve with a dial. Crescent: the original curved wheel. Grid, List, Smart and Pages scroll the normal way.</div>';
  box.prepend(wrap);
  const arcRow=(()=>{const c=$('awMinSet');return c?c.closest('div'):null})();
+ const cur=()=>LAY==='arc'?'arc':LAY==='crescent'?'crescent':(window.drawerStyle?drawerStyle.get():'grid');
  function sync(){
-  const g=LAY==='grid',cs=window.drawerStyle?drawerStyle.get():'grid';
-  [...$('dLaySeg').children].forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===LAY)));
-  $('dGridBox').hidden=!g;
-  [...$('dGridSt').children].forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===cs)));
-  if(arcRow)arcRow.hidden=g;
+  const c=cur();
+  [...$('dLaySeg').children].forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===c)));
+  if(arcRow)arcRow.hidden=LAY!=='arc';
  }
+ /* l: 'arc' | 'crescent' | 'grid' | 'list' | 'smart' | 'pages' */
  function use(l){
-  const g=l==='grid',was=dr.classList.contains('open');
-  if(g===(LAY==='grid')&&dr.classList.contains('aw')===!g){sync();return}
-  LAY=g?'grid':'arc';try{localStorage.setItem(K,LAY)}catch(e){}
-  if(was){try{YD.stop(false)}catch(e){}}
-  dr.classList.toggle('aw',!g);
-  Object.assign(YD,g?O:A);
-  if(g){const ct=$('awCt');if(ct)ct.classList.remove('on');const c=$('awCfg');if(c)c.classList.remove('on');
-   try{if(window.drawerStyle&&drawerStyle.get()==='arc')drawerStyle.set('grid')}catch(e){}}
-  if(was){try{YD.open()}catch(e){}}
+  const flat=l!=='arc',want=l==='crescent'?'arc':(l==='arc'?null:l);
+  const lay=l==='arc'?'arc':l==='crescent'?'crescent':'grid';
+  const was=dr.classList.contains('open');
+  const swap=flat===dr.classList.contains('aw');
+  if(!swap&&lay===LAY&&(!want||(window.drawerStyle&&drawerStyle.get()===want))){sync();return}
+  LAY=lay;try{localStorage.setItem(K,LAY)}catch(e){}
+  if(swap){
+   if(was){try{YD.stop(false)}catch(e){}}
+   dr.classList.toggle('aw',!flat);
+   Object.assign(YD,flat?O:A);
+   if(flat){const ct=$('awCt');if(ct)ct.classList.remove('on');const c=$('awCfg');if(c)c.classList.remove('on')}
+  }
+  if(want){try{if(window.drawerStyle&&drawerStyle.get()!==want)drawerStyle.set(want)}catch(e){try{ERR(e,'v74s')}catch(_){}}}
+  if(swap&&was){try{YD.open()}catch(e){}}
   sync();
  }
  $('dLaySeg').onclick=e=>{const b=e.target.closest('button');if(b)use(b.dataset.v)};
- $('dGridSt').onclick=e=>{const b=e.target.closest('button');if(!b)return;try{drawerStyle.set(b.dataset.v)}catch(x){}sync()};
- window.drawerLayout={get:()=>LAY,set:use};
+ window.drawerLayout={get:()=>LAY,style:cur,set:use};
  const sh=$('sheet');if(sh)new MutationObserver(sync).observe(sh,{attributes:true,attributeFilter:['class']});
- if(LAY==='grid')use('grid');else sync();
+ if(LAY==='crescent')use('crescent');else if(LAY==='grid'){const c=window.drawerStyle?drawerStyle.get():'grid';use(c==='arc'?'grid':c)}else sync();
 }catch(e){try{ERR(e,'v74')}catch(_){}}})();
 </script>
 <style id="v70-polish">
@@ -7502,6 +7579,50 @@ place();setTimeout(place,600);new MutationObserver(place).observe(sh,{attributes
 #aw .awb:not(#awHome):not(#awTab) svg{width:20px;height:20px}
 #aw #awHome{width:46px;height:46px;margin:-23px 0 0 -23px}
 #aw #awHome svg{width:26px;height:26px}
+</style>
+<style id="v156-arc-tools">
+/* v1.56: Sort / Reorder / Select in the arc, wrapped contact names, no rectangle round the search text */
+#awTools{position:absolute;top:12px;right:14px;z-index:5;display:flex;gap:6px}
+#awSearch.on~#awTools{top:62px}
+#awTools button,#awMv button,#awSb button,#awSortMenu button{border:1.5px solid rgba(var(--c1rgb),.5);background:rgba(8,20,28,.86);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#fff;border-radius:16px;height:32px;padding:0 12px;font:700 12px var(--f);cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap}
+#awTools button:active,#awMv button:active,#awSb button:active{transform:scale(.94)}
+#awTools button[aria-pressed=true],#awTools button[aria-expanded=true]{background:rgba(var(--c1rgb),.3);border-color:var(--c1)}
+#aw.ctm #awTools,#aw.notools #awTools,#aw.empty #awTools{display:none}
+#awSortMenu{position:absolute;top:50px;right:14px;z-index:6;display:flex;flex-direction:column;gap:4px;padding:6px;border-radius:16px;border:1.5px solid rgba(var(--c1rgb),.5);background:rgba(8,20,28,.95);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#awSortMenu[hidden],#awMv[hidden],#awSb[hidden]{display:none}
+#awSearch.on~#awSortMenu{top:100px}
+#awSortMenu button{border:0;background:none;text-align:left;border-radius:11px;padding:0 14px;min-width:130px;color:rgba(255,255,255,.85)}
+#awSortMenu button[aria-checked=true]{background:rgba(var(--c1rgb),.25);color:#fff}
+#awSortMenu button[aria-checked=true]::after{content:" \2713";color:var(--c1)}
+#awMv{position:absolute;top:12px;right:14px;z-index:6;display:flex;gap:6px}
+#awSearch.on~#awMv{top:62px}
+#aw.ro #awTools{display:none}
+#awMvX{color:var(--c1)}
+#awSb{position:absolute;top:12px;left:12px;right:12px;z-index:6;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 8px;border-radius:20px;border:1.5px solid rgba(var(--c1rgb),.6);background:rgba(8,20,28,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 8px 24px rgba(0,0,0,.45)}
+#awSearch.on~#awSb{top:62px}
+#awSb b{flex:1 1 auto;min-width:74px;padding-left:6px;font:700 12.5px var(--f);color:#fff}
+#awSb button{height:30px;padding:0 10px;border-width:1px}
+#awSb button:disabled{opacity:.4}
+#awSbDel{color:#ff8a80;border-color:rgba(255,138,128,.55)}
+#awSbX{background:rgba(var(--c1rgb),.3)}
+#aw.sel #awTools{display:none}
+/* selection ring and tick */
+#aw .ic.awsl{overflow:visible;position:relative;box-shadow:0 0 0 3px var(--c1),0 0 16px rgba(var(--c1rgb),.7)!important}
+#aw .ic .awck{position:absolute;left:-6px;top:-6px;z-index:5;width:20px;height:20px;border-radius:50%;background:var(--c1);color:#06070b;font:800 12px/20px var(--f);font-style:normal;text-align:center;box-shadow:0 0 0 2px #0a1115;pointer-events:none}
+#aw.sel .awi:not(.awsel) .ic{opacity:.62}
+/* reorder: the big icon wiggles and can be grabbed */
+#aw.ro #awFi{cursor:grab;touch-action:none}
+#aw.ro #awFi .ic{animation:awWob .45s ease-in-out infinite alternate;box-shadow:0 0 0 2.5px var(--c1),0 0 28px rgba(var(--c1rgb),.7),0 4px 14px #000}
+#aw.ro #awFi.grab{cursor:grabbing}#aw.ro #awFi.grab .ic{animation:none;scale:1.12}
+@keyframes awWob{from{transform:rotate(-3deg)}to{transform:rotate(3deg)}}
+@media (prefers-reduced-motion:reduce){#aw.ro #awFi .ic{animation:none}}
+/* contacts: names wrap inside their own space instead of overlapping */
+#aw.ctm .awi{width:36%}
+#aw.ctm .awi span{white-space:normal;overflow:hidden;text-overflow:clip;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;text-align:center;line-height:1.12;word-break:normal;overflow-wrap:break-word;padding:2px 8px;border-radius:12px}
+#aw.ctm #awNm{width:max-content;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;text-align:center;line-height:1.1;word-break:normal;overflow-wrap:break-word}
+/* no rectangle round the typed text: the glass pill already shows focus */
+.command-input:focus,.command-input:focus-visible,.cmd-bar input:focus-visible,#awQ:focus,#awQ:focus-visible,#aw #awQ:focus-visible,#q:focus,#q:focus-visible,.ydr-search .in:focus-visible,.ssrch input:focus-visible,#ssearch:focus-visible{outline:none!important;box-shadow:none!important}
+.command :focus-visible.command-input{outline:none!important}
 </style>
 </body>
 </html>
