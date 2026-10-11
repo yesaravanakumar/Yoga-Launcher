@@ -73,9 +73,9 @@ function boot({calendar=false,alarm=0,launchOk=true,event=null,pre={}}={}){
   w.document.getElementById('tin').value='  ';w.document.getElementById('tadd').click();
   ok(w.document.getElementById('toast').textContent==='Type a task first','empty task shows a message');
 
-  /* 6. modes are gone: no mode switch, no Smart Modes, no Golden Lotus panel */
+  /* 6. Smart Modes are gone; the Standard/Minimal/Performance/Stealth display modes were restored in the merge */
   ok(!!w.document.getElementById('modeSeg')&&!!w.document.getElementById('qaMode'),'mode selector and Mode quick action present (restored in merge)');
-  ok(!w.YogaModes&&!w.cycleMode,'no mode API left');
+  ok(!w.YogaModes&&typeof w.cycleMode==='function','Smart Modes stay removed; the display-mode switch (cycleMode) is the restored one');
 
   console.log(`\n${pass} passed, ${fail} failed`);process.exit(fail?1:0);
 })();

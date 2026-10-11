@@ -1235,7 +1235,7 @@ html.ux-hc .sheet.set .acc summary{color:#fff}
 
 /* v-lite: backdrop-filter removed everywhere (opaque fallbacks) */
 html:not(.light) .sheet.glass{background:rgba(14,15,22,.95)}
-html:not(.light) .dock,html:not(.light) .toast,html:not(.light) .smart-card,html:not(.light) .pvbar,html:not(.light) .mplay{background:rgba(22,24,32,.9)}
+html:not(.light) .dock,html:not(.light) .toast,html:not(.light) .smart-card,html:not(.light) .pvbar{background:rgba(22,24,32,.9)}
 html:not(.light) .hsearch,html:not(.light) .cmd-bar,html:not(.light) .cmd-close,html:not(.light) .command-results,html:not(.light) .ydr-search,html:not(.light) .ydr-top .mini,html:not(.light) .drawer .cats button,html:not(.light) .ydr-info::before{background:rgba(32,36,48,.92)}
 </style>
 </head>
@@ -2006,11 +2006,20 @@ const ldIc=d=>{if(!d||!d._ls)return;const src=d._ls,L=d._lt;d._ls=null;const im=
   const put=()=>{while(d.firstChild&&d.firstChild.nodeType===3)d.removeChild(d.firstChild);d.insertBefore(im,d.firstChild)};
   im.onerror=()=>{im.remove()};im.src=src;
   if(im.decode)im.decode().then(put,()=>{});else im.onload=put};
-const icon=a=>{const d=document.createElement('div');d.className='ic';{let h=0;for(const ch of String(a.n))h=(h*31+ch.charCodeAt(0))%360;d.style.setProperty('--h',h)}const L=a.e||([...String(a.n)][0]||'?').toUpperCase();if(a.i&&!a.e){if(ICLAZY){d.textContent=L;d._ls=a.i;d._lt=L}else{const im=new Image();im.alt='';im.decoding='async';im.onerror=()=>{im.remove();d.textContent=L};im.src=a.i;d.appendChild(im)}}else d.textContent=L;return d};
+/* contact photos: the picture saved on the phone for that contact, fetched one at a time (cached, small) so scrolling stays smooth */
+const PHC=new Map(),PHQ=[];let PHB=false;
+const phPut=(d,src)=>{const im=new Image();im.alt='';im.decoding='async';im.onload=()=>{d.textContent='';d.appendChild(im)};im.src=src};
+const phPump=()=>{if(PHB)return;PHB=true;const step=()=>{const j=PHQ.shift();if(!j){PHB=false;return}
+  let r='';try{r=Android.getContactPhoto(j.u)||''}catch(e){ERR(e,'ph')}
+  PHC.set(j.u,r);if(r)j.ds.forEach(d=>phPut(d,r));setTimeout(step,12)};setTimeout(step,0)};
+const contactPhoto=(a,d)=>{if(!(a&&a.ct&&a.u&&window.Android&&typeof Android.getContactPhoto==='function'))return;
+  if(PHC.has(a.u)){const r=PHC.get(a.u);if(r)phPut(d,r);return}
+  let j=PHQ.find(x=>x.u===a.u);if(!j){j={u:a.u,ds:[]};PHQ.push(j)}j.ds.push(d);phPump()};
+const icon=a=>{const d=document.createElement('div');d.className='ic';contactPhoto(a,d);{let h=0;for(const ch of String(a.n))h=(h*31+ch.charCodeAt(0))%360;d.style.setProperty('--h',h)}const L=a.e||([...String(a.n)][0]||'?').toUpperCase();if(a.i&&!a.e){if(ICLAZY){d.textContent=L;d._ls=a.i;d._lt=L}else{const im=new Image();im.alt='';im.decoding='async';im.onerror=()=>{im.remove();d.textContent=L};im.src=a.i;d.appendChild(im)}}else d.textContent=L;return d};
 const recent=()=>{const r=ls('mdc-recent',[]);return Array.isArray(r)?r.filter(x=>typeof x==='string'):[]};
 /* ---- contacts: same crescent drawer, filled with people ---- */
 let CONTACTS=[],CT_LOADED=false,CT_NEED=false;
-const mkContact=c=>({n:String(c.n||c.name||'').trim(),p:'contact:'+(c.ph||c.p||c.n),ph:String(c.ph||c.p||'').replace(/[^\d+*#]/g,''),c:'Contact',ct:true});
+const mkContact=c=>({n:String(c.n||c.name||'').trim(),p:'contact:'+(c.ph||c.p||c.n),ph:String(c.ph||c.p||'').replace(/[^\d+*#]/g,''),c:'Contact',ct:true,u:typeof c.u==='string'&&c.u.indexOf('content://com.android.contacts/')===0?c.u:''});
 window.setContacts=l=>{if(!Array.isArray(l))return;CONTACTS=l.filter(c=>c&&typeof c==='object').map(mkContact).filter(c=>c.n);CT_LOADED=true;try{if($('drawer').classList.contains('open')&&DC==='Contacts')renderGrid()}catch(e){ERR(e,"c13")}};
 window.onContactsGranted=()=>{CT_LOADED=false;CT_NEED=false;try{loadContacts();renderCats();if($('drawer').classList.contains('open')&&DC==='Contacts')renderGrid()}catch(e){ERR(e,"c14g")}};
 function loadContacts(){
@@ -3240,9 +3249,10 @@ window.ENG=(()=>{
   }
   function closeCommand(){setOpen($('command'),false);qi.blur();window.cmdSug=[];clearTimeout(window._st);clearTimeout(ctT);try{if(ENG._ac)ENG._ac.abort()}catch(x){}}
   window.openCommand=openCommand;
-  let ir=0;qi.oninput=()=>{cancelAnimationFrame(ir);ir=requestAnimationFrame(()=>{window.cmdSug=[];results(true);clearTimeout(window._st);const v=qi.value.trim();if(ENG.sugOn())window._st=setTimeout(()=>ENG.sug(v),250)})};
+  let ir=0;qi.oninput=()=>{cancelAnimationFrame(ir);ir=requestAnimationFrame(()=>{ir=0;window.cmdSug=[];results(true);clearTimeout(window._st);const v=qi.value.trim();if(ENG.sugOn())window._st=setTimeout(()=>ENG.sug(v),250)})};
   qi.onkeydown=e=>{
     if(e.isComposing||e.keyCode===229)return;                 /* don't act on IME composition keys */
+    if(ir&&(e.key==='Enter'||e.key==='ArrowDown'||e.key==='ArrowUp')){cancelAnimationFrame(ir);ir=0;window.cmdSug=[];results(true)}   /* typed text not yet ranked: rank it now so Enter acts on what is on screen */
     const its=qr._items||[],k=e.key,v=qi.value.trim();
     if(k==='Escape'){e.preventDefault();closeCommand()}
     else if(k==='Enter'){
@@ -4192,7 +4202,7 @@ try{ENG.init()}catch(e){console.error(e)}
   function glance(){
     const e=$('glance');if(!e)return;
     const it=[];
-    if(S.gmed&&S.mpl===false&&G.media&&G.media.playing)it.push(['m','\u266a '+G.media.title+(G.media.artist?' \u2013 '+G.media.artist:'')]);
+    if(S.gmed&&G.media&&G.media.playing)it.push(['m','\u266a '+G.media.title+(G.media.artist?' \u2013 '+G.media.artist:'')]);
     if(S.gev&&eventOk())it.push(['e','\u25a4 '+when(G.event.s)+'  '+(G.event.t||'')]);
     if(S.gal&&alarmOk())it.push(['a','\u25f7 '+when(G.alarm)]);
     if(S.gcm&&commuteOk())it.push(['c','\u279c '+(G.commute.dest||'')+'  '+G.commute.min+' min']);
@@ -4696,7 +4706,7 @@ try{ENG.init()}catch(e){console.error(e)}
   T(()=>{
     const det=document.createElement('details');det.className='acc';
     det.innerHTML='<summary>About</summary><div class="acc-b abt"><b>Version</b><p>Yoga Launcher '+APP_VER+'</p>'
-     +'<b>What\u2019s new</b><p>Music player above the dock; lock screen with its own settings group (background, clock weight, date and text size); settings grouped with search and undo; folders; large text and light theme options.</p>'
+     +'<b>What\u2019s new</b><p>Lock screen with its own settings group (background, clock weight, date and text size); settings grouped with search and undo; folders; large text and light theme options.</p>'
      +'<b>Privacy</b><p>Your settings, favourites and tasks stay on this device. Weather location is used only to fetch the forecast (Open-Meteo, plus BigDataCloud to name the place), and search suggestions send your typing to Google. There is no account and no cloud sync; use Backup and Restore to move your setup.</p>'
      +'<b>Licences</b><p>Weather data: Open-Meteo (CC BY 4.0).</p>'
      +'<b>Diagnostics</b><p id="errSum"></p><button type="button" class="mini" id="errShow">Show recent errors</button> <button type="button" class="mini" id="errCopy">Copy</button><pre id="errOut" hidden style="white-space:pre-wrap;word-break:break-word;font-size:10px;max-height:180px;overflow:auto;margin:8px 0 0;opacity:.8"></pre>'
@@ -5153,155 +5163,28 @@ try{ENG.init()}catch(e){console.error(e)}
 })();
 </script>
 <script id="v34-music-lock">
-/* v34: music player above the dock, own "Lock Screen" settings group, more lock screen looks */
+/* v34: own "Lock Screen" settings group, more lock screen looks */
 (function(){
   const T=f=>{try{f()}catch(e){console.error('v34',e)}};
-  const D={mpl:true,mps:'c',mpp:true,lkbg:'glow',lkdw:'t',lkfs:'m',lkds:'m'};
+  const D={lkbg:'glow',lkdw:'t',lkfs:'m',lkds:'m'};
   const fresh=S.lkbg==null;
   Object.assign(SD,D);for(const k in D)if(S[k]==null)S[k]=D[k];
   if(fresh&&S.lkglow===false)S.lkbg='black';
-  ['mpl','mpp'].forEach(k=>{if(!BOOL.includes(k))BOOL.push(k)});
-  const OPT={mps:['c','f'],lkbg:['glow','black','grad'],lkdw:['t','r','b'],lkfs:['s','m','l'],lkds:['s','m','l']};
+  const OPT={lkbg:['glow','black','grad'],lkdw:['t','r','b'],lkfs:['s','m','l'],lkds:['s','m','l']};
   const fix=()=>Object.keys(OPT).forEach(k=>{S[k]=String(S[k]);if(!OPT[k].includes(S[k]))S[k]=D[k]});
   fix();
   const css0=document.createElement('style');
   css0.textContent=
-   '.mplay{position:absolute;left:18px;right:18px;bottom:144px;z-index:7;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:20px;overflow:hidden;border:1px solid rgba(255,255,255,.16);'
-  +'background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.03) 60%,rgba(var(--c1rgb),.06));'
-  +'box-shadow:inset 0 1px 0 rgba(255,255,255,.18);color:var(--fg);font-family:var(--f);transition:opacity .25s ease,transform .3s var(--spring)}'
-  +'.mplay[hidden]{display:none}'
-  +'.mp-art{position:relative;flex:none;width:38px;height:38px;border-radius:11px;overflow:hidden;display:grid;place-items:center;background:linear-gradient(135deg,var(--c1),var(--c2));color:#06070b;font:700 18px var(--f);background-size:cover;background-position:center}'
-  +'.mp-art .ic{width:100%;height:100%}'
-  +'.mp-txt{flex:1;min-width:0;text-align:left;border:0;background:none;color:inherit;padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent}'
-  +'.mp-t{display:block;font:700 12.5px/1.3 var(--f);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
-  +'.mp-a{display:block;font:500 10.5px/1.3 var(--f);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
-  +'.mp-b{display:flex;gap:5px;flex:none}'
-  +'.mp-b button{width:34px;height:34px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;cursor:pointer;background:rgba(255,255,255,.09);color:var(--fg);-webkit-tap-highlight-color:transparent;transition:transform .15s var(--spring),opacity .2s}'
-  +'.mp-b button:active{transform:scale(.88)}'
-  +'.mp-b button.pp{background:linear-gradient(135deg,var(--c1),var(--c2));color:#06070b}'
-  +'.mp-b svg{width:16px;height:16px;fill:currentColor;display:block}'
-  +'.mplay.mpi .mp-b{display:none}.mplay.mpi .mp-art{filter:saturate(.5) brightness(.85)}'
-  +'.mp-p{position:absolute;left:0;right:0;bottom:0;height:2.5px;background:rgba(255,255,255,.1);display:none}'
-  +'.mp-p i{display:block;height:100%;width:100%;transform:scaleX(0);transform-origin:0 50%;background:linear-gradient(90deg,var(--c1),var(--c2))}'
-  +'.mplay.mpg .mp-p{display:block}.mplay.mpi .mp-p{display:none}'
-  +'.mplay.mpf{padding:12px 12px 14px;gap:10px}.mplay.mpf .mp-art{width:50px;height:50px;border-radius:14px;font-size:22px}'
-  +'.mplay.mpf .mp-t{font-size:13.5px}.mplay.mpf .mp-a{font-size:11px}.mplay.mpf .mp-b{gap:3px}.mplay.mpf .mp-b button{width:32px;height:32px}.mplay.mpf .mp-p{height:3px}'
-  +'.phone.cov .mplay{opacity:0!important;pointer-events:none!important}'
-  +'.phone.lay .mplay{opacity:.35;pointer-events:none}.phone.sh-full .mplay{visibility:hidden!important}'
-  +'.lite .mplay{background:rgba(20,22,30,.9);box-shadow:none}'
-  +'html.light .mplay{background:rgba(255,255,255,.62);border-color:rgba(0,0,0,.1)}html.light .mp-b button{background:rgba(0,0,0,.07)}'
+   ''
   /* lock screen looks */
   +'.lockscr.lkb-grad{background:linear-gradient(165deg,rgba(var(--c1rgb),.30),rgba(var(--c2rgb),.14) 42%,#000 88%),#000}'
   +'.lockscr.lkw-t .lk-dig b{font-weight:200}.lockscr.lkw-r .lk-dig b{font-weight:400}.lockscr.lkw-b .lk-dig b{font-weight:700}'
   +'.lockscr.lkds-s .lk-date{font-size:9.5px}.lockscr.lkds-l .lk-date{font-size:12px;letter-spacing:.22em}'
   +'.lockscr.lkfs-s .lk-feat b{font-size:26px}.lockscr.lkfs-l .lk-feat b{font-size:36px}';
   document.head.appendChild(css0);
-  /* v39: minimal look - no card, no glow, thin icons, hairline progress */
-  const css1=document.createElement('style');
-  css1.textContent=
-   '.mplay,.lite .mplay,html.light .mplay{left:26px;right:26px;padding:6px 0;gap:12px;border:0;border-radius:0;background:none;box-shadow:none;overflow:visible}'
-  +'.mp-art{width:36px;height:36px;border-radius:8px;background-color:rgba(255,255,255,.08);box-shadow:none}'
-  +'.mplay.mpn .mp-art{display:none}'
-  +'.mp-t{font:600 13px/1.3 var(--f);letter-spacing:.01em}'
-  +'.mp-a{font:400 11px/1.3 var(--f);color:var(--dim)}'
-  +'.mp-b{gap:2px}'
-  +'.mp-b button,html.light .mp-b button{width:38px;height:38px;background:none;color:var(--fg);opacity:.8}'
-  +'.mp-b button.pp{background:none;color:var(--fg);opacity:1}'
-  +'.mp-b svg{width:20px;height:20px}'
-  +'.mp-b button:active{opacity:.5;transform:scale(.9)}'
-  +'.mp-p{left:0;right:0;bottom:-3px;height:1.5px;background:rgba(255,255,255,.14)}'
-  +'html.light .mp-p{background:rgba(0,0,0,.14)}'
-  +'.mp-p i{background:var(--fg);opacity:.85}'
-  +'.mplay.mpf .mp-art{width:48px;height:48px;border-radius:10px}'
-  +'.mplay.mpf{padding:8px 0}';
-  document.head.appendChild(css1);
 
-  /* ---------- the player ---------- */
-  const mp=document.createElement('div');mp.className='mplay mpi';mp.id='mplay';mp.hidden=true;mp.setAttribute('role','group');mp.setAttribute('aria-label','Music player');
-  const ic=(d,x)=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+d+'"/></svg>';
-  const PL='M8 5v14l11-7z',PA='M7 5h4v14H7zM13 5h4v14h-4z',PV='M6 5h2v14H6zM20 5v14L9 12z',NX='M16 5h2v14h-2zM4 5l11 7L4 19z';
-  mp.innerHTML='<div class="mp-art" aria-hidden="true">\u266a</div><button type="button" class="mp-txt" aria-label="Open music app"><span class="mp-t"></span><span class="mp-a"></span></button>'
-    +'<div class="mp-b"><button type="button" class="pv" aria-label="Previous track">'+ic(PV)+'</button><button type="button" class="pp" aria-label="Play or pause">'+ic(PL)+'</button><button type="button" class="nx" aria-label="Next track">'+ic(NX)+'</button></div>'
-    +'<div class="mp-p" aria-hidden="true"><i></i></div>';
-  phone.appendChild(mp);
-  const q=s=>mp.querySelector(s),art=q('.mp-art'),tt=q('.mp-t'),ta=q('.mp-a'),pp=q('.pp'),bar=q('.mp-p i');
-  ['pointerdown','pointerup','touchstart'].forEach(t=>mp.addEventListener(t,e=>e.stopPropagation()));
-  const NB=()=>[window.YogaNative,window.Android];
-  const hasA=f=>NB().some(o=>o&&typeof o[f]==='function');
-  const call=(f,...a)=>{for(const o of NB())if(o&&typeof o[f]==='function'){try{return o[f](...a)}catch(e){return undefined}}};
-  const MUSIC=/music|spotify|saavn|gaana|wynk|deezer|podcast|audible|player|tidal|soundcloud|youtube music|hungama|resso/i;
-  const mediaApp=()=>{const m=(window.YG||{}).media;let a=m&&m.pkg?apps.find(x=>x.p===m.pkg):null;return a||apps.find(x=>MUSIC.test(x.n))||null};
-  let sample={t:0,pos:0},sig='';
-  let acc=true,accT=0;
-  /* is Notification access on? (needed to see what any app is playing) */
-  function chk(force){
-    if(!hasA('hasNotificationAccess'))return;
-    const n=Date.now();if(!force&&n-accT<10000)return;accT=n;
-    try{acc=call('hasNotificationAccess')!==false}catch(e){ERR(e,"c79")}
-  }
-  function ctl(c){
-    const G=window.YG||{};
-    if(hasA('mediaControl')){call('mediaControl',c);
-      if(G.media&&c==='toggle'){G.media.playing=!G.media.playing;sample={t:Date.now(),pos:posNow()};paint()}
-      setTimeout(poll,350);return}
-    if(G.demo&&G.media){if(c==='toggle'){G.media.playing=!G.media.playing;sample={t:Date.now(),pos:posNow()}}else toast(c==='next'?'Next track':'Previous track');paint();return}
-    toast('Music controls need the Android app');
-  }
-  q('.pv').onclick=()=>{try{vib(6)}catch(e){ERR(e,"c80")}ctl('prev')};
-  q('.nx').onclick=()=>{try{vib(6)}catch(e){ERR(e,"c81")}ctl('next')};
-  pp.onclick=()=>{try{vib(8)}catch(e){ERR(e,"c82")}ctl('toggle')};
-  q('.mp-txt').onclick=()=>{
-    try{vib(6)}catch(e){ERR(e,"c83")}
-    if(!acc&&hasA('requestNotificationAccess')){call('requestNotificationAccess');toast('Switch on Yoga Launcher, then come back');return}
-    const a=mediaApp();if(a)launch(a);else toast('No music app found');
-  };
-  const posNow=()=>{const m=(window.YG||{}).media;if(!m||typeof m.pos!=='number')return 0;const el=m.playing?Date.now()-sample.t:0;return Math.max(0,Math.min(m.dur>0?m.dur:1e12,sample.pos+el))};
-  function place(){
-    const dock=S.dock!==false&&!phone.classList.contains('nodock'),srch=S.hsb!==false;
-    mp.style.bottom=((dock?98:30)+(srch?46:0))+'px';
-  }
-  function safeArt(u){return typeof u==='string'&&(/^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+\/=]+$/.test(u)||/^https:\/\/[^\s"'()]+$/.test(u))?u:null}
-  function paint(){
-    place();chk();
-    const G=window.YG||{},m=G.media&&G.media.title!=null?G.media:null;
-    const need=!acc&&!m;
-    const on=S.mpl!==false&&(m||need);   /* hidden whenever nothing is playing */
-    mp.hidden=!on;if(!on)return;
-    mp.classList.toggle('mpi',!m);mp.classList.toggle('mpf',S.mps==='f');mp.classList.toggle('mpg',S.mpp!==false&&!!m&&m.dur>0);
-    const k=JSON.stringify(m?[m.title,m.artist,m.playing,m.pkg,m.art&&m.art.length]:0)+S.mps+need;
-    if(k!==sig){sig=k;
-      const ap=mediaApp();
-      tt.textContent=m?m.title:need?'Allow music control':'Nothing playing';
-      ta.textContent=m?(m.artist||(ap?ap.n:'')):need?'Tap to turn on Notification access':(ap?'Tap to open '+ap.n:'Music');
-      pp.innerHTML=ic(m&&m.playing?PA:PL);pp.setAttribute('aria-label',m&&m.playing?'Pause':'Play');
-      const au=m&&safeArt(m.art);
-      art.textContent='';art.style.backgroundImage='';
-      if(au)art.style.backgroundImage='url("'+au+'")';
-      mp.classList.toggle('mpn',!au);
-    }
-    prog();
-  }
-  function prog(){
-    const m=(window.YG||{}).media;if(mp.hidden||!m||!(m.dur>0)){return}
-    bar.style.transform='scaleX('+Math.max(0,Math.min(1,posNow()/m.dur)).toFixed(4)+')';
-  }
-  /* pull now-playing from the Android app (the page's own 30 s poll is too slow for track changes) */
-  function poll(){
-    if(document.hidden)return;chk();const G=window.YG;if(!G||G.demo||!hasA('getMedia'))return;if(!acc&&!G.media)return;   /* no Notification access: Android cannot return anything, so do not ask every second */
-    try{const r=call('getMedia'),v=r==null?null:JSON.parse(r||'null'),m=v&&v.title!=null?v:null;
-      const was=JSON.stringify(G.media&&[G.media.title,G.media.playing,Math.round((G.media.pos||0)/4000)]);
-      G.media=m;if(m){sample={t:Date.now(),pos:+m.pos||0}}
-      if(JSON.stringify(m&&[m.title,m.playing,Math.round((m.pos||0)/4000)])!==was)paint()}catch(e){ERR(e,"c84")}
-  }
-  const _sm=window.setMedia;
-  window.setMedia=function(m){const r=typeof _sm==='function'?_sm.apply(this,arguments):undefined;const G=window.YG;if(G&&G.media)sample={t:Date.now(),pos:+G.media.pos||0};paint();return r};
-  let _idleN=0;
-  setTicker(()=>{if(document.hidden)return;const m0=(window.YG||{}).media;/* nothing playing: ask Android every 2nd second instead of every second */if(!(m0&&m0.playing)&&(_idleN++&1))return;poll();const m=(window.YG||{}).media;if(m&&m.playing)prog();else if(!mp.hidden)paint()},1000);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden){chk(true);poll();paint()}});
-  addEventListener('resize',place);
-  window.mplayRefresh=paint;
 
-  /* ---------- settings: music player (inside Dock) + lock screen (own group) ---------- */
+  /* ---------- settings: lock screen (own group) ---------- */
   const tg=(k,t)=>'<label class="tg"><span>'+t+'</span><input type="checkbox" data-v34="'+k+'"><i></i></label>';
   const seg=(k,t,o)=>'<div class="sl">'+t+'</div><div class="seg" data-v34seg="'+k+'">'+o.map(([v,x])=>'<button type="button" data-v="'+v+'">'+x+'</button>').join('')+'</div>';
   const hd=t=>'<div class="sl" style="margin-top:12px;font-weight:700;opacity:.9;letter-spacing:.08em">'+t.toUpperCase()+'</div>';
@@ -5312,15 +5195,6 @@ try{ENG.init()}catch(e){console.error(e)}
     root.querySelectorAll('input[data-v34]').forEach(i=>i.onchange=()=>{S[i.dataset.v34]=i.checked;saveS();applySettings()});
     root.querySelectorAll('.seg[data-v34seg] button').forEach(b=>b.onclick=()=>{S[b.parentNode.dataset.v34seg]=b.dataset.v;saveS();applySettings()});
   };
-  T(()=>{
-    const dk=byName('Dock');if(!dk)return;
-    const box=document.createElement('div');
-    box.innerHTML=hd('Music player')
-      +tg('mpl','Music player above the dock')
-      +seg('mps','Player style',[['c','Compact'],['f','Large']])+tg('mpp','Progress line')
-      +'<div class="sl" style="opacity:.7">Shows the song that is playing in any music app, with previous, play and pause, next. Tap the title to open the app. Needs Notification access (At a glance &amp; notifications).</div>';
-    dk.querySelector('.acc-b').appendChild(box);wire(box);
-  });
   T(()=>{
     const det=byName('Lock screen');if(!det)return;
     /* new group header + move the section out of Home Screen */
@@ -5353,9 +5227,9 @@ try{ENG.init()}catch(e){console.error(e)}
     }
   }
   ASET.pre.push(()=>{fix();S.lkglow=S.lkbg!=='black'});
-  ASET.post.push(()=>{T(()=>{sync();paint()})});
+  ASET.post.push(()=>{T(()=>{sync()})});
   S.lkglow=S.lkbg!=='black';
-  sync();paint();
+  sync();
 })();
 </script>
 <script id="v39-settings">
@@ -5384,7 +5258,6 @@ try{ENG.init()}catch(e){console.error(e)}
   +'.v39t .tg2{right:6px;top:7px;width:8px;height:8px;border-radius:50%;border:1px solid rgba(255,255,255,.55)}'
   +'.v39t .hr{left:9px;top:50%;margin-top:-13px;font:200 26px/1 var(--f);color:var(--fg);opacity:.95}'
   +'.v39t svg{left:0;top:0;width:100%;height:100%}'
-  +'.v39t .mu{left:8px;right:8px;bottom:50px;height:2px;border-radius:1px;background:rgba(255,255,255,.35)}'
   +'.v39t .sb{left:7px;right:7px;bottom:36px;height:9px;border-radius:5px;background:rgba(255,255,255,.12)}'
   +'.v39t .dk{left:6px;right:6px;bottom:6px;height:24px;border-radius:9px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:space-evenly;padding:0 3px}'
   +'.v39t .dk.clr{background:none;border:1px solid rgba(255,255,255,.2)}'
@@ -5418,7 +5291,7 @@ try{ENG.init()}catch(e){console.error(e)}
   const card=document.createElement('div');card.className='v39p';
   card.innerHTML='<div class="v39t" id="v39t"><div class="tm"></div><div class="tg2"></div>'
     +'<svg viewBox="0 0 68 136" aria-hidden="true"><g id="v39a"></g></svg><div class="hr"></div>'
-    +'<div class="mu"></div><div class="sb"></div><div class="dk"></div></div>'
+    +'<div class="sb"></div><div class="dk"></div></div>'
     +'<div class="v39s" id="v39s"></div><button type="button" class="v39h" id="v39h"></button>';
   const head=sh.querySelector('.sh-head');head.after(card);
   const srch=$('ssearch');
@@ -5433,14 +5306,14 @@ try{ENG.init()}catch(e){console.error(e)}
   let last='';
   function paintPrev(){
     card.classList.toggle('off',S.spv===false);hb.textContent=S.spv===false?'Show preview':'Hide';
-    if(S.spv===false){sum.innerHTML='<b>Home preview hidden</b>';return}
+    if(S.spv===false){last='';sum.innerHTML='<b>Home preview hidden</b>';return}
     const rs=getComputedStyle(root),c1=rs.getPropertyValue('--c1').trim()||'#7df9ff';
     const w=$('wall'),wc=w?getComputedStyle(w):null;
     const flat=root.classList.contains('minimal'),stl=root.classList.contains('stealth');
     const n=Math.max(3,Math.min(5,parseInt(S.dn)||4)),dockOn=S.dock!==false,
-      wx=S.dmin!==false,sc=S.dsec!==false,mus=S.mpl!==false,srb=S.hsb!==false;
+      wx=S.dmin!==false,sc=S.dsec!==false,srb=S.hsb!==false;
     const d=new Date(),hh=String(S.h24?d.getHours():(d.getHours()%12||12)).padStart(2,'0');
-    const key=[c1,wc&&wc.backgroundImage,wc&&wc.backgroundColor,flat,stl,n,dockOn,wx,sc,mus,srb,S.ish,S.dks,S.mand,S.mode,hh,S.dnum,S.dring,root.classList.contains('light')].join('|');
+    const key=[c1,wc&&wc.backgroundImage,wc&&wc.backgroundColor,flat,stl,n,dockOn,wx,sc,srb,S.ish,S.dks,S.mand,S.mode,hh,S.dnum,S.dring,root.classList.contains('light')].join('|');
     if(key===last)return;last=key;
     thumb.style.backgroundImage=wc&&wc.backgroundImage!=='none'?wc.backgroundImage:'none';
     thumb.style.backgroundColor=wc&&wc.backgroundColor&&wc.backgroundColor!=='rgba(0, 0, 0, 0)'?wc.backgroundColor:'#06070b';
@@ -5453,14 +5326,14 @@ try{ENG.init()}catch(e){console.error(e)}
     const ring=(r,on)=>on?'<circle cx="0" cy="68" r="'+r+'" fill="none" stroke="'+c1+'" stroke-width="'+(S.dring===false?0.4:1.4)+'" '+(S.dnum===false?'':'stroke-dasharray="1 2.6" ')+'opacity=".85"/>':'';
     g+=ring(30,wx)+ring(42,sc);
     $('v39a').innerHTML=g;
-    q('.mu').style.display=mus?'':'none';q('.sb').style.display=srb?'':'none';
+    q('.sb').style.display=srb?'':'none';
     const dk=q('.dk');dk.style.display=dockOn?'':'none';dk.classList.toggle('clr',S.dks==='clear');
     dk.innerHTML=Array(n).fill('<i style="border-radius:'+(SHAPE[S.ish]||'3px')+'"></i>').join('');
     sum.innerHTML='<b>Your home screen</b>'
       +'Mode: <span>'+(MODEN[S.mode]||'Standard')+'</span><br>'
       +'Dials: <span>'+(wx&&sc?'minutes + seconds':wx?'minutes':sc?'seconds':'none')+'</span><br>'
       +'Dock: <span>'+(dockOn?n+' apps':'off')+'</span><br>'
-      +'Search bar: <span>'+(srb?'on':'off')+'</span> \u00b7 Music: <span>'+(mus?'on':'off')+'</span>';
+      +'Search bar: <span>'+(srb?'on':'off')+'</span>';
   }
   ASET.post.push(()=>{T(()=>{last='';paintPrev()})});
   applyView();paintPrev();
@@ -5715,7 +5588,6 @@ ASET.post.push(()=>{try{wakeFrame()}catch(e){ERR(e,"c86")}});
    ['Weather','cloud','wu wloc wcity wlat wlon dwx'],
    ['Notifications','bell','nbd nbn nbp'],
    ['Lock screen','lock',/^lk/],
-   ['Music player','music','mpl mps mpp'],
    ['Display & accessibility','eye','xth xts xtt amoled sdim uxbig uxhc'],
    ['Power & performance','battery','mode mini miniBak perf abs hap fvib'],
    ['Settings app','cog','apv sv spv al41']
@@ -6630,6 +6502,13 @@ background:#030304 linear-gradient(rgba(var(--c1rgb),.05) 1px,transparent 1px) 0
 .awi .ic{box-shadow:0 0 0 1.5px rgba(var(--c1rgb),.35),0 0 12px rgba(var(--c1rgb),.25)}
 .drawer:not(.open) #aw *{animation-play-state:paused}
 .phone.performance #aw .jv-spin,.phone.performance #aw .jv-spinr,.phone.performance #aw .jv-pulse,.phone.performance #awScan,html.minimal #aw .jv-spin,html.minimal #aw .jv-spinr,html.minimal #aw .jv-pulse,html.minimal #awScan,html.minimal #awHud i{animation:none}
+#awCa{position:absolute;z-index:6;display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:16px;border:1.5px solid rgba(var(--c1rgb),.5);background:rgba(8,20,28,.85);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transform:translateX(-50%);touch-action:manipulation}
+#awCa[hidden]{display:none}
+#awCa .cab{width:36px;height:30px;border:0;border-radius:10px;background:none;color:var(--c1);display:grid;place-items:center;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#awCa .cab:active{background:rgba(255,255,255,.14)}
+#awCa .cab svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+#awCa .cab-msg,#awCa .cab-wac{color:#25D366}
+#awCa .cab:focus-visible{outline:2px solid var(--c1);outline-offset:2px}
 @media(prefers-reduced-motion:reduce),(update:slow){.jv-spin,.jv-spinr,.jv-pulse,#awScan,#awHud i{animation:none!important}}
 </style>
 <script id="v60-arcwave">
@@ -6689,8 +6568,32 @@ function hud(){
 function arcPts(rad,d1,d2,n){const xc=FX()-R(),yc=YD0(),o=[];for(let i=0;i<=n;i++){const dy=(d1+(d2-d1)*i/n)*H;o.push([xc+Math.sqrt(rad*rad-dy*dy),yc+dy])}return o}
 const P=a=>a.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
 function band(d1,d2){const bw=.034*H,o=arcPts(R()+bw,d1,d2,12),i=arcPts(R()-bw,d1,d2,12).reverse();return el('polygon',{points:P(o.concat(i)),fill:'rgba(var(--c1rgb),.10)',stroke:'rgba(var(--c1rgb),.55)','stroke-width':1.3,'stroke-linejoin':'round'})}
-function ctSync(){const on=DC==='Contacts',c=$('awCt');root.classList.toggle('ctm',on);c.classList.toggle('on',on);c.setAttribute('aria-pressed',on);c.setAttribute('aria-label',on?'Back to apps':'Contacts');$('awPlay').setAttribute('aria-label',on?'Call':'Open in Play Store');$('awInfo').setAttribute('aria-label',on?'Message':'App info');qi.placeholder=on?'Search contacts':'Search apps'}
-function placeNm(){const fx=trk(FOC*H),w=nm.offsetWidth||0;nm.style.left=clamp(fx,w/2+6,.975*W-w/2)+'px';nm.style.top=(FOC*H+62)+'px'}
+function ctSync(){const on=DC==='Contacts',c=$('awCt');try{if(!on)ca.hidden=true}catch(_){}root.classList.toggle('ctm',on);c.classList.toggle('on',on);c.setAttribute('aria-pressed',on);c.setAttribute('aria-label',on?'Back to apps':'Contacts');$('awPlay').setAttribute('aria-label',on?'Call':'Open in Play Store');$('awInfo').setAttribute('aria-label',on?'Message':'App info');qi.placeholder=on?'Search contacts':'Search apps'}
+function placeNm(){const fx=trk(FOC*H),w=nm.offsetWidth||0;nm.style.left=clamp(fx,w/2+6,.975*W-w/2)+'px';nm.style.top=(FOC*H+62)+'px';placeCa()}
+/* contact quick actions: small Call, WhatsApp message and WhatsApp call buttons under the selected contact */
+const ca=document.createElement('div');ca.id='awCa';ca.hidden=true;ca.setAttribute('role','group');ca.setAttribute('aria-label','Contact actions');
+const CAI={call:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/>',
+ msg:'<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/>',
+ wac:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/><circle cx="18" cy="6" r="3.2"/>'};
+[['call','Call'],['msg','WhatsApp message'],['wac','WhatsApp call']].forEach(([k,t])=>{const b=document.createElement('button');b.type='button';b.className='cab cab-'+k;b.dataset.k=k;b.setAttribute('aria-label',t);b.title=t;
+  b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+CAI[k]+'</svg>';ca.appendChild(b)});
+root.appendChild(ca);
+['pointerdown','pointerup','touchstart'].forEach(t=>ca.addEventListener(t,e=>e.stopPropagation()));
+function caAct(k,a){if(!a||!a.ct)return;try{vib(8)}catch(_){}
+  const n=a.ph;if(!n){toast('No number for '+a.n);return}const A=window.Android;
+  if(k==='call'){ENG.open('tel:'+n);return}
+  if(k==='msg'){if(A&&typeof A.waChat==='function')A.waChat(n);else ENG.open('https://wa.me/'+n.replace(/\D/g,''));return}
+  if(A&&typeof A.waCall==='function')A.waCall(n);else toast('WhatsApp calls need the Android app')}
+ca.addEventListener('click',e=>{const b=e.target.closest('.cab');if(!b)return;e.stopPropagation();caAct(b.dataset.k,cur())});
+/* the same three icons on every contact row in the arc */
+const CAT={call:'Call',msg:'WhatsApp message',wac:'WhatsApp call'};
+function rowActs(a,b){const r=document.createElement('div');r.className='awr';
+  Object.keys(CAT).forEach(k=>{const i=document.createElement('i');i.className='cab cab-'+k;i.setAttribute('role','button');i.setAttribute('aria-label',CAT[k]+' '+a.n);i.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+CAI[k]+'</svg>';
+    i.onclick=e=>{e.stopPropagation();e.preventDefault();caAct(k,a)};r.appendChild(i)});
+  ['pointerdown','pointerup','touchstart','contextmenu'].forEach(t=>r.addEventListener(t,e=>e.stopPropagation()));b.appendChild(r)}
+function placeCa(){const a=cur(),on=!!(a&&a.ct&&a.ph)&&isOpen();ca.hidden=!on;if(!on)return;
+  const w=ca.offsetWidth||120,fx=trk(FOC*H);ca.style.left=clamp(fx,w/2+6,.975*W-w/2)+'px';ca.style.top=(FOC*H+62+(nm.offsetHeight||28)+8)+'px'}
+
 function layout(){geo();art.setAttribute('viewBox','0 0 '+W+' '+H);art.textContent='';
  const df=el('defs',{});df.innerHTML='<linearGradient id="awg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--c1)" stop-opacity="0"/><stop offset=".25" style="stop-color:var(--c1)"/><stop offset=".75" style="stop-color:var(--c1)"/><stop offset="1" style="stop-color:var(--c1)" stop-opacity="0"/></linearGradient>';art.appendChild(df);
  art.appendChild(band(-.29,-.062));art.appendChild(band(.062,.262));
@@ -6706,7 +6609,7 @@ function layout(){geo();art.setAttribute('viewBox','0 0 '+W+' '+H);art.textConte
  bub.style.left=.17*W+'px';bub.style.top=YD0()+'px';
  art.appendChild(hud());root.style.setProperty('--awH',H+'px');
 }
-function mk(a){const b=document.createElement('button');b.className='awi'+(stagger?' in':'');b.type='button';b.appendChild(icon(a));const s=document.createElement('span');s.textContent=a.n;b.appendChild(s);
+function mk(a){const b=document.createElement('button');b.className='awi'+(stagger?' in':'');b.type='button';b.appendChild(icon(a));const s=document.createElement('span');s.textContent=a.n;b.appendChild(s);if(a.ct&&a.ph)rowActs(a,b);
  hold(b,a);b.onclick=()=>{const i=list.indexOf(a);if(CFG.tapSel&&i>=0&&i!==foc){glide(i);return}closeAll();launch(a)};return b}
 function setFocus(f){foc=f;const a=list[f];if(!a)return;fi.replaceChildren(icon(a));nm.textContent=a.n;placeNm();
  [fi,nm].forEach(e=>{e.classList.remove('pop');void e.offsetWidth;if(!RMo)e.classList.add('pop')});
@@ -6738,7 +6641,7 @@ function stop(){mode='';cancelAnimationFrame(raf);raf=0;drag=null;sbar.classList
 YD.open=open;YD.stop=stop;YD.build=build;YD.relayout=()=>{if(isOpen()){layout();paint()}};YD.glide=glide;YD.cur=()=>cur();YD.fx=()=>{};YD.st={foc:-1,els:[]};
 new ResizeObserver(()=>{if(isOpen()){layout();paint()}}).observe(root);
 /* drag the wave */
-root.addEventListener('pointerdown',e=>{moved=false;if(e.target.closest('.awb,#awRail,#awSearch,#awFi,#awNm,#awCfg,#awCfgBtn'))return;drag={y:e.clientY,p:pos,t:e.timeStamp,ly:e.clientY,lt:e.timeStamp,v:0};mode='';});
+root.addEventListener('pointerdown',e=>{moved=false;if(e.target.closest('.awb,#awRail,#awSearch,#awFi,#awNm,#awCa,.awr,#awCfg,#awCfgBtn'))return;drag={y:e.clientY,p:pos,t:e.timeStamp,ly:e.clientY,lt:e.timeStamp,v:0};mode='';});
 root.addEventListener('pointermove',e=>{if(window.DRG&&DRG.on){drag=null;return}if(!drag)return;const dy=e.clientY-drag.y;if(Math.abs(dy)>7)moved=true;if(!moved)return;const N=list.length;pos=clamp(drag.p-dy/(STEP*H),-.35,N-.65);
  const dt=e.timeStamp-drag.lt;if(dt>0){drag.v=.6*drag.v+.4*(-(e.clientY-drag.ly)/(STEP*H)/(dt/1000));drag.ly=e.clientY;drag.lt=e.timeStamp}paint()});
 const end=()=>{if(!drag)return;const d=drag;drag=null;if(!moved)return;vel=clamp(d.v,-26,26);if(Math.abs(vel)>3)go('fling');else glide(Math.round(pos))};

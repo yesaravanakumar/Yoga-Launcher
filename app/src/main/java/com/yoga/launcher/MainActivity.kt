@@ -333,6 +333,7 @@ class MainActivity : Activity() {
         try { unregisterReceiver(pkgReceiver) } catch (_: Exception) {}
         try { unregisterReceiver(battReceiver) } catch (_: Exception) {}
         web.removeJavascriptInterface("Android")
+        try { bridge.release() } catch (_: Exception) {}
         web.destroy()
         super.onDestroy()
     }

@@ -287,6 +287,46 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
         try { act.startActivity(i); true } catch (e: Exception) { toast("No app can open that link"); false }
     }
 
+    // ---------- WhatsApp shortcuts for a contact (no WhatsApp data is read) ----------
+    private fun waDigits(num: String): String {
+        val raw = num.filter { it.isDigit() || it == '+' }
+        val e164 = try { android.telephony.PhoneNumberUtils.formatNumberToE164(raw, java.util.Locale.getDefault().country) } catch (_: Exception) { null }
+        return (e164 ?: raw).filter { it.isDigit() }
+    }
+    private fun waIntent(i: Intent): Boolean {
+        for (pkg in arrayOf("com.whatsapp", "com.whatsapp.w4b")) {
+            try { act.startActivity(Intent(i).setPackage(pkg)); return true } catch (_: Exception) {}
+        }
+        return false
+    }
+    /** Opens the WhatsApp chat with this number. */
+    @JavascriptInterface fun waChat(number: String): Boolean = uiResult(false) {
+        val d = waDigits(number)
+        if (d.length < 6) { toast("No valid number"); return@uiResult false }
+        val ok = waIntent(Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/$d")))
+        if (!ok) toast("WhatsApp is not installed")
+        ok
+    }
+    /** Starts a WhatsApp voice call to this contact. Falls back to opening the chat when WhatsApp has no call entry for the contact. */
+    @JavascriptInterface fun waCall(number: String): Boolean = uiResult(false) {
+        if (hasContactsPerm()) {
+            try {
+                var cid = -1L
+                act.contentResolver.query(Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number)),
+                    arrayOf(ContactsContract.PhoneLookup._ID), null, null, null)?.use { if (it.moveToFirst()) cid = it.getLong(0) }
+                if (cid >= 0) {
+                    val mime = "vnd.android.cursor.item/vnd.com.whatsapp.voip.call"
+                    var did = -1L
+                    act.contentResolver.query(ContactsContract.Data.CONTENT_URI, arrayOf(ContactsContract.Data._ID),
+                        "${ContactsContract.Data.CONTACT_ID}=? AND ${ContactsContract.Data.MIMETYPE}=?", arrayOf(cid.toString(), mime), null)?.use { if (it.moveToFirst()) did = it.getLong(0) }
+                    if (did >= 0 && waIntent(Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse("content://com.android.contacts/data/$did"), mime))) return@uiResult true
+                }
+            } catch (_: Exception) {}
+        }
+        toast("No WhatsApp call found for this contact, opening chat")
+        waChat(number)
+    }
+
     // ---------- clipboard, sharing, saving files ----------
     /** Puts text on the clipboard. Returns true when Android accepted it. */
     @JavascriptInterface fun copyText(text: String): Boolean = uiResult(false) {
@@ -390,17 +430,33 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
         try {
             act.contentResolver.query(
                 ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                arrayOf(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME, ContactsContract.CommonDataKinds.Phone.NUMBER),
+                arrayOf(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME, ContactsContract.CommonDataKinds.Phone.NUMBER,
+                    ContactsContract.CommonDataKinds.Phone.PHOTO_THUMBNAIL_URI),
                 null, null, "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} COLLATE NOCASE ASC")?.use { c ->
                 val seen = HashSet<String>()
                 while (c.moveToNext() && out.length() < 3000) {
                     val n = c.getString(0)?.trim() ?: continue
                     val p = c.getString(1)?.trim() ?: ""
-                    if (n.isNotEmpty() && seen.add(n + "|" + p.filter { it.isDigit() || it == '+' })) out.put(JSONObject().put("n", n).put("p", p))
+                    val u = c.getString(2) ?: ""
+                    if (n.isNotEmpty() && seen.add(n + "|" + p.filter { it.isDigit() || it == '+' })) out.put(JSONObject().put("n", n).put("p", p).put("u", u))
                 }
             }
         } catch (_: Exception) {}
         return out.toString()
+    }
+
+    /** Contact photo (the one stored on the phone, e.g. synced from Google) as a small data: URI, or "" if there is none.
+     *  Only content://com.android.contacts/ addresses are accepted. Nothing is sent over the internet. */
+    @JavascriptInterface fun getContactPhoto(uri: String): String {
+        if (!hasContactsPerm() || !uri.startsWith("content://com.android.contacts/")) return ""
+        return try {
+            val src = act.contentResolver.openInputStream(android.net.Uri.parse(uri))?.use { android.graphics.BitmapFactory.decodeStream(it) } ?: return ""
+            val side = 128
+            val bmp = Bitmap.createScaledBitmap(src, side, side, true)
+            val bo = ByteArrayOutputStream()
+            bmp.compress(Bitmap.CompressFormat.JPEG, 82, bo)
+            "data:image/jpeg;base64," + Base64.encodeToString(bo.toByteArray(), Base64.NO_WRAP)
+        } catch (_: Exception) { "" }
     }
 
     private var askedContacts = false
@@ -475,7 +531,8 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
 
     @JavascriptInterface fun hasNotificationAccess(): Boolean {
         val s = Settings.Secure.getString(act.contentResolver, "enabled_notification_listeners") ?: return false
-        return s.contains(act.packageName)
+        // the setting is "pkg/Class:pkg/Class": compare the package exactly (a plain contains() also matched e.g. com.yoga.launcher.beta)
+        return s.split(':').any { android.content.ComponentName.unflattenFromString(it)?.packageName == act.packageName }
     }
 
     @JavascriptInterface fun requestNotificationAccess() = ui {
@@ -601,6 +658,20 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
     // ---------- saving & restoring ----------
     @JavascriptInterface fun saveSettings(json: String) { prefs.edit().putString("settings", json).apply() }
     @JavascriptInterface fun saveTheme(json: String) { prefs.edit().putString("theme", json).apply() }
+
+    /** "Reset all" in Settings: forget the native copies of settings, theme and lock-over, so restore() does not bring the old look back after the page reloads. */
+    @JavascriptInterface fun clearData() {
+        prefs.edit().remove("settings").remove("theme").remove("lockover").apply()
+        ui { applyLockOver(act, false) }
+    }
+
+    /** Called from MainActivity.onDestroy: stop background work and listeners that would otherwise keep this Activity alive. */
+    fun release() {
+        try { (act.getSystemService(Context.CAMERA_SERVICE) as CameraManager).unregisterTorchCallback(torchCb) } catch (_: Exception) {}
+        iconJob?.interrupt()
+        try { appScan.shutdownNow() } catch (_: Exception) {}
+        try { sugPool.shutdownNow() } catch (_: Exception) {}
+    }
 
     /** Re-applies saved settings/theme to the page (call after the page loads). */
     fun restore() {
@@ -795,7 +866,9 @@ class BadgeService : NotificationListenerService() {
         }
     }
     override fun onListenerConnected() { inst = this; refresh() }
-    override fun onListenerDisconnected() { if (inst === this) inst = null }
+    override fun onListenerDisconnected() {
+        if (inst === this) { inst = null; counts = emptyMap(); notes = emptyMap() }   // access switched off: no stale dots or texts
+    }
     override fun onNotificationPosted(sbn: StatusBarNotification?) = refresh()
     override fun onNotificationRemoved(sbn: StatusBarNotification?) = refresh()
 }
