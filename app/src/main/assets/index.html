@@ -1449,7 +1449,7 @@ html:not(.light) .hsearch,html:not(.light) .cmd-bar,html:not(.light) .cmd-close,
       <div class="row" style="margin:6px 0 8px"><button class="mini ghost" id="lgReplay" style="flex:1">Replay intro</button></div>
       <div id="segs"></div>
       </div></details>
-      <div class="ver"><span class="lg" style="--lw:46px"><i></i></span>YOGA LAUNCHER &middot; METAL</div>
+      <div class="resetall"><button type="button" id="resetAll">Reset all</button><small>Erases every saved setting, theme, design, layout, pinned app, task and wallpaper, then restarts the launcher on the default look. Tap twice to confirm.</small></div>\n      <div class="ver"><span class="lg" style="--lw:46px"><i></i></span>YOGA LAUNCHER &middot; METAL</div>
     </div>
     <button class="done" id="done">Done</button>
   </div>
@@ -4051,7 +4051,7 @@ try{ENG.init()}catch(e){console.error(e)}
     if(DRG.fh){DRG.src=A.el;A.el.classList.add('lift')}
     const gh=document.createElement('div');gh.className='dghost';gh.appendChild(icon(A.a));phone.appendChild(gh);DRG.ghost=gh;
     hd.textContent='';hd.classList.toggle('fh',DRG.fh);
-    const note=document.createElement('div');note.className='hd-note';note.textContent=DRG.fh?'Drop on a cell to move \u00b7 on the dock for \u2605 Favs':'Drop on a cell for home \u00b7 on the dock for \u2605 Favs';hd.appendChild(note);
+    const note=document.createElement('div');note.className='hd-note';note.textContent=DRG.fh?'Drop on a cell to move \u00b7 on a dock slot to pin':'Drop on a cell for home \u00b7 on a dock slot to pin';hd.appendChild(note);
     const rm=document.createElement('div');rm.className='hd-rm';rm.textContent='DROP HERE TO REMOVE';hd.appendChild(rm);DRG.rm=rm;
     DRG.cells=freeCells(A.a.p).map(o=>{const c=document.createElement('div'),r=cellR(o.c,o.r);c.className='hcell';c.style.cssText='left:'+(r.l+3)+'px;top:'+(r.t+3)+'px;width:'+(CW-6)+'px;height:'+(CH-6)+'px';hd.appendChild(c);return {c:o.c,r:o.r,e:c,x:(r.l+r.r)/2,y:(r.t+r.b)/2}});
     vib(14);move(e);
@@ -4061,12 +4061,25 @@ try{ENG.init()}catch(e){console.error(e)}
     const p=pt(e.clientX,e.clientY);DRG.ghost.style.transform='translate3d('+(p.x-27)+'px,'+(p.y-27-20)+'px,0) scale(1.1)';
     const dk=rc($('dock')),inDock=p.y>=dk.t-6&&p.x>=dk.l-6&&p.x<=dk.r+6;
     let t=null;
-    if(inDock)t={type:'dock'};
+    if(inDock){const ds=[...$('dock').querySelectorAll('.app')];let bi=0,bd=1e9;ds.forEach((e,i)=>{const r=rc(e),d=Math.abs((r.l+r.r)/2-p.x);if(d<bd){bd=d;bi=i}});t={type:'dock',i:bi}}
     else if(DRG.fh&&p.y<TOP-50)t={type:'rm'};
     else{let best=1e9;DRG.cells.forEach(c=>{const d=Math.hypot(c.x-p.x,c.y-p.y);if(d<best){best=d;t={type:'cell',c:c.c,r:c.r}}})}
     DRG.t=t;
+    {const ds=[...$('dock').querySelectorAll('.app')];ds.forEach((e,i)=>e.classList.toggle('dslot',!!t&&t.type==='dock'&&t.i===i))}
     DRG.cells.forEach(c=>c.e.classList.toggle('on',!!t&&t.type==='cell'&&t.c===c.c&&t.r===c.r));
     DRG.rm.classList.toggle('on',!!t&&t.type==='rm');$('dock').classList.toggle('dk',!!t&&t.type==='dock');
+  }
+  /* drop on a dock slot: room -> insert there; dock full -> replace that slot (old app stays in Favs); already docked -> move to that slot */
+  function dockDrop(a,idx){
+    const n=+S.dn||4,cur=vf().filter(p=>p!==a.p),was=shown().includes(a.p),room=shown().length<n||was;
+    idx=Math.max(0,Math.min(idx,room?Math.min(n-1,cur.length):n-1));
+    let msg;
+    if(room){cur.splice(idx,0,a.p);msg=was?a.n+' moved in the dock':a.n+' added to the dock'}
+    else{const old=cur[idx],oa=apps.find(x=>x.p===old);cur[idx]=a.p;if(old)cur.splice(n,0,old);msg=a.n+' replaced '+(oa?oa.n:'an app')+' in the dock'}
+    favs=cur;sv('mdc-favs',favs);sv('mdc-fseeded',true);
+    try{renderDock();renderChips()}catch(e){ERR(e,'dock-drop')}
+    document.querySelectorAll('.gapp').forEach(b=>b.classList.toggle('pin',shown().includes(b._p)));
+    vib(10);toast(msg);
   }
   function restore(){DRG.saved.forEach(c=>phone.classList.add(c));DRG.saved=[]}
   function finish(cancel){
@@ -4074,16 +4087,12 @@ try{ENG.init()}catch(e){console.error(e)}
     DRG.on=false;DRG.armed=null;
     if(DRG.ghost){DRG.ghost.remove();DRG.ghost=null}
     if(DRG.src){DRG.src.classList.remove('lift');DRG.src=null}
-    $('dock').classList.remove('dk');phone.classList.remove('dragging');
+    $('dock').classList.remove('dk');$('dock').querySelectorAll('.dslot').forEach(e=>e.classList.remove('dslot'));phone.classList.remove('dragging');
     if(DRG.imm&&!DRG.moved&&!cancel){DRG.imm=false;restore();setTimeout(()=>openMenu(a),120);return}
     DRG.imm=false;
     if(t&&t.type==='cell'){closeAll();place(a.p,t.c,t.r);vib(10);toast(a.n+(DRG.fh?' moved':' added to home screen'))}
     else if(t&&t.type==='rm'){remove(a.p);toast(a.n+' removed from home screen')}
-    else if(t&&t.type==='dock'){
-      if(shown().includes(a.p)){closeAll();toast(a.n+' is already in the dock')}
-      else if(togglePin(a)!==false)closeAll();
-      else{if(!vf().includes(a.p)){favs=vf().concat(a.p);sv('mdc-favs',favs);sv('mdc-fseeded',true);try{renderChips()}catch(_){ERR(_,"c60")}toast(a.n+' added to Favs (dock is full)')}else toast(a.n+' is already in Favs');closeAll()}
-    }
+    else if(t&&t.type==='dock'){dockDrop(a,t.i||0);closeAll()}
     else restore();
   }
   document.addEventListener('pointermove',e=>{
@@ -6726,11 +6735,11 @@ function build(){if(!isOpen())return;const q=$('q').value.trim(),keep=cur();list
  paint()}
 function open(){$('q').value='';qi.value='';sbar.classList.remove('on');DC='All';ctSync();dr.classList.add('open');layout();stagger=!RMo&&CFG.openAnim!==false;foc=-1;build();stagger=false;try{vib(12)}catch(_){}}
 function stop(){mode='';cancelAnimationFrame(raf);raf=0;drag=null;sbar.classList.remove('on');bub.classList.remove('on')}
-YD.open=open;YD.stop=stop;YD.build=build;YD.relayout=()=>{if(isOpen()){layout();paint()}};YD.glide=glide;YD.fx=()=>{};YD.st={foc:-1,els:[]};
+YD.open=open;YD.stop=stop;YD.build=build;YD.relayout=()=>{if(isOpen()){layout();paint()}};YD.glide=glide;YD.cur=()=>cur();YD.fx=()=>{};YD.st={foc:-1,els:[]};
 new ResizeObserver(()=>{if(isOpen()){layout();paint()}}).observe(root);
 /* drag the wave */
 root.addEventListener('pointerdown',e=>{moved=false;if(e.target.closest('.awb,#awRail,#awSearch,#awFi,#awNm,#awCfg,#awCfgBtn'))return;drag={y:e.clientY,p:pos,t:e.timeStamp,ly:e.clientY,lt:e.timeStamp,v:0};mode='';});
-root.addEventListener('pointermove',e=>{if(!drag)return;const dy=e.clientY-drag.y;if(Math.abs(dy)>7)moved=true;if(!moved)return;const N=list.length;pos=clamp(drag.p-dy/(STEP*H),-.35,N-.65);
+root.addEventListener('pointermove',e=>{if(window.DRG&&DRG.on){drag=null;return}if(!drag)return;const dy=e.clientY-drag.y;if(Math.abs(dy)>7)moved=true;if(!moved)return;const N=list.length;pos=clamp(drag.p-dy/(STEP*H),-.35,N-.65);
  const dt=e.timeStamp-drag.lt;if(dt>0){drag.v=.6*drag.v+.4*(-(e.clientY-drag.ly)/(STEP*H)/(dt/1000));drag.ly=e.clientY;drag.lt=e.timeStamp}paint()});
 const end=()=>{if(!drag)return;const d=drag;drag=null;if(!moved)return;vel=clamp(d.v,-26,26);if(Math.abs(vel)>3)go('fling');else glide(Math.round(pos))};
 root.addEventListener('pointerup',end);root.addEventListener('pointercancel',end);
@@ -7256,6 +7265,16 @@ html.dc-mono #dial circle[fill=none]{stroke:rgba(255,255,255,.4)}
 .mseg button[aria-pressed=true]{background:linear-gradient(135deg,var(--c1),var(--c2));color:#06070b;border-color:transparent;box-shadow:0 0 12px rgba(var(--c1rgb),.35)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 </style>
+<style id="resetall-css">
+.resetall{margin:14px 0 6px;padding:12px;border:1px solid rgba(255,90,70,.35);border-radius:14px;background:rgba(255,70,50,.06)}
+.resetall button{display:block;width:100%;padding:11px;border:0;border-radius:11px;background:#d9382a;color:#fff;font:800 13px var(--f);cursor:pointer}
+.resetall button:active{transform:scale(.98)}
+.resetall small{display:block;margin-top:8px;font-size:9.5px;line-height:1.4;color:var(--dim)}
+</style>
+<style id="dnd-css">
+#dock .app.dslot{outline:2px solid var(--c1);outline-offset:3px;border-radius:16px;background:rgba(var(--c1rgb),.18)}
+.dghost{filter:drop-shadow(0 8px 14px rgba(0,0,0,.6))}
+</style>
 <style id="v75-platform-css">
 /* ===== v75 platform layer: reduced motion, battery, a11y, rotation / wide screens (additive) ===== */
 /* A. Reduce motion (Settings > Display & accessibility > Reduce motion, or the system "Remove animations" setting).
@@ -7405,6 +7424,50 @@ safe('v75rot',()=>{let tm=0;const re=()=>{clearTimeout(tm);tm=setTimeout(()=>saf
   if(screen.orientation&&screen.orientation.addEventListener)screen.orientation.addEventListener('change',re);
   const mq=matchMedia('(orientation:landscape)');(mq.addEventListener?mq.addEventListener('change',re):mq.addListener(re))});
 })();
+</script>
+<script id="dnd-js">
+(function(){try{
+var fi=document.getElementById('awFi');
+if(fi&&window.DRG&&window.YD){var t=0,sx=0,sy=0,sup=false;
+ fi.addEventListener('pointerdown',function(e){clearTimeout(t);sx=e.clientX;sy=e.clientY;var id=e.pointerId;
+  t=setTimeout(function(){var a=YD.cur&&YD.cur();if(a&&!DRG.on){sup=true;DRG.go(a,fi,sx,sy,id)}},(window.YTC&&YTC.lp?YTC.lp():420))});
+ ['pointerup','pointercancel','pointerleave'].forEach(function(ev){fi.addEventListener(ev,function(){clearTimeout(t)})});
+ fi.addEventListener('pointermove',function(e){if(Math.hypot(e.clientX-sx,e.clientY-sy)>10)clearTimeout(t)});
+ fi.addEventListener('click',function(e){if(sup){sup=false;e.stopImmediatePropagation();e.preventDefault()}},true);
+ document.addEventListener('pointerup',function(){setTimeout(function(){sup=false},400)},true)}
+var dr=document.getElementById('drawer'),shown=false;
+try{shown=localStorage.getItem('mdc-dndtip')==='1'}catch(e){}
+if(dr&&!shown)new MutationObserver(function(){if(dr.classList.contains('open')&&!shown){shown=true;try{localStorage.setItem('mdc-dndtip','1')}catch(e){}setTimeout(function(){try{toast('Hold an app, then drag it to the dock or home screen')}catch(e){}},900)}}).observe(dr,{attributes:true,attributeFilter:['class']});
+}catch(e){console.error('dnd',e)}})();
+</script>
+<script id="resetall-js">
+(function(){try{var b=document.getElementById('resetAll');if(!b)return;
+var armed=0,tm=0,lab=b.textContent;
+function disarm(){armed=0;clearTimeout(tm);b.textContent=lab;b.style.background=''}
+function wipe(){
+ try{localStorage.clear()}catch(e){}
+ try{sessionStorage.clear()}catch(e){}
+ try{if(window.indexedDB&&indexedDB.databases)indexedDB.databases().then(function(l){l.forEach(function(d){try{indexedDB.deleteDatabase(d.name)}catch(e){}})}).catch(function(){})}catch(e){}
+ try{if(window.caches)caches.keys().then(function(k){k.forEach(function(n){caches.delete(n)})}).catch(function(){})}catch(e){}
+ try{if(window.Android&&typeof Android.clearData==='function')Android.clearData()}catch(e){}
+}
+b.onclick=function(){
+ if(!armed){armed=1;b.textContent='Tap again to erase everything';b.style.background='#a81f14';tm=setTimeout(disarm,5000);return}
+ disarm();b.textContent='Resetting…';
+ wipe();
+ /* in-memory defaults too, in case the page cannot reload (previews, embedded views) */
+ try{Object.assign(S,SD);S.mode='std';S.mini=false;S.miniBak=null}catch(e){}
+ try{cur=THEMES.find(function(t){return t.n==='Forest'}).c.slice();applyTheme(cur,1)}catch(e){}
+ try{saveS()}catch(e){}
+ try{applySettings()}catch(e){}
+ try{wipe()}catch(e){}
+ setTimeout(function(){try{location.reload()}catch(e){try{location.href=location.href}catch(x){}}},150);
+ setTimeout(function(){b.textContent=lab},1500);
+};
+var sh=document.getElementById('sheet'),box=b.parentNode;
+function place(){try{var v=sh.querySelector('.ver');if(v&&v.parentNode&&v.previousElementSibling!==box)v.parentNode.insertBefore(box,v)}catch(e){}}
+place();setTimeout(place,600);new MutationObserver(place).observe(sh,{attributes:true,attributeFilter:['class']});
+}catch(e){console.error('resetall',e)}})();
 </script>
 </body>
 </html>

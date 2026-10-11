@@ -8,3 +8,5 @@ Base is the v1.51 page (Arc Wave drawer, matte look, Android platform layer). Pu
 
 Changed on the way: entering Stealth no longer opens the search overlay (the old code fired a `change` event that live preview reacted to).
 Left as v1.51: parallax tilt stays off, matte look, newer text and sizing code. Phones saved on Minimal stay on Minimal.
+- Settings: new "Reset all" button at the bottom (Simple and All settings). Wipes every saved launcher key (mdc-*, yoga*), then reloads to the Standard default.
+- Drag and drop: hold an app (or the big focused icon) in the Arc Wave drawer, drag to the dock (drops on the nearest slot: inserts, replaces when full, or moves) or to a home-screen cell. Slot highlights while dragging; one-time hint on first drawer open.
