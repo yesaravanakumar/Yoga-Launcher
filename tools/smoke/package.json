@@ -1,0 +1,1 @@
+{"name":"yoga-launcher-smoke","private":true,"description":"Headless checks for index.html (no phone needed)","scripts":{"load":"node smoke-load.js","monkey":"CLICKS=500 node smoke-monkey.js"},"dependencies":{"jsdom":"^24.0.0"}}

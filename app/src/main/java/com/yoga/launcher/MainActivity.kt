@@ -8,6 +8,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.database.ContentObserver
+import android.os.PowerManager
+import android.provider.Settings
+import android.view.WindowInsets
+import android.view.WindowManager
 import android.net.Uri
 import android.graphics.Color
 import android.os.Build
@@ -17,6 +22,10 @@ import android.os.Looper
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.webkit.GeolocationPermissions
+import android.webkit.JsPromptResult
+import android.webkit.JsResult
+import android.app.AlertDialog
+import android.widget.EditText
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
@@ -56,9 +65,14 @@ class MainActivity : Activity() {
     }
 
     // keeps the battery percentage in the page exact (the WebView's own battery API goes stale)
+    private var lastBatt = ""
     private val battReceiver = object : BroadcastReceiver() {
         override fun onReceive(c: Context?, i: Intent?) {
-            if (loaded) web.evaluateJavascript("window.setBattery&&window.setBattery(${bridge.getBattery()})", null)
+            if (!loaded) return
+            val b = bridge.getBattery()
+            if (b == lastBatt) return                 // voltage / temperature ticks: nothing the page shows has changed
+            lastBatt = b
+            web.evaluateJavascript("window.setBattery&&window.setBattery($b)", null)
         }
     }
 
@@ -71,11 +85,49 @@ class MainActivity : Activity() {
         }
     }
 
+    // Battery Saver and the system "Remove animations" switch are pushed to the page (it calms its decorative loops)
+    private val psReceiver = object : BroadcastReceiver() {
+        override fun onReceive(c: Context?, i: Intent?) { pushPlatform() }
+    }
+    private val animObserver = object : ContentObserver(handler) {
+        override fun onChange(selfChange: Boolean) { pushPlatform() }
+    }
+    private fun pushPlatform() {
+        if (!loaded) return
+        web.evaluateJavascript("window.setPowerSave&&window.setPowerSave(${bridge.isPowerSave()});window.setReduceMotion&&window.setReduceMotion(${bridge.getReduceMotion()})", null)
+    }
+
+    // Edge-to-edge (Android 11+): the page is drawn behind the bars and told the insets in dp. Older versions keep black bars.
+    private var insetsJs = ""
+    private fun setupEdgeToEdge(root: FrameLayout) {
+        window.statusBarColor = Color.BLACK
+        window.navigationBarColor = Color.BLACK
+        if (Build.VERSION.SDK_INT < 30) return
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
+        window.isStatusBarContrastEnforced = false
+        window.isNavigationBarContrastEnforced = false
+        window.attributes = window.attributes.apply {
+            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+        }
+        window.setDecorFitsSystemWindows(false)
+        root.setBackgroundColor(Color.BLACK)
+        root.setOnApplyWindowInsetsListener { v, ins ->
+            val bars = ins.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
+            val ime = ins.getInsets(WindowInsets.Type.ime()).bottom
+            // adjustResize no longer resizes the window when it is edge-to-edge, so the keyboard shrinks the WebView here instead
+            v.setPadding(0, 0, 0, ime)
+            val d = resources.displayMetrics.density
+            val bottom = if (ime > 0) 0 else bars.bottom           // the keyboard already covers the navigation bar
+            insetsJs = "window.setInsets&&window.setInsets({top:${bars.top / d},bottom:${bottom / d},left:${bars.left / d},right:${bars.right / d}})"
+            if (loaded) web.evaluateJavascript(insetsJs, null)
+            ins
+        }
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.statusBarColor = Color.BLACK
-        window.navigationBarColor = Color.BLACK
 
         web = WebView(this)
         web.setBackgroundColor(Color.BLACK)
@@ -83,6 +135,7 @@ class MainActivity : Activity() {
         val root = FrameLayout(this)
         root.addView(web, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         setContentView(root)
+        setupEdgeToEdge(root)
 
         web.settings.apply {
             javaScriptEnabled = true
@@ -118,6 +171,35 @@ class MainActivity : Activity() {
                 }
             }
 
+            // The WebView shows nothing for alert() / confirm() / prompt() unless these are implemented
+            // (without them confirm() silently returns false, so every "Are you sure?" action did nothing).
+            override fun onJsAlert(view: WebView, url: String?, message: String?, result: JsResult): Boolean {
+                if (isFinishing) { result.cancel(); return true }
+                AlertDialog.Builder(this@MainActivity).setMessage(message)
+                    .setPositiveButton(android.R.string.ok) { _, _ -> result.confirm() }
+                    .setOnCancelListener { result.cancel() }.show()
+                return true
+            }
+
+            override fun onJsConfirm(view: WebView, url: String?, message: String?, result: JsResult): Boolean {
+                if (isFinishing) { result.cancel(); return true }
+                AlertDialog.Builder(this@MainActivity).setMessage(message)
+                    .setPositiveButton(android.R.string.ok) { _, _ -> result.confirm() }
+                    .setNegativeButton(android.R.string.cancel) { _, _ -> result.cancel() }
+                    .setOnCancelListener { result.cancel() }.show()
+                return true
+            }
+
+            override fun onJsPrompt(view: WebView, url: String?, message: String?, defaultValue: String?, result: JsPromptResult): Boolean {
+                if (isFinishing) { result.cancel(); return true }
+                val input = EditText(this@MainActivity).apply { setText(defaultValue ?: ""); setSingleLine() }
+                AlertDialog.Builder(this@MainActivity).setMessage(message).setView(input)
+                    .setPositiveButton(android.R.string.ok) { _, _ -> result.confirm(input.text.toString()) }
+                    .setNegativeButton(android.R.string.cancel) { _, _ -> result.cancel() }
+                    .setOnCancelListener { result.cancel() }.show()
+                return true
+            }
+
             override fun onShowFileChooser(view: WebView, callback: ValueCallback<Array<Uri>>, params: FileChooserParams): Boolean {
                 fileCb?.onReceiveValue(null)
                 fileCb = callback
@@ -142,8 +224,9 @@ class MainActivity : Activity() {
 
             override fun onPageFinished(v: WebView, url: String) {
                 loaded = true
-                bridge.pushApps()
-                bridge.restore()
+                if (insetsJs.isNotEmpty()) web.evaluateJavascript(insetsJs, null)
+                pushPlatform()
+                bridge.pushApps { bridge.restore() }   // app scan runs off the UI thread; saved settings follow the app list, as before
             }
         }
         web.loadUrl("file:///android_asset/index.html")
@@ -166,9 +249,23 @@ class MainActivity : Activity() {
         else registerReceiver(pkgReceiver, pk)
     }
 
-    override fun onStart() { super.onStart(); widgets.onStart() }
+    override fun onStart() {
+        super.onStart()
+        widgets.onStart()
+        web.onResume()
+        val ps = IntentFilter(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
+        if (Build.VERSION.SDK_INT >= 33) registerReceiver(psReceiver, ps, Context.RECEIVER_NOT_EXPORTED) else registerReceiver(psReceiver, ps)
+        contentResolver.registerContentObserver(Settings.Global.getUriFor(Settings.Global.ANIMATOR_DURATION_SCALE), false, animObserver)
+        pushPlatform()
+    }
 
-    override fun onStop() { widgets.onStop(); super.onStop() }
+    override fun onStop() {
+        try { unregisterReceiver(psReceiver) } catch (_: Exception) {}
+        try { contentResolver.unregisterContentObserver(animObserver) } catch (_: Exception) {}
+        web.onPause()                       // another app is in front: stop rendering and page work
+        widgets.onStop()
+        super.onStop()
+    }
 
     override fun onResume() {
         super.onResume()
@@ -183,7 +280,7 @@ class MainActivity : Activity() {
         pausedAt = System.currentTimeMillis()
     }
 
-    /** Home button pressed while the launcher is already open: close drawers and go to the clock. */
+    /** Home button pressed while the launcher is already open: close every panel, leave edit modes, go to the clock. */
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         if (intent?.hasCategory(Intent.CATEGORY_HOME) == true) {
@@ -206,6 +303,8 @@ class MainActivity : Activity() {
             geoOrigin = null
         } else if (requestCode == 7 && grantResults.any { it == PackageManager.PERMISSION_GRANTED } && loaded) {
             web.evaluateJavascript("window.onContactsGranted&&window.onContactsGranted()", null)
+        } else if (requestCode == 7208 && grantResults.any { it == PackageManager.PERMISSION_GRANTED } && loaded) {
+            web.evaluateJavascript("window.onCalendarGranted&&window.onCalendarGranted()", null)
         }
         if (loaded) web.evaluateJavascript("window.onPermsChanged&&window.onPermsChanged()", null)
     }
@@ -213,7 +312,8 @@ class MainActivity : Activity() {
     @Deprecated("Activity result")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (widgets.onActivityResult(requestCode, resultCode, data)) return
-        if (requestCode == 7204) {
+        if (bridge.onSaveResult(requestCode, resultCode, data)) return
+        if (requestCode == 7206) {   // default-home role request
             if (loaded) web.evaluateJavascript("window.onPermsChanged&&window.onPermsChanged()", null)
         } else if (requestCode == REQ_VOICE) {
             val said = if (resultCode == RESULT_OK) data?.getStringArrayListExtra("android.speech.extra.RESULTS")?.firstOrNull() else null

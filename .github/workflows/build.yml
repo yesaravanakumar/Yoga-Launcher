@@ -13,12 +13,21 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v5
 
+      - name: Fail on leftover merge-conflict markers
+        run: |
+          if grep -rnIE '^(<<<<<<< |=======$|>>>>>>> )' app .github --include=*.kt --include=*.kts --include=*.xml --include=*.html --include=*.yml; then
+            echo "::error::Merge-conflict markers found - resolve them before building"; exit 1
+          fi
+
       - name: Set up Java
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
           cache: gradle
+
+      - name: Build index.html from app/src/web
+        run: node tools/build-web.js
 
       - name: Make Gradle executable
         run: chmod +x ./gradlew

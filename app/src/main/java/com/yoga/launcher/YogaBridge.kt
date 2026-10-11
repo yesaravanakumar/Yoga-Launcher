@@ -19,7 +19,6 @@ import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.util.Base64
 import java.io.ByteArrayOutputStream
@@ -49,26 +48,92 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
 
     private val prefs = act.getSharedPreferences("yoga", Context.MODE_PRIVATE)
     private val pm = act.packageManager
-    private fun ui(block: () -> Unit) = act.runOnUiThread { try { block() } catch (_: Exception) {} }
+    private fun ui(block: () -> Unit) = act.runOnUiThread {
+        try { block() } catch (e: Exception) { android.util.Log.w("YogaBridge", "bridge call failed", e) }   // never crash the launcher, but leave the reason in Logcat
+    }
     private fun js(code: String) = ui { web.evaluateJavascript(code, null) }
+
+    /** Runs [block] on the UI thread and returns its result to the page (false/default if it throws or takes > 1.5 s). */
+    private fun <T> uiResult(def: T, block: () -> T): T {
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            return try { block() } catch (e: Exception) { android.util.Log.w("YogaBridge", "bridge call failed", e); def }
+        }
+        val box = arrayOfNulls<Any>(1)
+        val latch = java.util.concurrent.CountDownLatch(1)
+        act.runOnUiThread {
+            try { box[0] = block() } catch (e: Exception) { android.util.Log.w("YogaBridge", "bridge call failed", e) } finally { latch.countDown() }
+        }
+        latch.await(1500, java.util.concurrent.TimeUnit.MILLISECONDS)
+        @Suppress("UNCHECKED_CAST") return (box[0] as T?) ?: def
+    }
+    private fun toast(msg: String) = Toast.makeText(act, msg, Toast.LENGTH_SHORT).show()
+
+    /** The page sends its error log lines here so they also show up in Logcat. */
+    @JavascriptInterface fun logError(msg: String) { android.util.Log.e("YogaPage", msg.take(300)) }
 
     // ---------- haptic detents (v1.48): real tick / click effects; returns false so the page can fall back to navigator.vibrate ----------
     private val hapticMotor: android.os.Vibrator? by lazy {
         try { act.getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator } catch (_: Exception) { null }
     }
-    /** kind: 0 = tick (light), 1 = click, 2 = heavy click (end stop). Needs Android 10+. */
+    /** kind: 0 = tick (light), 1 = click, 2 = heavy click (end stop).
+     *  Android 10+ uses the system's predefined effects; Android 8-9 a short one-shot.
+     *  If the phone's "touch feedback" switch is off we stay quiet but still answer true, so the page does not fall back to navigator.vibrate. */
     @JavascriptInterface fun haptic(kind: Int): Boolean {
         val v = hapticMotor ?: return false
-        if (Build.VERSION.SDK_INT < 29 || !v.hasVibrator()) return false
+        if (!v.hasVibrator()) return false
+        if (!touchFeedbackOn()) return true
         return try {
-            val id = when (kind) {
-                0 -> android.os.VibrationEffect.EFFECT_TICK
-                2 -> android.os.VibrationEffect.EFFECT_HEAVY_CLICK
-                else -> android.os.VibrationEffect.EFFECT_CLICK
+            if (Build.VERSION.SDK_INT >= 29) {
+                val id = when (kind) {
+                    0 -> android.os.VibrationEffect.EFFECT_TICK
+                    2 -> android.os.VibrationEffect.EFFECT_HEAVY_CLICK
+                    else -> android.os.VibrationEffect.EFFECT_CLICK
+                }
+                v.vibrate(android.os.VibrationEffect.createPredefined(id))
+            } else {
+                val ms = longArrayOf(6L, 10L, 22L)[kind.coerceIn(0, 2)]
+                v.vibrate(android.os.VibrationEffect.createOneShot(ms, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
             }
-            v.vibrate(android.os.VibrationEffect.createPredefined(id))
             true
         } catch (_: Exception) { false }
+    }
+
+    private fun touchFeedbackOn(): Boolean = try {
+        Settings.System.getInt(act.contentResolver, Settings.System.HAPTIC_FEEDBACK_ENABLED, 1) != 0
+    } catch (_: Exception) { true }
+
+    // ---------- v1.51 platform hooks (docs/V1.51_NOTES.md). Every one is optional for the page: it checks typeof first. ----------
+    @JavascriptInterface fun isDefaultLauncher(): Boolean = isDefaultHome()
+    @JavascriptInterface fun requestDefaultLauncher() = ui { openHomeSettings() }
+    @JavascriptInterface fun isPowerSave(): Boolean = try {
+        (act.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).isPowerSaveMode
+    } catch (_: Exception) { false }
+    /** true when the user turned "Remove animations" on (animator scale 0) */
+    @JavascriptInterface fun getReduceMotion(): Boolean = try {
+        Settings.Global.getFloat(act.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+    } catch (_: Exception) { false }
+
+    /** Android 10+ gesture navigation steals edge swipes. The page lists the rects (CSS px) that must keep their touches, e.g. the A-Z rail. */
+    @JavascriptInterface fun setGestureExclusion(json: String) {
+        if (Build.VERSION.SDK_INT < 29) return
+        val d = act.resources.displayMetrics.density
+        val rects = ArrayList<android.graphics.Rect>()
+        try {
+            val a = JSONArray(json)
+            for (i in 0 until minOf(a.length(), 16)) {
+                val r = a.getJSONArray(i)
+                rects.add(android.graphics.Rect((r.getInt(0) * d).toInt(), (r.getInt(1) * d).toInt(), (r.getInt(2) * d).toInt(), (r.getInt(3) * d).toInt()))
+            }
+        } catch (_: Exception) { return }
+        ui { web.systemGestureExclusionRects = rects }
+    }
+
+    /** Light page theme -> dark status / navigation bar icons (and back). Android 11+; older versions keep the black bars. */
+    @JavascriptInterface fun setBarsLight(light: Boolean) = ui {
+        if (Build.VERSION.SDK_INT >= 30) {
+            val m = android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+            act.window.insetsController?.setSystemBarsAppearance(if (light) m else 0, m)
+        }
     }
 
     // ---------- real Android widgets (hosted by YogaWidgets, set from MainActivity) ----------
@@ -79,16 +144,26 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
     @JavascriptInterface fun removeWidget(id: String) { widgets?.remove(id) }
 
     // ---------- apps ----------
-    @JavascriptInterface fun launch(pkg: String) = ui {
-        pm.getLaunchIntentForPackage(pkg)?.let { act.startActivity(it) }
+    /** true if the app was started; otherwise a toast tells the user why and the page gets false. */
+    @JavascriptInterface fun launch(pkg: String): Boolean = uiResult(false) {
+        val i = pm.getLaunchIntentForPackage(pkg)
+        if (i == null) { toast("That app can't be opened (removed or disabled)"); false }
+        else try { act.startActivity(i); true } catch (e: Exception) { toast("Could not open that app"); false }
     }
 
-    @JavascriptInterface fun appInfo(pkg: String) = ui {
-        act.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$pkg")))
+    @JavascriptInterface fun appInfo(pkg: String): Boolean = uiResult(false) {
+        try { act.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$pkg"))); true }
+        catch (e: Exception) { toast("Could not open app info"); false }
     }
 
-    @JavascriptInterface fun uninstall(pkg: String) = ui {
-        act.startActivity(Intent(Intent.ACTION_DELETE, Uri.parse("package:$pkg")))
+    @JavascriptInterface fun uninstall(pkg: String): Boolean = uiResult(false) {
+        val ai = try { pm.getApplicationInfo(pkg, 0) } catch (e: Exception) { null }
+        if (ai == null) { toast("That app is not installed"); return@uiResult false }
+        val system = (ai.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0 &&
+            (ai.flags and android.content.pm.ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 0
+        if (system) { toast("This is a system app. Android doesn't allow uninstalling it"); return@uiResult false }
+        try { act.startActivity(Intent(Intent.ACTION_DELETE, Uri.parse("package:$pkg"))); true }
+        catch (e: Exception) { toast("Could not start the uninstall"); false }
     }
 
     @JavascriptInterface fun getShortcuts(pkg: String): String = try {
@@ -104,17 +179,33 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
         out.toString()
     } catch (e: Exception) { "[]" }   // only works once this app is the default Home app
 
-    @JavascriptInterface fun launchShortcut(pkg: String, id: String) = ui {
-        act.getSystemService(LauncherApps::class.java)
-            .startShortcut(pkg, id, null, null, Process.myUserHandle())
+    @JavascriptInterface fun launchShortcut(pkg: String, id: String): Boolean = uiResult(false) {
+        try {
+            act.getSystemService(LauncherApps::class.java).startShortcut(pkg, id, null, null, Process.myUserHandle()); true
+        } catch (e: Exception) { toast("That shortcut isn't available. Make Yoga Launcher your default Home app"); false }
     }
 
-    /** Sends the installed-app list to the page (call after the page loads), then the real icons. */
+    /** One background thread for the app scan. It used to run on the UI thread inside onPageFinished
+     *  (queryIntentActivities + loadLabel for every installed app), which delays the first touch on slow phones. */
+    private val appScan = java.util.concurrent.Executors.newSingleThreadExecutor { r -> Thread(r, "yoga-appscan").also { it.isDaemon = true } }
+
+    /** Sends the installed-app list to the page (call after the page loads), then the real icons.
+     *  [after] runs on the same thread right after the list is sent, so "apps first, then saved settings" keeps its order. */
+    fun pushApps(after: (() -> Unit)? = null) {
+        try {
+            appScan.execute {
+                try { pushAppsNow() } catch (e: Exception) { android.util.Log.w("YogaBridge", "app scan failed", e) }
+                try { after?.invoke() } catch (e: Exception) { android.util.Log.w("YogaBridge", "after-scan step failed", e) }
+            }
+        } catch (_: java.util.concurrent.RejectedExecutionException) {}
+    }
+
     @Suppress("DEPRECATION")
-    fun pushApps() {
+    private fun pushAppsNow() {
         val i = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
         val labelled = pm.queryIntentActivities(i, 0)
             .filter { it.activityInfo.packageName != act.packageName }
+            .distinctBy { it.activityInfo.packageName }      // apps with several launcher entries would otherwise show twice
             .map { it to it.loadLabel(pm).toString() }
             .sortedBy { it.second.lowercase() }
         val infos = labelled.map { it.first }
@@ -146,6 +237,7 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
     }
 
     // ---------- real app icons ----------
+    private companion object { const val ICON_PX = 96; const val ICON_QUALITY = 82 }
     private val iconCache = java.util.concurrent.ConcurrentHashMap<String, String>()
     @Volatile private var iconJob: Thread? = null
 
@@ -170,25 +262,74 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
         }.also { it.isDaemon = true; it.start() }
     }
 
-    private fun toDataUri(d: Drawable, size: Int = 128): String {
-        val bmp = if (d is BitmapDrawable && d.bitmap != null) Bitmap.createScaledBitmap(d.bitmap, size, size, true)
-        else Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888).also { b ->
-            val c = Canvas(b); d.setBounds(0, 0, size, size); d.draw(c)   // adaptive icons: background + foreground layers
-        }
+    /** 96 px WebP instead of the old 128 px PNG: a smaller base64 payload for the page to decode. */
+    @Suppress("DEPRECATION")
+    private fun toDataUri(d: Drawable, size: Int = ICON_PX): String {
+        val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val c = Canvas(bmp)
+        d.setBounds(0, 0, size, size); d.draw(c)   // works for plain and adaptive icons (background + foreground layers)
         val out = ByteArrayOutputStream()
-        bmp.compress(Bitmap.CompressFormat.PNG, 100, out)
-        return "data:image/png;base64," + Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
+        val fmt = if (Build.VERSION.SDK_INT >= 30) Bitmap.CompressFormat.WEBP_LOSSY else Bitmap.CompressFormat.WEBP
+        bmp.compress(fmt, ICON_QUALITY, out)
+        bmp.recycle()
+        return "data:image/webp;base64," + Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
     }
 
     // ---------- links & search ----------
-    @JavascriptInterface fun openUrl(url: String) = ui {
+    @JavascriptInterface fun openUrl(url: String): Boolean = uiResult(false) {
         val u = Uri.parse(url)
-        when (u.scheme?.lowercase()) {
-            "http", "https" -> act.startActivity(Intent(Intent.ACTION_VIEW, u))
-            "tel" -> act.startActivity(Intent(Intent.ACTION_DIAL, u))
-            "sms", "smsto" -> act.startActivity(Intent(Intent.ACTION_SENDTO, u))
-            else -> {}
+        val i = when (u.scheme?.lowercase()) {
+            "http", "https" -> Intent(Intent.ACTION_VIEW, u)
+            "tel" -> Intent(Intent.ACTION_DIAL, u)
+            "sms", "smsto" -> Intent(Intent.ACTION_SENDTO, u)
+            else -> { toast("Can't open that kind of link"); return@uiResult false }
         }
+        try { act.startActivity(i); true } catch (e: Exception) { toast("No app can open that link"); false }
+    }
+
+    // ---------- clipboard, sharing, saving files ----------
+    /** Puts text on the clipboard. Returns true when Android accepted it. */
+    @JavascriptInterface fun copyText(text: String): Boolean = uiResult(false) {
+        val cm = act.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        cm.setPrimaryClip(android.content.ClipData.newPlainText("Yoga Launcher", text)); true
+    }
+
+    /** Opens Android's share sheet with plain text. */
+    @JavascriptInterface fun shareText(text: String): Boolean = uiResult(false) {
+        try {
+            val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
+            act.startActivity(Intent.createChooser(send, "Share via")); true
+        } catch (e: Exception) { toast("Nothing to share with"); false }
+    }
+
+    private var pendingSave: Triple<String, String, String>? = null
+    private val REQ_SAVE = 7210
+    /** Android's "Save as" screen. The page is told the outcome through window.onFileSaved(ok, name). Returns true if the screen opened. */
+    @JavascriptInterface fun saveFile(name: String, mime: String, content: String): Boolean = uiResult(false) {
+        if (content.length > 4_000_000) { toast("That file is too large to save from here"); return@uiResult false }
+        val safe = name.replace(Regex("[\\\\/:*?\"<>|]"), "_").take(80).ifBlank { "yoga-launcher.json" }
+        pendingSave = Triple(safe, mime.ifBlank { "application/octet-stream" }, content)
+        try {
+            val i = Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+                .setType(pendingSave!!.second).putExtra(Intent.EXTRA_TITLE, safe)
+            act.startActivityForResult(i, REQ_SAVE); true
+        } catch (e: Exception) { pendingSave = null; toast("No file manager is available to save to"); false }
+    }
+
+    /** Called from MainActivity.onActivityResult. Returns true if the result was ours. */
+    fun onSaveResult(code: Int, resultCode: Int, data: Intent?): Boolean {
+        if (code != REQ_SAVE) return false
+        val p = pendingSave; pendingSave = null
+        val uri = if (resultCode == Activity.RESULT_OK) data?.data else null
+        if (p == null || uri == null) { js("window.onFileSaved&&window.onFileSaved(false,${JSONObject.quote(p?.first ?: "")},true)"); return true }
+        Thread {
+            val ok = try {
+                act.contentResolver.openOutputStream(uri, "wt")?.use { it.write(p.third.toByteArray(Charsets.UTF_8)); true } ?: false
+            } catch (e: Exception) { false }
+            ui { toast(if (ok) "Saved " + p.first else "Could not save the file") }
+            js("window.onFileSaved&&window.onFileSaved($ok,${JSONObject.quote(p.first)},false)")
+        }.start()
+        return true
     }
 
     @JavascriptInterface fun search(q: String) = ui {
@@ -200,11 +341,19 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
     }
 
     /** Non-blocking version: the network call runs on its own thread and the result is pushed back to window.__sug(id, [...]). */
+    // search suggestions: one request at a time (was a new Thread per keystroke); a request the user has already typed past is
+    // answered with [] at once, which is what the page's own 2.5 s timeout would have done
+    private val sugPool = java.util.concurrent.ThreadPoolExecutor(1, 1, 0L, java.util.concurrent.TimeUnit.SECONDS,
+        java.util.concurrent.LinkedBlockingQueue<Runnable>(), { r -> Thread(r, "yoga-suggest").also { it.isDaemon = true } })
+    @Volatile private var sugLatest = 0
     @JavascriptInterface fun suggestAsync(q: String, id: Int) {
-        Thread {
-            val r = suggest(q)
-            js("window.__sug&&window.__sug($id,$r)")
-        }.start()
+        sugLatest = id
+        try {
+            sugPool.execute {
+                val r = if (id != sugLatest) "[]" else suggest(q)
+                js("window.__sug&&window.__sug($id,$r)")
+            }
+        } catch (_: java.util.concurrent.RejectedExecutionException) { js("window.__sug&&window.__sug($id,[])") }
     }
 
     @JavascriptInterface fun suggest(q: String): String = try {
@@ -232,7 +381,7 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
         act.checkSelfPermission(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
 
     /** Shows Android's Contacts permission dialog. MainActivity tells the page when it is granted (window.onContactsGranted). */
-    @JavascriptInterface fun askContacts() = ui { act.requestPermissions(arrayOf(Manifest.permission.READ_CONTACTS), 7) }
+    @JavascriptInterface fun askContacts() = ui { askRuntime(arrayOf(Manifest.permission.READ_CONTACTS), 7) }
 
     /** Whole address book for the app drawer's Contacts group: [{"n":"Name","p":"number"}], one entry per person+number. */
     @JavascriptInterface fun getContacts(): String {
@@ -258,7 +407,7 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
     @JavascriptInterface fun searchContacts(q: String): String {
         if (act.checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
             // ask once per session, not on every keystroke
-            if (!askedContacts) { askedContacts = true; ui { act.requestPermissions(arrayOf(Manifest.permission.READ_CONTACTS), 7) } }
+            if (!askedContacts) { askedContacts = true; ui { askRuntime(arrayOf(Manifest.permission.READ_CONTACTS), 7) } }
             return "[]"
         }
         val out = JSONArray()
@@ -286,8 +435,11 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
         (am.nextAlarmClock?.triggerTime ?: 0L).toString()
     } catch (_: Exception) { "0" }
 
+    @JavascriptInterface fun hasCalendarPerm(): Boolean = granted(Manifest.permission.READ_CALENDAR)
+
     @JavascriptInterface fun requestCalendar() = ui {
-        act.requestPermissions(arrayOf(Manifest.permission.READ_CALENDAR), 7203)
+        if (granted(Manifest.permission.READ_CALENDAR)) js("window.onCalendarGranted&&window.onCalendarGranted()")
+        else askRuntime(arrayOf(Manifest.permission.READ_CALENDAR), 7208)
     }
 
     @JavascriptInterface fun getNextEvent(): String {
@@ -532,12 +684,15 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
         if (Build.VERSION.SDK_INT >= 29) {
             val rm = act.getSystemService(RoleManager::class.java)
             if (rm != null && rm.isRoleAvailable(RoleManager.ROLE_HOME) && !rm.isRoleHeld(RoleManager.ROLE_HOME)) {
-                act.startActivityForResult(rm.createRequestRoleIntent(RoleManager.ROLE_HOME), 7204)
+                act.startActivityForResult(rm.createRequestRoleIntent(RoleManager.ROLE_HOME), 7206)   // not 7204: that is the widget picker's code
                 return
             }
         }
-        try { act.startActivity(Intent(Settings.ACTION_HOME_SETTINGS)) }
-        catch (_: Exception) { act.startActivity(Intent(Settings.ACTION_SETTINGS)) }
+        // role dialog unavailable (older Android, some OEM builds): Home settings, then the default-apps list, then Settings
+        for (a in arrayOf(Settings.ACTION_HOME_SETTINGS, Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS, Settings.ACTION_SETTINGS)) {
+            try { act.startActivity(Intent(a)); return } catch (_: Exception) {}
+        }
+        web.evaluateJavascript("window.YPLAT&&window.YPLAT.homeHelp()", null)   // nothing opened: the page shows the manual steps
     }
 
     /** Every row in Permissions & system: ask if it is off, open the right settings page if it is already on. */
@@ -550,12 +705,24 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
             "access" -> act.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
             "location" -> if (granted(coarse) || granted(fine)) appDetails() else askRuntime(arrayOf(coarse, fine), 7205)
             "contacts" -> if (hasContactsPerm()) appDetails() else askRuntime(arrayOf(Manifest.permission.READ_CONTACTS), 7)
-            "calendar" -> if (granted(Manifest.permission.READ_CALENDAR)) appDetails() else askRuntime(arrayOf(Manifest.permission.READ_CALENDAR), 7203)
+            "calendar" -> if (granted(Manifest.permission.READ_CALENDAR)) appDetails() else askRuntime(arrayOf(Manifest.permission.READ_CALENDAR), 7208)
             else -> appDetails()
         }
     }
 
-    private var torchOn = false
+    @Volatile private var torchOn = false
+    private var torchId: String? = null
+    private val torchCb = object : CameraManager.TorchCallback() {
+        override fun onTorchModeChanged(cameraId: String, enabled: Boolean) { if (cameraId == torchId) torchOn = enabled }
+    }
+    init {
+        // keep torchOn equal to the real flashlight state (it can be switched off from the quick settings too)
+        try {
+            val cm = act.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+            torchId = cm.cameraIdList.firstOrNull { cm.getCameraCharacteristics(it).get(CameraCharacteristics.FLASH_INFO_AVAILABLE) == true }
+            cm.registerTorchCallback(torchCb, android.os.Handler(android.os.Looper.getMainLooper()))
+        } catch (_: Exception) {}
+    }
 
     /** Gesture actions: shade, qs, recents, shot (need the Accessibility service), torch, camera. Returns ok / on / off / need:access / fail. */
     @JavascriptInterface fun sysAction(name: String): String {
@@ -569,11 +736,11 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
                 "qs" -> glob(AccessibilityService.GLOBAL_ACTION_QUICK_SETTINGS)
                 "recents" -> glob(AccessibilityService.GLOBAL_ACTION_RECENTS)
                 "shot" -> if (Build.VERSION.SDK_INT >= 28) glob(AccessibilityService.GLOBAL_ACTION_TAKE_SCREENSHOT) else "fail"
-                "camera" -> { ui { act.startActivity(Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)) }; "ok" }
+                "camera" -> if (uiResult(false) { act.startActivity(Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)); true }) "ok" else "fail"
                 "torch" -> {
                     val cm = act.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-                    val id = cm.cameraIdList.firstOrNull { cm.getCameraCharacteristics(it).get(CameraCharacteristics.FLASH_INFO_AVAILABLE) == true }
-                    if (id == null) "fail" else { torchOn = !torchOn; cm.setTorchMode(id, torchOn); if (torchOn) "on" else "off" }
+                    val id = torchId
+                    if (id == null) "fail" else { val want = !torchOn; cm.setTorchMode(id, want); torchOn = want; if (want) "on" else "off" }
                 }
                 else -> "fail"
             }
@@ -583,8 +750,11 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
     // ---------- lock screen ----------
     @JavascriptInterface fun lockScreen() = ui {
         val svc = LockService.inst
-        if (Build.VERSION.SDK_INT >= 28 && svc != null) svc.performGlobalAction(AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN)
-        else {
+        if (Build.VERSION.SDK_INT < 28) {
+            Toast.makeText(act, "Locking from the launcher needs Android 9 or newer", Toast.LENGTH_LONG).show()
+        } else if (svc != null) {
+            if (!svc.performGlobalAction(AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN)) Toast.makeText(act, "Android refused to lock the screen", Toast.LENGTH_SHORT).show()
+        } else {
             Toast.makeText(act, "Turn on \"Yoga Launcher lock\" in Accessibility", Toast.LENGTH_LONG).show()
             act.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
