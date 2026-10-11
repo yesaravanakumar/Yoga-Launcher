@@ -1531,7 +1531,7 @@ addEventListener('error',ev=>ERR(ev.error||ev.message,'uncaught'));
 var ASET={pre:[],post:[]};
 addEventListener('unhandledrejection',ev=>ERR(ev.reason,'promise'));
 /* single source of truth for the version label: window title, Settings footer, About, and the Android build (window.APP_VER / <meta name="app-version">) */
-const APP_VER='v1.51';
+const APP_VER='v1.55';
 window.APP_VER=APP_VER;document.title='Yoga Launcher \u2022 '+APP_VER;
 {const m=document.createElement('meta');m.name='app-version';m.content=APP_VER;document.head.appendChild(m)}
 const NS='http://www.w3.org/2000/svg', $=id=>document.getElementById(id), p2=v=>String(v).padStart(2,'0');
@@ -6533,7 +6533,7 @@ let list=[],pos=0,vel=0,mode='',tgt=0,raf=0,last=0,foc=-1,W=360,H=780,drag=null,
 const isOpen=()=>dr.classList.contains('open'),cur=()=>list[foc],clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const geo=()=>{W=root.clientWidth||360;H=root.clientHeight||780};
 /* ONE curve for the whole drawer: trk(y) is the x of the flow line at height y. Apps, the focused app and the red line all use it, so nothing can drift off the line. */
-const CFG0={lineX:.80,lineC:1.9,step:.123,dialX:.40,dialR:.40,ltrR:.50,ltrX:0,ltrS:1,icS:1,nmS:1,names:true,rail:true,scan:true,anim:true,acc:'',minimal:false,shape:'auto',gloss:true,dof:true,float:true,lines:true,rings:true,wedge:true,bub:true,hapx:true,glide:.05,snapS:13,tapSel:false,openAnim:true,dim:0,btnS:1,focS:1,bCt:true,bEdit:true,bStar:true,bHome:true,bPlay:true,bInfo:true,bDel:true};
+const CFG0={lineX:.80,lineC:1.9,step:.123,dialX:.40,dialR:.40,ltrR:.50,ltrX:0,ltrS:1,icS:1,nmS:1,names:true,rail:true,scan:true,anim:true,acc:'',minimal:false,shape:'auto',gloss:true,dof:true,float:true,lines:true,rings:true,wedge:true,bub:true,hapx:true,glide:.05,snapS:13,tapSel:false,openAnim:true,dim:0,btnS:1,focS:1,bCt:true,bEdit:true,bStar:true,bHome:true,bPlay:true,bInfo:true,bDel:true,bdot:true,bnew:true};
 const CFG=Object.assign({},CFG0,(()=>{try{const o=JSON.parse(localStorage.getItem('aw-cfg'));return o&&typeof o==='object'?o:{}}catch(e){return {}}})());STEP=CFG.step;
 const FOC=.56;let PUSH=.065;
 const trk=y=>{const t=y/H-.56;return(CFG.lineX-CFG.lineC*t*t)*W};
@@ -6611,9 +6611,30 @@ function layout(){geo();art.setAttribute('viewBox','0 0 '+W+' '+H);art.textConte
  bub.style.left=.17*W+'px';bub.style.top=YD0()+'px';
  art.appendChild(hud());root.style.setProperty('--awH',H+'px');
 }
+/* v1.55: notification dots / counts and NEW badges on the arc. Same data as the Grid drawer: YG.badges (Android notification counts) and mdc-new (just-installed apps).
+   Settings that already exist keep working: Notification badges (nbd), Counts (nbn), NEW badges (pmon), Hide smart card and NEW badges (shin). */
+const BD={n:{},nw:{},dot:true,cnt:true,nwOn:true};let bdT=0;
+function bdSnap(){try{BD.dot=CFG.bdot!==false&&S.nbd!==false;BD.cnt=S.nbn!==false;BD.nwOn=CFG.bnew!==false&&!!S.pmon;
+ BD.n=(window.YG&&YG.badges&&typeof YG.badges==='object')?YG.badges:{};
+ BD.nw=(BD.nwOn&&typeof newMap==='function')?newMap():{}}catch(e){BD.n={};BD.nw={}}}
+function bdPull(){try{const o=[window.YogaNative,window.Android].find(x=>x&&typeof x.getBadges==='function');
+ if(o&&window.YG&&!YG.demo){const v=JSON.parse(o.getBadges()||'null');if(v&&typeof v==='object')YG.badges=v}}catch(e){}}
+const bdN=a=>{if(!a||a.ct||!BD.dot)return 0;const v=BD.n[a.p];return typeof v==='number'?v:(v&&+v.n)||0};
+const bdNew=a=>!!(a&&!a.ct&&BD.nwOn&&BD.nw[a.p]);
+const bdTxt=a=>{const n=bdN(a),t=[];if(n>0)t.push(n===1?'1 notification':n+' notifications');if(bdNew(a))t.push('new app');return t.length?', '+t.join(', '):''};
+function bdDecor(host,a){const ic=host&&host.querySelector('.ic');if(!ic)return;
+ const n=bdN(a),nw=bdNew(a);let d=ic.querySelector('.awbd'),w=ic.querySelector('.awnw');
+ if(n>0){if(!d){d=document.createElement('i');d.className='awbd';d.setAttribute('aria-hidden','true');ic.appendChild(d)}
+  const t=BD.cnt?(n>99?'99+':String(n)):'';if(d.textContent!==t)d.textContent=t;d.classList.toggle('n',!!t)}else if(d)d.remove();
+ if(nw){if(!w){w=document.createElement('i');w.className='awnw';w.setAttribute('aria-hidden','true');w.textContent='NEW';ic.appendChild(w)}}else if(w)w.remove();
+ ic.classList.toggle('awbx',n>0||nw);
+ if(host!==fi){const x=bdTxt(a);if(x)host.setAttribute('aria-label',a.n+x);else host.removeAttribute('aria-label')}}
+function bdSr(a){const o=nm.querySelector('.awsr');if(o)o.remove();const x=bdTxt(a);if(x){const r=document.createElement('span');r.className='awsr';r.textContent=x;nm.appendChild(r)}}
+function bdRefresh(){bdSnap();els.forEach((e,i)=>bdDecor(e,list[i]));const a=cur();if(a){bdDecor(fi,a);bdSr(a)}}
+function bdStart(){clearInterval(bdT);bdT=setInterval(()=>{if(!isOpen()){clearInterval(bdT);return}if(document.hidden)return;bdPull();bdRefresh()},8000)}
 function mk(a){const b=document.createElement('button');b.className='awi'+(stagger?' in':'');b.type='button';b.appendChild(icon(a));const s=document.createElement('span');s.textContent=a.n;b.appendChild(s);
- hold(b,a);b.onclick=()=>{const i=list.indexOf(a);if(CFG.tapSel&&i>=0&&i!==foc){glide(i);return}closeAll();launch(a)};return b}
-function setFocus(f){foc=f;const a=list[f];if(!a)return;fi.replaceChildren(icon(a));nm.textContent=a.n;placeNm();
+ hold(b,a);b.onclick=()=>{const i=list.indexOf(a);if(CFG.tapSel&&i>=0&&i!==foc){glide(i);return}closeAll();launch(a)};bdDecor(b,a);return b}
+function setFocus(f){foc=f;const a=list[f];if(!a)return;fi.replaceChildren(icon(a));nm.textContent=a.n;bdDecor(fi,a);bdSr(a);placeNm();
  [fi,nm].forEach(e=>{e.classList.remove('pop');void e.offsetWidth;if(!RMo)e.classList.add('pop')});
  
  starPaint(a);
@@ -6638,8 +6659,10 @@ function build(){if(!isOpen())return;const q=$('q').value.trim(),keep=cur();list
  root.classList.toggle('empty',!list.length);
  if(!list.length){$('awEmpty').firstChild.textContent=ALLQ()?'No apps or contacts found':DC==='Contacts'?(q?'No contacts found':'No contacts'):(q?'No apps found':'No apps');const o=$('awEmpty').querySelector('button');if(o)o.remove();if(q&&DC!=='Contacts'){const b=document.createElement('button');b.type='button';b.textContent='Search the web';b.onclick=()=>webSearch(q);$('awEmpty').appendChild(b)}}
  paint()}
-function open(){$('q').value='';qi.value='';sbar.classList.remove('on');DC='All';ctSync();dr.classList.add('open');layout();stagger=!RMo&&CFG.openAnim!==false;foc=-1;build();stagger=false;try{vib(12)}catch(_){}}
-function stop(){mode='';cancelAnimationFrame(raf);raf=0;drag=null;sbar.classList.remove('on');bub.classList.remove('on')}
+function open(){$('q').value='';qi.value='';sbar.classList.remove('on');DC='All';ctSync();dr.classList.add('open');layout();stagger=!RMo&&CFG.openAnim!==false;foc=-1;bdPull();bdSnap();build();stagger=false;bdStart();try{vib(12)}catch(_){}}
+function stop(){mode='';clearInterval(bdT);cancelAnimationFrame(raf);raf=0;drag=null;sbar.classList.remove('on');bub.classList.remove('on')}
+/* v1.55: repaint the arc badges when the page is handed new notification counts */
+['setBadges','onBadges'].forEach(k=>{const f=window[k];if(typeof f==='function')window[k]=function(){const r=f.apply(this,arguments);try{if(isOpen())bdRefresh()}catch(e){}return r}});
 YD.open=open;YD.stop=stop;YD.build=build;YD.relayout=()=>{if(isOpen()){layout();paint()}};YD.glide=glide;YD.cur=()=>cur();YD.fx=()=>{};YD.st={foc:-1,els:[]};
 new ResizeObserver(()=>{if(isOpen()){layout();paint()}}).observe(root);
 /* drag the wave */
@@ -6745,7 +6768,7 @@ const SH=[
  ['Apps',[['lineX','Line position',.5,.95,.01],['lineC','Line curve',0,3.5,.05],['step','App spacing',.07,.2,.002],['icS','Icon size',.6,1.5,.05],['focS','Selected icon size',.7,1.6,.05],['nmS','Name size',.6,1.5,.05],['glide','Scroll glide',.01,.3,.01],['snapS','Snap speed',6,24,1]],[['names','Show app names'],['tapSel','Tap selects before opening'],['openAnim','Open animation']],[['shape','Icon shape',[['auto','Mixed'],['ci','Circle'],['sq','Squircle'],['rs','Square']]]]],
  ['Dial',[['dialX','Dial position',.15,.65,.01],['dialR','Dial size',.25,.65,.01],['btnS','Button size',.7,1.4,.05]],[['scan','Scan line'],['anim','Animations'],['wedge','Dial strip'],['rings','Dial rings and marks'],['bCt','Contacts button'],['bEdit','Options button'],['bStar','Pin button'],['bHome','Add-to-home button'],['bPlay','Play Store button'],['bInfo','App info button'],['bDel','Uninstall button']],[]],
  ['Letters',[['ltrR','Letters curve',.3,.9,.01],['ltrX','Letters shift',-40,80,1],['ltrS','Letters size',.6,1.6,.05]],[['rail','Show A-Z'],['bub','Letter bubble']],[]],
- ['Look',[['dim','Background dim',0,.7,.02]],[['gloss','Glossy icons'],['dof','Depth blur'],['float','Floating selected icon'],['lines','Arc lines'],['hapx','Haptic ticks']],[]]];
+ ['Look',[['dim','Background dim',0,.7,.02]],[['gloss','Glossy icons'],['dof','Depth blur'],['float','Floating selected icon'],['lines','Arc lines'],['hapx','Haptic ticks'],['bdot','Notification dots and counts'],['bnew','NEW badges']],[]]];
 const QK=['lineX','step','icS','dialX','dialR','btnS'],QS=[];SH.forEach(g=>g[1].forEach(r=>{if(QK.includes(r[0]))QS[QK.indexOf(r[0])]=r}));
 SH.unshift(['Quick',QS,[['names','Show app names'],['rail','Show A-Z']],[],1]);SH[SH.findIndex(g=>g[0]==='Look')].push(1);
 const ACC=['','#ff6b6b','#ffb347','#f0c75e','#7df97f','#5ec8ff','#b58cff','#ff7ad9'];
@@ -6765,7 +6788,7 @@ function apply(){
  root.style.setProperty('--awi',CFG.icS);root.style.setProperty('--awn',CFG.nmS);root.style.setProperty('--awl',CFG.ltrS);
  if(CFG.acc){root.style.setProperty('--c1',CFG.acc);const h=CFG.acc.replace('#','');root.style.setProperty('--c1rgb',[0,2,4].map(i=>parseInt(h.substr(i,2),16)).join(','))}
  else{root.style.removeProperty('--c1');root.style.removeProperty('--c1rgb')}
- try{layout();arcRail();paint()}catch(e){}}
+ try{layout();arcRail();paint()}catch(e){}try{bdRefresh()}catch(e){}}
 function draw(){
  tb.innerHTML='';SH.forEach((g,i)=>{const b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-selected',String(i===tab));b.textContent=g[0];b.className=i===tab?'on':'';b.onclick=()=>{tab=i;draw()};tb.appendChild(b)});
  const ta=tb.querySelector('.on');if(ta)tb.scrollLeft=Math.max(0,ta.offsetLeft-12);
@@ -6820,6 +6843,20 @@ if(document.readyState==='complete')setTimeout(go,300);else addEventListener('lo
 /* 16 reduced motion respected  17 battery: nothing animates while the drawer is closed */
 @media (prefers-reduced-motion:reduce){#aw .awo,#aw .jv-spin,#aw .jv-spinr,#aw .jv-pulse,#aw #awScan{animation:none!important}}
 .drawer:not(.open) #aw *{animation-play-state:paused!important}
+</style>
+<style id="v76-arc-badges">
+/* v1.55: notification dots / counts (top-right of the icon) and NEW badges (bottom edge) on the arc, for the wave and the selected icon */
+#aw .ic.awbx{overflow:visible}
+#aw .ic.awbx>img,#aw .ic.awbx>svg{border-radius:inherit}
+#aw .ic .awbd{position:absolute;top:-3px;right:-3px;z-index:4;min-width:12px;height:12px;box-sizing:border-box;border-radius:7px;background:var(--c1);color:#06070b;font:800 9px/12px var(--f);font-style:normal;text-align:center;pointer-events:none;box-shadow:0 0 0 2px #0a1115,0 0 10px rgba(var(--c1rgb),.85)}
+#aw .ic .awbd.n{min-width:18px;height:18px;top:-7px;right:-7px;padding:0 5px;border-radius:9px;font-size:10.5px;line-height:18px}
+#aw .ic .awnw{position:absolute;left:50%;bottom:-7px;translate:-50% 0;z-index:4;padding:1px 6px;border-radius:7px;background:var(--c1);color:#06070b;font:800 8px/11px var(--f);font-style:normal;letter-spacing:1px;pointer-events:none;box-shadow:0 0 0 2px #0a1115}
+#aw #awFi .ic .awbd{top:-4px;right:-4px}#aw #awFi .ic .awbd.n{top:-8px;right:-8px}
+#awNm .awsr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+html.nbdoff #aw .awbd,html.shin #aw .awbd,html.shin #aw .awnw{display:none}
+@media (prefers-reduced-motion:no-preference){#aw:not(.noanim) .ic .awbd{animation:awBdP 2.4s ease-in-out infinite}}
+@keyframes awBdP{50%{transform:scale(1.14)}}
+.phone.performance #aw .awbd{animation:none!important}
 </style>
 <script id="v61-aw-keys">
 (function(){try{

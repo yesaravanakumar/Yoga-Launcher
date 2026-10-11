@@ -12,3 +12,6 @@ The app drawer now looks like the reference screenshot:
 Code: `<script id="v60-arcwave">` at the end of index.html. It takes over YD.open, YD.stop, YD.build and YD.relayout.
 The old Crescent drawer code is still in the file, hidden and unused. Remove it in the dead-code stage.
 Category chips, drawer style picker and multi-select are not shown in this drawer.
+
+## Badges (v1.55)
+Notification dots / counts and NEW pills are drawn on the wave icons and the selected icon. See `V1.55_NOTES.md`.
