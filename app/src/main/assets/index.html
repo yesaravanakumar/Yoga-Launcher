@@ -2655,7 +2655,7 @@ const YD=window.YD=(()=>{
   window.drawerStyle={get:()=>DSTL,set:setStyle};
   function popBuild(){
     sPop.textContent='';
-    DSTYLES.forEach(([id,nm,ds])=>{const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',String(DSTL===id));
+    DSTYLES.filter(x=>x[0]!=='arc').forEach(([id,nm,ds])=>{const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',String(DSTL===id));
       const t=document.createElement('b');t.textContent=nm;const s=document.createElement('small');s.textContent=ds;b.appendChild(t);b.appendChild(s);
       b.onclick=()=>{sPop.hidden=true;sBtn.setAttribute('aria-expanded','false');setStyle(id)};sPop.appendChild(b)});
   }
@@ -6516,7 +6516,7 @@ background:#030304 linear-gradient(rgba(var(--c1rgb),.05) 1px,transparent 1px) 0
 <script id="v60-arcwave">
 /* Arc Wave drawer: apps flow along a curve, the selected app sits on a dial with its own action wheel, A-Z rail on the right. */
 (()=>{'use strict';
-const dr=document.getElementById('drawer');if(!dr||!window.YD||dr.dataset.aw)return;dr.dataset.aw='1';dr.classList.add('aw');
+const dr=document.getElementById('drawer');if(!dr||!window.YD||dr.dataset.aw)return;dr.dataset.aw='1';dr.classList.add('aw');window.__YD0=Object.assign({},YD);
 let STEP=.123;const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
 const ic=d=>'<svg viewBox="0 0 24 24">'+d+'</svg>';
 const G={edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',star:'<path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.7 6.6 19.7l1.1-6.1L3.2 9.4l6.1-.8z"/>',home:'<path d="M3.5 11 12 3.5 20.5 11"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/>',play:'<path d="M5 3.5v17l14-8.5z"/>',info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/>',del:'<path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/>',tab:'<path d="M2 2l16 15L2 32z" />',sr:'<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',ct:'<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c.6-4 3.7-6 7.5-6s6.9 2 7.5 6"/>'};
@@ -6597,13 +6597,14 @@ function placeCa(){const a=cur(),on=!!(a&&a.ct&&a.ph)&&isOpen();ca.hidden=!on;if
 
 function layout(){geo();art.setAttribute('viewBox','0 0 '+W+' '+H);art.textContent='';
  const df=el('defs',{});df.innerHTML='<linearGradient id="awg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--c1)" stop-opacity="0"/><stop offset=".25" style="stop-color:var(--c1)"/><stop offset=".75" style="stop-color:var(--c1)"/><stop offset="1" style="stop-color:var(--c1)" stop-opacity="0"/></linearGradient>';art.appendChild(df);
- art.appendChild(band(-.29,-.062));art.appendChild(band(.062,.262));
+ art.appendChild(band(-.285,-.062));art.appendChild(band(.062,.285));
  const oa=[];for(let i=0;i<=44;i++){const y=(.08+.91*i/44)*H;oa.push([trk(y),y])}const o=el('polyline',{points:P(oa),fill:'none',stroke:'url(#awg)','stroke-width':2,class:'awo'});art.appendChild(o);
  art.appendChild(el('polyline',{points:P(arcPts(R()-.075*H,-.085,.085,12)),fill:'none',stroke:'var(--c1)','stroke-width':2.4,'stroke-linecap':'round'}));
  const lt=.16*H,lb=.96*H;art.appendChild(el('polyline',{points:P(Array.from({length:31},(_,k)=>{const y=lt+(lb-lt)*k/30;return[LX(y)-17,y]})),fill:'none',stroke:'var(--c1)','stroke-width':1,'stroke-dasharray':'2 6','stroke-linecap':'round',opacity:.3}));
  art.appendChild(el('polyline',{points:P(Array.from({length:31},(_,k)=>{const y=lt+(lb-lt)*k/30;return[LX(y)+17,y]})),fill:'none',stroke:'var(--c1)','stroke-width':1.6,opacity:.7,class:'awo'}));
  const put=(e,dy,x)=>{e.style.left=(x==null?AX(dy*H):x)+'px';e.style.top=(YD0()+dy*H)+'px'};
- put($('awSr'),-.29);put($('awCt'),-.226);put($('awEdit'),-.163);put(fi,FOC-.56,trk(FOC*H));put($('awStar'),-.1);put($('awHome'),0);put($('awPlay'),.1);put($('awInfo'),.163);put($('awDel'),.225);
+ put($('awSr'),-.252);put($('awCt'),-.19);put($('awEdit'),-.128);put(fi,FOC-.56,trk(FOC*H));put($('awStar'),-.066);put($('awHome'),0);put($('awPlay'),.066);put($('awInfo'),.128);put($('awDel'),.19);
+ {const gb=$('awCfgBtn');if(gb)put(gb,.252,AX(Math.min(.252*H,.96*R())))}
  nm.style.fontSize=clamp(H*.03,17,25)*CFG.nmS+'px';nm.style.maxWidth=(.8*W)+'px';placeNm();
  const tb=$('awTab');tb.style.left=.06*W+'px';tb.style.top=YD0()+'px';
  rail.style.width='24px';rail.style.left=(LX(YD0())-12)+'px';rail.style.top=(lt+.01*H)+'px';rail.style.height=(lb-lt-.02*H)+'px';arcRail();
@@ -6702,14 +6703,15 @@ $('awCt').onclick=()=>{try{vib(8)}catch(_){}
 /* ===== Settings tab inside the Arc Wave panel: live, saved to localStorage ('aw-cfg') ===== */
 (()=>{
 const st=document.createElement('style');st.textContent=`
-#awCfgBtn{position:absolute;left:12px;top:12px;width:38px;height:38px;border-radius:50%;border:1px solid rgba(var(--c1rgb),.5);background:rgba(8,20,28,.6);color:var(--c1);display:grid;place-items:center;padding:0;cursor:pointer;z-index:6}
-#awCfgBtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-#awCfg{position:absolute;left:0;right:0;bottom:0;height:52%;z-index:7;display:none;flex-direction:column;background:rgba(7,14,20,.93);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1.5px solid var(--c1);border-radius:18px 18px 0 0;color:#fff;font:600 12.5px var(--f)}
+#awCfgBtn.on{color:#fff}#awCfgBtn.on svg{filter:drop-shadow(0 0 7px var(--c1))}
+#awCfgBtn.on::before{content:"";position:absolute;inset:3px;border-radius:50%;border:1.5px solid var(--c1);box-shadow:0 0 10px rgba(var(--c1rgb),.6)}
+#awCfg{position:absolute;left:0;right:0;bottom:0;height:min(44%,360px);z-index:7;display:none;transition:background .18s,border-color .18s;flex-direction:column;background:rgba(7,14,20,.93);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1.5px solid var(--c1);border-radius:18px 18px 0 0;color:#fff;font:600 12.5px var(--f)}
 #awCfg.on{display:flex}
 #awCfg .h{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 6px;font:700 14px var(--f);color:var(--c1)}
 #awCfg .h button{border:1px solid rgba(var(--c1rgb),.5);background:rgba(var(--c1rgb),.12);color:#fff;border-radius:12px;padding:5px 11px;font:700 12px var(--f);margin-left:6px}
-#awCfg .tb{display:flex;gap:6px;padding:0 12px 6px}
-#awCfg .tb button{flex:1;border:1px solid rgba(255,255,255,.15);background:none;color:rgba(255,255,255,.7);border-radius:10px;padding:6px 0;font:700 12px var(--f)}
+#awCfg .tb{display:flex;gap:6px;padding:0 12px 6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+#awCfg .tb::-webkit-scrollbar{display:none}
+#awCfg .tb button{flex:1 0 auto;padding-left:12px!important;padding-right:12px!important;border:1px solid rgba(255,255,255,.15);background:none;color:rgba(255,255,255,.7);border-radius:10px;padding:6px 0;font:700 12px var(--f)}
 #awCfg .tb button.on{border-color:var(--c1);color:var(--c1);background:rgba(var(--c1rgb),.12)}
 #awCfg .bd{flex:1;overflow:auto;padding:2px 14px 14px;-webkit-overflow-scrolling:touch;touch-action:pan-y}
 #awCfg .r{display:flex;align-items:center;gap:8px;margin:9px 0}
@@ -6720,6 +6722,16 @@ const st=document.createElement('style');st.textContent=`
 #awCfg .sw{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
 #awCfg .sw i{width:24px;height:24px;border-radius:50%;border:2px solid rgba(255,255,255,.3);cursor:pointer}
 #awCfg .sw i.on{border-color:#fff}
+#awCfg .r label{display:flex;align-items:center;gap:4px}
+#awCfg .rr{flex:0 0 26px;width:26px;height:26px;border:0;border-radius:50%;background:rgba(var(--c1rgb),.16);color:var(--c1);font:700 14px/1 var(--f);padding:0;visibility:hidden}
+#awCfg .rr.v{visibility:visible}
+#awCfg input[type=range]{height:30px;margin:0}
+#awCfg input[type=range]::-webkit-slider-thumb{width:22px;height:22px}
+#awCfg .grip{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.28);margin:7px auto 0;flex:none}
+#awCfg .hint{margin:2px 0 8px;font:600 11px var(--f);color:rgba(255,255,255,.5)}
+#awCfg.scrub{background:transparent!important;border-top-color:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
+#awCfg.scrub .h,#awCfg.scrub .tb,#awCfg.scrub .grip,#awCfg.scrub .hint,#awCfg.scrub .r:not(.act){opacity:0;transition:opacity .12s}
+#awCfg.scrub .r.act{background:rgba(7,14,20,.86);border:1px solid rgba(var(--c1rgb),.55);border-radius:14px;padding:8px 10px;box-shadow:0 6px 20px rgba(0,0,0,.5)}
 #aw.nonames .awi span{display:none}
 #aw.noscan #awScan{display:none}
 #aw.noanim .awo,#aw.noanim .jv-spin,#aw.noanim .jv-spinr,#aw.noanim .jv-pulse,#aw.noanim #awScan{animation:none!important}
@@ -6734,13 +6746,15 @@ const SH=[
  ['Dial',[['dialX','Dial position',.15,.65,.01],['dialR','Dial size',.25,.65,.01],['btnS','Button size',.7,1.4,.05]],[['scan','Scan line'],['anim','Animations'],['wedge','Dial strip'],['rings','Dial rings and marks'],['bCt','Contacts button'],['bEdit','Options button'],['bStar','Pin button'],['bHome','Add-to-home button'],['bPlay','Play Store button'],['bInfo','App info button'],['bDel','Uninstall button']],[]],
  ['Letters',[['ltrR','Letters curve',.3,.9,.01],['ltrX','Letters shift',-40,80,1],['ltrS','Letters size',.6,1.6,.05]],[['rail','Show A-Z'],['bub','Letter bubble']],[]],
  ['Look',[['dim','Background dim',0,.7,.02]],[['gloss','Glossy icons'],['dof','Depth blur'],['float','Floating selected icon'],['lines','Arc lines'],['hapx','Haptic ticks']],[]]];
+const QK=['lineX','step','icS','dialX','dialR','btnS'],QS=[];SH.forEach(g=>g[1].forEach(r=>{if(QK.includes(r[0]))QS[QK.indexOf(r[0])]=r}));
+SH.unshift(['Quick',QS,[['names','Show app names'],['rail','Show A-Z']],[],1]);SH[SH.findIndex(g=>g[0]==='Look')].push(1);
 const ACC=['','#ff6b6b','#ffb347','#f0c75e','#7df97f','#5ec8ff','#b58cff','#ff7ad9'];
-const btn=document.createElement('button');btn.id='awCfgBtn';btn.type='button';btn.setAttribute('aria-label','Arc settings');
+const btn=document.createElement('button');btn.id='awCfgBtn';btn.className='awb';btn.type='button';btn.setAttribute('aria-label','Arc settings');btn.setAttribute('aria-expanded','false');btn.title='Arc settings';
 btn.innerHTML='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
 const pn=document.createElement('div');pn.id='awCfg';pn.setAttribute('role','dialog');pn.setAttribute('aria-label','Arc settings');
-pn.innerHTML='<div class="h"><span>Arc settings</span><span><button type="button" id="awCfgRs">Reset</button><button type="button" id="awCfgX">Done</button></span></div><div class="tb"></div><div class="bd"></div>';
+pn.innerHTML='<div class="grip"></div><div class="h"><span>Arc settings</span><span><button type="button" id="awCfgRs">Reset all</button><button type="button" id="awCfgX">Done</button></span></div><div class="tb" role="tablist"></div><div class="bd"></div>';
 root.appendChild(btn);root.appendChild(pn);
-const tb=pn.querySelector('.tb'),bd=pn.querySelector('.bd');let tab=0;
+const tb=pn.querySelector('.tb'),bd=pn.querySelector('.bd');let tab=0,scT=0;
 const save=()=>{try{localStorage.setItem('aw-cfg',JSON.stringify(CFG))}catch(e){}};
 function apply(){
  STEP=CFG.step;
@@ -6753,19 +6767,27 @@ function apply(){
  else{root.style.removeProperty('--c1');root.style.removeProperty('--c1rgb')}
  try{layout();arcRail();paint()}catch(e){}}
 function draw(){
- tb.innerHTML='';SH.forEach((g,i)=>{const b=document.createElement('button');b.type='button';b.textContent=g[0];b.className=i===tab?'on':'';b.onclick=()=>{tab=i;draw()};tb.appendChild(b)});
+ tb.innerHTML='';SH.forEach((g,i)=>{const b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-selected',String(i===tab));b.textContent=g[0];b.className=i===tab?'on':'';b.onclick=()=>{tab=i;draw()};tb.appendChild(b)});
+ const ta=tb.querySelector('.on');if(ta)tb.scrollLeft=Math.max(0,ta.offsetLeft-12);
  bd.innerHTML='';const g=SH[tab];
+ if(g[0]==='Quick'){const h=document.createElement('div');h.className='hint';h.textContent='Drag a slider to preview live. \u21BA undoes one setting.';bd.appendChild(h)}
  g[1].forEach(([k,l,mn,mx_,sp])=>{const r=document.createElement('div');r.className='r';const f=v=>sp<.01?(+v).toFixed(3):sp<1?(+v).toFixed(2):Math.round(v);
-  r.innerHTML='<label>'+l+'</label><input type="range" min="'+mn+'" max="'+mx_+'" step="'+sp+'" value="'+CFG[k]+'"><output>'+f(CFG[k])+'</output>';
-  const i=r.querySelector('input'),o=r.querySelector('output');i.oninput=()=>{CFG[k]=+i.value;o.textContent=f(i.value);apply()};i.onchange=save;bd.appendChild(r)});
+  r.innerHTML='<label>'+l+'</label><input type="range" min="'+mn+'" max="'+mx_+'" step="'+sp+'" value="'+CFG[k]+'" aria-label="'+l+'"><output>'+f(CFG[k])+'</output><button type="button" class="rr" aria-label="Reset '+l+'" title="Reset">\u21BA</button>';
+  const i=r.querySelector('input'),o=r.querySelector('output'),rr=r.querySelector('.rr'),dirty=()=>rr.classList.toggle('v',Math.abs(+CFG[k]-CFG0[k])>1e-9);dirty();
+  let st;const on=()=>{clearTimeout(scT);r.classList.add('act');pn.classList.add('scrub')},off=()=>{r.classList.remove('act');scT=setTimeout(()=>pn.classList.remove('scrub'),260)};
+  i.addEventListener('pointerdown',on);i.addEventListener('touchstart',on,{passive:true});['pointerup','pointercancel','touchend','touchcancel','blur','change'].forEach(ev=>i.addEventListener(ev,off));
+  i.oninput=()=>{CFG[k]=+i.value;o.textContent=f(i.value);dirty();apply();clearTimeout(st);st=setTimeout(save,200)};i.onchange=save;
+  rr.onclick=()=>{CFG[k]=CFG0[k];i.value=CFG[k];o.textContent=f(CFG[k]);dirty();save();apply()};bd.appendChild(r)});
  g[2].forEach(([k,l])=>{const r=document.createElement('div');r.className='r';r.innerHTML='<label>'+l+'</label><input type="checkbox"'+(CFG[k]?' checked':'')+'>';r.querySelector('input').onchange=e=>{CFG[k]=e.target.checked;save();apply()};bd.appendChild(r)});
  (g[3]||[]).forEach(([k,l,opts])=>{const r=document.createElement('div');r.className='r';r.innerHTML='<label>'+l+'</label><div class="sw"></div>';const w=r.querySelector('.sw');opts.forEach(([v,t])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.style.cssText='border:0;border-radius:10px;padding:6px 10px;font:700 12px var(--f);color:#fff;background:'+((CFG[k]||'auto')===v?'rgba(var(--c1rgb),.45)':'rgba(255,255,255,.1)');b.onclick=()=>{CFG[k]=v;save();apply();draw()};w.appendChild(b)});bd.appendChild(r)});
- if(g[0]==='Look'){const r=document.createElement('div');r.className='r';r.innerHTML='<label>Accent</label><div class="sw"></div>';const sw=r.querySelector('.sw');
+ if(g[4]){const r=document.createElement('div');r.className='r';r.innerHTML='<label>Accent</label><div class="sw"></div>';const sw=r.querySelector('.sw');
   ACC.forEach(c=>{const i=document.createElement('i');i.style.background=c||'#7df9ff';i.title=c||'Default';if((CFG.acc||'')===c)i.className='on';i.onclick=()=>{CFG.acc=c;save();apply();draw()};sw.appendChild(i)});bd.appendChild(r)}}
-btn.onclick=()=>{draw();pn.classList.add('on')};
-window.AWCFG={get:()=>CFG,set:(k,v)=>{CFG[k]=v;save();apply();if(pn.classList.contains('on'))draw()},open:()=>{draw();pn.classList.add('on')}};
-$('awCfgX').onclick=()=>pn.classList.remove('on');
-$('awCfgRs').onclick=()=>{Object.assign(CFG,CFG0);save();apply();draw()};
+const openP=()=>{draw();pn.classList.add('on')},closeP=()=>pn.classList.remove('on');
+btn.onclick=()=>{pn.classList.contains('on')?closeP():openP()};
+new MutationObserver(()=>{const on=pn.classList.contains('on');btn.classList.toggle('on',on);btn.setAttribute('aria-expanded',String(on));if(!on&&pn.classList.contains('scrub'))pn.classList.remove('scrub')}).observe(pn,{attributes:true,attributeFilter:['class']});
+window.AWCFG={get:()=>CFG,set:(k,v)=>{CFG[k]=v;save();apply();if(pn.classList.contains('on'))draw()},open:openP};
+$('awCfgX').onclick=closeP;
+{const rs=$('awCfgRs');let arm=0,t;rs.onclick=()=>{if(!arm){arm=1;rs.textContent='Tap to confirm';t=setTimeout(()=>{arm=0;rs.textContent='Reset all'},3000);return}clearTimeout(t);arm=0;rs.textContent='Reset all';Object.assign(CFG,CFG0);save();apply();draw()}}
 ['pointerdown','pointermove','wheel','touchstart'].forEach(ev=>pn.addEventListener(ev,e=>e.stopPropagation(),{passive:true}));
 apply();
 })();
@@ -6900,6 +6922,7 @@ if(document.readyState==='complete')setTimeout(go,300);else addEventListener('lo
 #aw.min #awRail div,#aw.min #awRail div.on{text-shadow:none}
 #aw.min #awNm{text-shadow:none}
 #awCfgBtn{display:grid!important}
+#aw.min #awCfgBtn.awb{display:grid!important}
 </style>
 <script id="v66-swipe-right">
 /* swipe right on the home screen opens the app drawer. More forgiving than the old gesture: fires as soon as the swipe is clearly sideways, even if your thumb drifts. */
@@ -6935,6 +6958,47 @@ if(document.readyState==='complete')setTimeout(go,300);else addEventListener('lo
  document.getElementById('awAllOpts').onclick=()=>{try{closeAll()}catch(_){}try{YD.open()}catch(_){}setTimeout(()=>AWCFG.open(),250)};
  const sh=document.getElementById('sheet');if(sh)new MutationObserver(sync).observe(sh,{attributes:true,attributeFilter:['class']});
 }catch(e){try{ERR(e,'v66b')}catch(_){}}})();
+</script>
+<style id="v74-drawer-layout-css">#drawer:not(.aw) #aw{display:none!important}#dLay .seg{margin:4px 0 8px}#dLay .seg button{padding:8px 4px;font-size:11px}#dLay [hidden]{display:none}</style>
+<script id="v74-drawer-layout">
+/* v74: Settings > App drawer > Drawer layout: Arc Wave (default) or Grid. Grid is the classic drawer (icon grid, A-Z rail, categories, search)
+   with its own styles (Grid, List, Smart, Pages). The Arc Wave functions and the classic ones are swapped on YD, so both stay intact. */
+(function(){try{
+ const $=id=>document.getElementById(id),dr=$('drawer'),O=window.__YD0,box=$('drawerOpts');
+ if(!dr||!O||!window.YD||!box)return;
+ const A=Object.assign({},YD),K='yoga-dlay';
+ let LAY='arc';try{LAY=localStorage.getItem(K)==='grid'?'grid':'arc'}catch(e){}
+ const ST=[['grid','Grid'],['list','List'],['smart','Smart'],['pages','Pages']];
+ const wrap=document.createElement('div');wrap.id='dLay';
+ wrap.innerHTML='<div class="sl">Drawer layout</div><div class="seg" id="dLaySeg" role="group" aria-label="Drawer layout"><button type="button" data-v="arc">Arc Wave</button><button type="button" data-v="grid">Grid</button></div>'
+  +'<div id="dGridBox" hidden><div class="sl">Grid style</div><div class="seg" id="dGridSt" role="group" aria-label="Grid style">'+ST.map(([v,t])=>'<button type="button" data-v="'+v+'">'+t+'</button>').join('')+'</div></div>';
+ box.prepend(wrap);
+ const arcRow=(()=>{const c=$('awMinSet');return c?c.closest('div'):null})();
+ function sync(){
+  const g=LAY==='grid',cs=window.drawerStyle?drawerStyle.get():'grid';
+  [...$('dLaySeg').children].forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===LAY)));
+  $('dGridBox').hidden=!g;
+  [...$('dGridSt').children].forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===cs)));
+  if(arcRow)arcRow.hidden=g;
+ }
+ function use(l){
+  const g=l==='grid',was=dr.classList.contains('open');
+  if(g===(LAY==='grid')&&dr.classList.contains('aw')===!g){sync();return}
+  LAY=g?'grid':'arc';try{localStorage.setItem(K,LAY)}catch(e){}
+  if(was){try{YD.stop(false)}catch(e){}}
+  dr.classList.toggle('aw',!g);
+  Object.assign(YD,g?O:A);
+  if(g){const ct=$('awCt');if(ct)ct.classList.remove('on');const c=$('awCfg');if(c)c.classList.remove('on');
+   try{if(window.drawerStyle&&drawerStyle.get()==='arc')drawerStyle.set('grid')}catch(e){}}
+  if(was){try{YD.open()}catch(e){}}
+  sync();
+ }
+ $('dLaySeg').onclick=e=>{const b=e.target.closest('button');if(b)use(b.dataset.v)};
+ $('dGridSt').onclick=e=>{const b=e.target.closest('button');if(!b)return;try{drawerStyle.set(b.dataset.v)}catch(x){}sync()};
+ window.drawerLayout={get:()=>LAY,set:use};
+ const sh=$('sheet');if(sh)new MutationObserver(sync).observe(sh,{attributes:true,attributeFilter:['class']});
+ if(LAY==='grid')use('grid');else sync();
+}catch(e){try{ERR(e,'v74')}catch(_){}}})();
 </script>
 <style id="v70-polish">
 /* ===== v70 polish: Android-ready touch, motion, insets (additive; nothing removed) ===== */
@@ -7395,5 +7459,12 @@ function place(){try{var v=sh.querySelector('.ver');if(v&&v.parentNode&&v.previo
 place();setTimeout(place,600);new MutationObserver(place).observe(sh,{attributes:true,attributeFilter:['class']});
 }catch(e){console.error('resetall',e)}})();
 </script>
+<style id="v73-arc-panel">
+/* v73: smaller dial-panel icons (48 -> 40 px buttons, 24 -> 20 px glyphs, hub 46 px); the gear lives in the same column */
+#aw .awb:not(#awHome):not(#awTab){width:40px;height:40px;margin:-20px 0 0 -20px}
+#aw .awb:not(#awHome):not(#awTab) svg{width:20px;height:20px}
+#aw #awHome{width:46px;height:46px;margin:-23px 0 0 -23px}
+#aw #awHome svg{width:26px;height:26px}
+</style>
 </body>
 </html>
