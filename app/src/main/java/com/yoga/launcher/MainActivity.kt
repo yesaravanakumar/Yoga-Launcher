@@ -27,6 +27,7 @@ import android.webkit.JsResult
 import android.app.AlertDialog
 import android.widget.EditText
 import android.webkit.ValueCallback
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -213,6 +214,14 @@ class MainActivity : Activity() {
             }
         }
         web.webViewClient = object : WebViewClient() {
+            // The page's renderer process died (memory pressure or a crash). Unhandled, Android kills the whole app and it
+            // restarts from scratch with the boot logo. Rebuild the screen instead.
+            override fun onRenderProcessGone(v: WebView, detail: RenderProcessGoneDetail): Boolean {
+                loaded = false
+                handler.post { if (!isFinishing && !isDestroyed) recreate() }
+                return true
+            }
+
             override fun shouldOverrideUrlLoading(v: WebView, request: WebResourceRequest): Boolean {
                 val u = request.url
                 if (u.scheme == "file" && u.path?.startsWith("/android_asset/") == true) return false

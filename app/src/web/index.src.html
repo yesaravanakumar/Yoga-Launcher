@@ -932,6 +932,20 @@ label[hidden]{display:none!important}
 .lg i{opacity:.4;background:linear-gradient(115deg,transparent 36%,rgba(255,255,255,.95) 50%,transparent 64%) no-repeat;background-size:260% 100%;background-position:calc(50% + var(--sx,0)*70%) 0}
 .lite .lg{filter:drop-shadow(0 1px 1px rgba(0,0,0,.6)) brightness(1.1) contrast(1.06)}
 #gear #logo{--lw:42px}
+
+/* ===== v1.58: All-apps dock button = Yoga logo (draggable); logo a little smaller ===== */
+.dock .dab{position:relative;flex:none;width:calc(var(--dl,34px) + 12px);height:calc(var(--dl,34px) + 12px);display:grid;place-items:center;padding:0;border:0;background:none;box-shadow:none;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .28s var(--spring);-webkit-user-select:none;user-select:none}
+.dock .dab .lg{--lw:var(--dl,34px);pointer-events:none}
+.dock .dab:active{transform:scale(.92)}
+.dock .dab.drag{z-index:20;transition:none;filter:drop-shadow(0 8px 14px rgba(0,0,0,.5))}
+.dock .dab:focus-visible{outline:2px solid var(--c1);outline-offset:3px;border-radius:50%}
+#logo{--lw:34px}
+.dock .dsb{border-radius:50%;background:rgba(255,255,255,.12);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 0 0 1px rgba(255,255,255,.14)}
+.dock .dsb svg{width:calc(var(--dl,34px)*.55);height:calc(var(--dl,34px)*.55);fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.hsearch.docked{display:none!important}
+.hsearch.drag{transition:none!important;z-index:130;filter:drop-shadow(0 10px 16px rgba(0,0,0,.5));touch-action:none}
+.hsearch{touch-action:manipulation}
+#gear #logo{--lw:35px}
 /* ===== v29: weather card ===== */
 .wxm{display:flex;align-items:center;gap:10px}
 .wxm svg{width:46px;height:46px;flex:none;filter:drop-shadow(0 2px 5px rgba(0,0,0,.35))}
@@ -2052,18 +2066,98 @@ function hold(el,a){let t,long=false,sx=0,sy=0;
   el.addEventListener('pointermove',e=>{if(t&&Math.hypot(e.clientX-sx,e.clientY-sy)>10)clearTimeout(t)});
   ['pointerup','pointerleave','pointercancel'].forEach(ev=>el.addEventListener(ev,()=>clearTimeout(t)));
   el.addEventListener('click',e=>{if(long){long=false;e.stopImmediatePropagation();e.preventDefault()}},true)}
+const dsbOn=()=>!!ls('mdc-hsdock',false)&&!!S.hsb&&!!S.dock;
+function dabDrag(g,d,key,out){
+  key=key||'mdc-dabi';
+  let t=0,on=false,id=0,sx=0,sy=0,moved=false,lx=0,ly=0;
+  const apps_=()=>[...d.querySelectorAll('.app')];
+  const slot=x=>{let i=0;apps_().forEach(a=>{const r=a.getBoundingClientRect();if(x>r.left+r.width/2)i++});return i};
+  const end=cancel=>{clearTimeout(t);if(!on){return}
+    on=false;g.classList.remove('drag');g.style.transform='';
+    try{g.releasePointerCapture(id)}catch(e){}
+    d.classList.remove('dk');
+    if(cancel)return;
+    if(out&&ly<d.getBoundingClientRect().top-18){try{vib(10)}catch(e){}out(lx,ly);return}
+    const gr=g.getBoundingClientRect(),i=slot(gr.left+gr.width/2);
+    sv(key,i);try{vib(10)}catch(e){}renderDock()};
+  g.addEventListener('pointerdown',e=>{if(e.button)return;moved=false;sx=e.clientX;sy=e.clientY;id=e.pointerId;
+    clearTimeout(t);t=setTimeout(()=>{on=true;moved=true;try{g.setPointerCapture(id)}catch(x){}g.classList.add('drag');d.classList.add('dk');try{vib(12)}catch(x){}},(window.YTC&&YTC.lp?YTC.lp():420))});
+  g.addEventListener('pointermove',e=>{
+    if(!on){if(t&&Math.hypot(e.clientX-sx,e.clientY-sy)>10)clearTimeout(t);return}
+    e.preventDefault();lx=e.clientX;ly=e.clientY;
+    const dx=e.clientX-sx,dk=d.getBoundingClientRect(),gr=g.getBoundingClientRect(),base=gr.left-(parseFloat((g.style.transform.match(/-?[\d.]+/)||[0])[0])||0);
+    const lim=Math.max(dk.left+4-base,Math.min(dk.right-4-gr.width-base,dx));
+    g.style.transform='translate3d('+lim+'px,'+(out?Math.min(0,e.clientY-sy):0)+'px,0) scale(1.12)'});
+  g.addEventListener('pointerup',()=>end(false));
+  g.addEventListener('pointercancel',()=>end(true));
+  g.addEventListener('contextmenu',e=>e.preventDefault());
+  g.addEventListener('click',e=>{if(moved){moved=false;e.stopImmediatePropagation();e.preventDefault()}},true);
+  g.style.touchAction='none'}
+/* ---- home search bar: hold + drag to move it anywhere on the home screen; drop it on the dock to dock it as a search button ---- */
+function applyHS(){
+  const h=$('hsearch');if(!h)return;
+  const docked=!!ls('mdc-hsdock',false)&&!!S.dock,pos=ls('mdc-hspos',null);
+  h.classList.toggle('docked',docked);
+  const st=h.style;
+  if(pos&&!docked&&typeof pos.l==='number'){const w=phone.offsetWidth-36;st.left=pos.l+'px';st.top=pos.t+'px';st.right='auto';st.bottom='auto';st.width=w+'px'}
+  else{st.left=st.top=st.right=st.bottom=st.width=''}}
+function hsDrag(){
+  const h=$('hsearch');if(!h||h._dr)return;h._dr=1;
+  let t=0,on=false,id=0,sx=0,sy=0,ox=0,oy=0,moved=false,over=false;
+  const k=()=>(phone.getBoundingClientRect().width/phone.offsetWidth)||1;
+  const dockTop=()=>{const d=$('dock');return d&&S.dock?d.getBoundingClientRect().top:1e9};
+  const end=cancel=>{clearTimeout(t);if(!on)return;
+    on=false;h.classList.remove('drag');try{h.releasePointerCapture(id)}catch(e){}$('dock').classList.remove('dk');
+    if(cancel){applyHS();return}
+    try{vib(10)}catch(e){}
+    if(over){sv('mdc-hsdock',true);applyHS();renderDock();toast('Search docked - hold and drag it up to undock');return}
+    const l=parseFloat(h.style.left)||0,tp=parseFloat(h.style.top)||0,def=phone.offsetHeight-98-46;
+    if(Math.abs(tp-def)<26&&Math.abs(l-18)<26){try{localStorage.removeItem('mdc-hspos')}catch(e){}}else sv('mdc-hspos',{l:Math.round(l),t:Math.round(tp)});
+    applyHS()};
+  h.addEventListener('pointerdown',e=>{if(e.button||h.classList.contains('docked'))return;moved=false;sx=e.clientX;sy=e.clientY;id=e.pointerId;
+    clearTimeout(t);t=setTimeout(()=>{
+      const r=h.getBoundingClientRect(),pr=phone.getBoundingClientRect(),kk=k();
+      ox=(r.left-pr.left)/kk;oy=(r.top-pr.top)/kk;on=true;moved=true;over=false;
+      const st=h.style;st.left=ox+'px';st.top=oy+'px';st.right='auto';st.bottom='auto';st.width=(r.width/kk)+'px';
+      h.classList.add('drag');try{h.setPointerCapture(id)}catch(x){}try{vib(12)}catch(x){}},(window.YTC&&YTC.lp?YTC.lp():420))});
+  h.addEventListener('pointermove',e=>{
+    if(!on){if(t&&Math.hypot(e.clientX-sx,e.clientY-sy)>10)clearTimeout(t);return}
+    e.preventDefault();const kk=k(),w=h.offsetWidth,hh=h.offsetHeight;
+    const l=Math.max(0,Math.min(phone.offsetWidth-w,ox+(e.clientX-sx)/kk)),tp=Math.max(70,Math.min(phone.offsetHeight-hh-8,oy+(e.clientY-sy)/kk));
+    h.style.left=l+'px';h.style.top=tp+'px';
+    over=e.clientY>dockTop()-10;$('dock').classList.toggle('dk',over)});
+  h.addEventListener('pointerup',()=>end(false));
+  h.addEventListener('pointercancel',()=>end(true));
+  h.addEventListener('contextmenu',e=>{if(on)e.preventDefault()});
+  h.addEventListener('click',e=>{if(moved){moved=false;e.stopImmediatePropagation();e.preventDefault()}},true)}
 function renderDock(){
   const d=$('dock');d.textContent='';
   const list=shown().map(p=>apps.find(a=>a.p===p)),want=({s:38,m:44,l:52})[S.dz]||44;
-  const dz=Math.max(30,Math.min(want,Math.floor(268/Math.max(list.length+(S.dab?1:0),1))-4));
+  const dz=Math.max(30,Math.min(want,Math.floor(268/Math.max(list.length+(S.dab?1:0)+(dsbOn()?1:0),1))-4));
   d.style.setProperty('--dz',dz+'px');d.style.height=(dz+22)+'px';
   list.forEach(a=>{
     const b=document.createElement('button');b.className='app';b.setAttribute('aria-label',a.n);
     b.appendChild(icon(a));b.onclick=()=>launch(a);hold(b,a);d.appendChild(b)});
   {const rim=document.createElement('i');rim.className='rim';rim.appendChild(document.createElement('b'));d.appendChild(rim);const shn=document.createElement('i');shn.className='shn';shn.appendChild(document.createElement('b'));d.appendChild(shn)}
-  const g=document.createElement('button');g.className='orb-btn btn-silver';g.style.fontSize=dz/5+'px';g.setAttribute('aria-label','All apps');
-  g.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 L17 7 M17 7 L9 7 M17 7 L17 15"></path></svg>';
-  g.onclick=openApps;if(S.dab)d.appendChild(g);
+  /* All-apps button = the Yoga logo (no arrow). Tap opens the drawer; hold and drag to put it between any dock apps. */
+  const g=document.createElement('button');g.className='dab';g.style.setProperty('--dl',Math.round(dz*.8)+'px');g.setAttribute('aria-label','All apps');
+  g.innerHTML='<span class="lg"><i></i></span>';
+  g.onclick=openApps;
+  if(S.dab){
+    const apps_=[...d.querySelectorAll('.app')],ix=Math.max(0,Math.min(+ls('mdc-dabi',apps_.length),apps_.length));
+    d.insertBefore(g,apps_[ix]||d.querySelector('.rim')||null);
+    dabDrag(g,d)}
+  if(dsbOn()){
+    const q=document.createElement('button');q.className='dab dsb';q.style.setProperty('--dl',Math.round(dz*.8)+'px');q.setAttribute('aria-label','Search apps and web');
+    q.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 5 5"></path></svg>';
+    q.onclick=()=>{try{vib(8)}catch(e){}window.openCommand&&window.openCommand()};
+    const as=[...d.querySelectorAll('.app')],qi=Math.max(0,Math.min(+ls('mdc-dsbi',as.length),as.length));
+    d.insertBefore(q,as[qi]||d.querySelector('.rim')||null);
+    dabDrag(q,d,'mdc-dsbi',(x,y)=>{
+      const pr=phone.getBoundingClientRect(),kk=(pr.width/phone.offsetWidth)||1,w=phone.offsetWidth-36;
+      sv('mdc-hsdock',false);sv('mdc-hspos',{l:18,t:Math.round(Math.max(70,Math.min(phone.offsetHeight-54,(y-pr.top)/kk-23)))});
+      applyHS();renderDock();toast('Search bar back on the home screen')})}
+  applyHS();
 }
 const ALLQ=()=>{const s=document.getElementById('awSearch');return !!(s&&s.classList.contains('on')&&$('q').value.trim())};   /* drawer search bar open + something typed: look in apps AND contacts */
 const matches=()=>{
@@ -3414,6 +3508,7 @@ let ptT;$('ptn').oninput=()=>{S.ptn=+$('ptn').value;$('ptnv').textContent=S.ptn+
 $('ptDemo').onclick=()=>{PT.demo=performance.now();ptKick();PRE.ghost(2800)};
 $('ptCal').onclick=()=>{PT.g0=PT.b0=null;PT.tx=PT.ty=0;ptKick();toast('Calibrated to current angle')};
 
+ASET.post.push(()=>{try{hsDrag();applyHS()}catch(e){console.error(e)}});
 ASET.post.push(()=>{try{phone.classList.toggle('nologo',!S.logo);todSync();ptSync()}catch(e){console.error(e)}});
 todSync();ptSync();
 
@@ -3605,7 +3700,7 @@ try{ENG.init()}catch(e){console.error(e)}
     phone.classList.add('hp');
     try{
       for(const h of hits(x,y)){
-        if(h.closest('#hour,#gear,#hourLogo,#dock .app'))return null;
+        if(h.closest('#hour,#gear,#hourLogo,#hsearch,#dock .app,#dock .dab'))return null;
         if(h.closest('#wxl,#fl,#hpg'))return 'Widgets';                                   /* weather line, page dots -> Widgets (weather, home apps & pages) */
         if(h.closest('#nt,#glance'))return 'At a glance & notifications';                /* next alarm / event / now-playing line */
         if(h.closest('#read,.date'))return 'Clock';
@@ -3628,7 +3723,7 @@ try{ENG.init()}catch(e){console.error(e)}
     if(phone.classList.contains('lay'))return;
     if(e.pointerType==='mouse'&&e.button!==0)return;
     if(IDS.some(i=>$(i).classList.contains('open')))return;
-    if(e.target.closest('input,textarea,select,#hour,#gear,#dock .app,.hic'))return;
+    if(e.target.closest('input,textarea,select,#hour,#gear,#hsearch,#dock .app,#dock .dab,.hic'))return;
     sx=e.clientX;sy=e.clientY;
     t=setTimeout(()=>{t=0;if(phone.classList.contains('lay'))return;const sec=pick(sx,sy);if(!sec)return;if(sec==='Wallpaper'&&S.gon&&(S.glp||'none')!=='none')return;   /* an assigned long-press gesture owns empty home */
     vib(18);window.HOLDSEC=sec;$('gear').click();blk=Date.now()+1500},600);
@@ -7867,6 +7962,15 @@ html.ds-dots #dial circle[fill=none],html.ds-bold #dial circle[fill=none],html.d
 /* a11y: readable sublabels and 44px touch targets in settings */
 html body .sheet.set .sl,html body .sheet .sl,html body .sheet .tg.dep-off>span::after,html body .v48q>small{font-size:11px}
 html body .sheet.set .seg button,html body .sheet.set .chips button,html body .sheet.set .dchips button,html body .sheet.set .dtabs button,html body .sheet.set .v48q .v48qc button,html body .sheet.set .mini,html body #dLay .seg button{min-height:44px}
+</style>
+<style id="pill-glass-final">
+/* v1.58: clock pill keeps its frosted glass in the cyber theme too (cyber used to flatten it). Matte / outline / neon pill styles still win. */
+html.cyber:not(.ck-p-matte):not(.ck-p-outline):not(.ck-p-neon) .phone .pill{
+  -webkit-backdrop-filter:blur(22px) saturate(1.9) brightness(1.08)!important;backdrop-filter:blur(22px) saturate(1.9) brightness(1.08)!important;
+  background:radial-gradient(circle at var(--hx,30%) var(--hy,25%),rgba(255,255,255,.34),rgba(255,255,255,0) 58%),linear-gradient(160deg,rgba(255,255,255,.20),rgba(255,255,255,.06) 52%,rgba(var(--c1rgb),.12))!important;
+  border:1px solid rgba(255,255,255,.30)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(255,255,255,.10),inset 0 0 14px rgba(255,255,255,.07)!important}
+html.cyber:not(.ck-p-matte):not(.ck-p-outline):not(.ck-p-neon) .pill::before{display:block}
 </style>
 </body>
 </html>
