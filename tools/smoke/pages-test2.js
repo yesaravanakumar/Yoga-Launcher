@@ -1,0 +1,13 @@
+const {JSDOM,VirtualConsole}=require('jsdom');const fs=require('fs'),path=require('path');
+const html=fs.readFileSync(path.join(__dirname,'../../app/src/main/assets/index.html'),'utf8');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));const errs=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>errs.push(e.message));
+const A={getBattery:()=>'{"p":57}',getBadges:()=>'{}',getMedia:()=>'null',getNextAlarm:()=>'0',getNextEvent:()=>'null',hasNotificationAccess:()=>false,getPerms:()=>'{}',saveSettings:()=>{},saveTheme:()=>{},logError:()=>{},launch:()=>true,getShortcuts:()=>'[]',haptic:()=>false,isKeyguardLocked:()=>false,setLockOver:()=>{},openUrl:()=>true,search:()=>{},appInfo:()=>true};
+const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,virtualConsole:vc,url:'https://appassets.test/index.html',beforeParse(w){w.matchMedia=q=>({matches:false,addEventListener(){},removeEventListener(){},addListener(){},removeListener(){}});w.HTMLCanvasElement.prototype.getContext=()=>null;w.scrollTo=()=>{};w.Element.prototype.scrollTo=()=>{};w.ResizeObserver=class{observe(){}unobserve(){}disconnect(){}};w.IntersectionObserver=class{observe(){}unobserve(){}disconnect(){}};w.Element.prototype.animate=function(){return{cancel(){},finish(){},set onfinish(f){}}};w.Android=A}});
+(async()=>{const w=dom.window,d=w.document;await sleep(1500);
+ const L=[];for(let i=0;i<30;i++)L.push({n:'App'+i,p:'p.'+i});w.setApps(L);await sleep(100);
+ const res=L.map(a=>w.homeAdd(a));
+ const hp=JSON.parse(w.localStorage.getItem('mdc-hpos'));const per={};Object.values(hp).forEach(v=>{per[v.pg||0]=(per[v.pg||0]||0)+1});
+ console.log('results ok:',res.filter(r=>r==='ok').length,'full:',res.filter(r=>r==='full').length,'per page:',JSON.stringify(per),'pages:',d.querySelectorAll('#hpg .hpd').length);
+ const shown=d.querySelectorAll('#hicons .hic').length;console.log('icons shown on current page:',shown,'(current page count',per[0]||0,')');
+ d.querySelectorAll('#hpg .hpd')[1].click();console.log('after switching to page 2 icons shown:',d.querySelectorAll('#hicons .hic').length,'expected',per[1]);
+ console.log('errors:',errs.length?errs.slice(0,3):'none');process.exit(0)})();

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 6-11 Auto Backup: keep only launcher settings, never caches or temp files. -->
+<full-backup-content>
+    <include domain="sharedpref" path="yoga.xml" />
+    <include domain="root" path="app_webview/Default/Local Storage" />
+    <exclude domain="root" path="app_webview/Default/Cache" />
+    <exclude domain="root" path="app_webview/Default/Code Cache" />
+    <exclude domain="root" path="app_webview/Default/GPUCache" />
+    <exclude domain="cache" path="." />
+    <exclude domain="no_backup" path="." />
+</full-backup-content>

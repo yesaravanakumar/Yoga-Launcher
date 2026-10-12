@@ -234,6 +234,7 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
         }
         js("window.setApps(${list})")
         pushIcons(infos.map { it.activityInfo.packageName to it })
+        if (activePack.isNotEmpty()) runPack(activePack)   // the list above carries the apps' own icons; draw the pack's again
     }
 
     // ---------- real app icons ----------
@@ -258,8 +259,92 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
                     if (++n % 24 == 0) { val b = batch; batch = JSONObject(); js("window.setIconPack($b)") }
                 }
                 if (batch.length() > 0) js("window.setIconPack($batch)")
+                if (activePack.isNotEmpty()) runPack(activePack)
             } catch (_: InterruptedException) {}
         }.also { it.isDaemon = true; it.start() }
+    }
+
+    // ---------- installed icon packs (ADW / Nova / Apex style, appfilter.xml) ----------
+    @Volatile private var activePack: String = ""
+    @Volatile private var packJob: Thread? = null
+
+    /** Icon packs installed on the phone, as [{"p":package,"n":label}]. */
+    @Suppress("DEPRECATION")
+    @JavascriptInterface fun getIconPacks(): String = try {
+        val seen = LinkedHashMap<String, String>()
+        val probes = listOf(
+            Intent("org.adw.launcher.THEMES"), Intent("com.novalauncher.THEME"), Intent("com.anddoes.launcher.THEME"),
+            Intent(Intent.ACTION_MAIN).addCategory("com.anddoes.launcher.THEME"))
+        for (i in probes) for (ri in pm.queryIntentActivities(i, 0)) {
+            val p = ri.activityInfo.packageName
+            if (p != act.packageName) seen.putIfAbsent(p, ri.loadLabel(pm).toString())
+        }
+        val a = JSONArray(); seen.forEach { (p, n) -> a.put(JSONObject().put("p", p).put("n", n)) }; a.toString()
+    } catch (_: Throwable) { "[]" }
+
+    /** Uses [pkg]'s icons where the pack has one; other apps keep their own. Empty string switches back to the apps' own icons. */
+    @JavascriptInterface fun applyIconPack(pkg: String) { activePack = pkg; runPack(pkg) }
+
+    private fun sendIcons(m: Map<String, String>) {
+        var b = JSONObject(); var n = 0
+        for ((k, v) in m) { b.put(k, v); if (++n % 24 == 0) { val x = b; b = JSONObject(); js("window.setIconPack($x)") } }
+        if (b.length() > 0) js("window.setIconPack($b)")
+    }
+
+    @Suppress("DEPRECATION")
+    private fun runPack(pkg: String) {
+        packJob?.interrupt()
+        packJob = Thread {
+            try {
+                if (pkg.isEmpty()) { sendIcons(HashMap(iconCache)); return@Thread }
+                val res = pm.getResourcesForApplication(pkg)
+                val byComp = HashMap<String, String>(); val byPkg = HashMap<String, String>()
+                parseAppFilter(pkg, res, byComp, byPkg)
+                if (byComp.isEmpty() && byPkg.isEmpty()) return@Thread
+                val launcher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+                val byApp = pm.queryIntentActivities(launcher, 0).filter { it.activityInfo.packageName != act.packageName }
+                    .groupBy { it.activityInfo.packageName }
+                val out = LinkedHashMap<String, String>()
+                for ((app, list) in byApp) {
+                    if (Thread.currentThread().isInterrupted) return@Thread
+                    val name = list.firstNotNullOfOrNull { byComp[app + "/" + it.activityInfo.name] } ?: byPkg[app]
+                    val uri = name?.let { n ->
+                        try {
+                            var id = res.getIdentifier(n, "drawable", pkg)
+                            if (id == 0) id = res.getIdentifier(n, "mipmap", pkg)
+                            if (id != 0) toDataUri(res.getDrawable(id, null)) else null
+                        } catch (_: Throwable) { null }
+                    }
+                    (uri ?: iconCache[app])?.let { out[app] = it }
+                }
+                if (activePack == pkg) sendIcons(out)
+            } catch (_: InterruptedException) {
+            } catch (e: Throwable) { android.util.Log.w("YogaBridge", "icon pack failed", e) }
+        }.also { it.isDaemon = true; it.start() }
+    }
+
+    private fun parseAppFilter(pkg: String, res: android.content.res.Resources, byComp: MutableMap<String, String>, byPkg: MutableMap<String, String>) {
+        val xp: org.xmlpull.v1.XmlPullParser = try {
+            val id = res.getIdentifier("appfilter", "xml", pkg)
+            if (id != 0) res.getXml(id) else throw IllegalStateException()
+        } catch (_: Throwable) {
+            try { org.xmlpull.v1.XmlPullParserFactory.newInstance().newPullParser().also { it.setInput(res.assets.open("appfilter.xml"), null) } }
+            catch (_: Throwable) { return }
+        }
+        val re = Regex("ComponentInfo\\{([^/}]+)/([^}]*)\\}")
+        var ev = xp.eventType
+        while (ev != org.xmlpull.v1.XmlPullParser.END_DOCUMENT) {
+            if (ev == org.xmlpull.v1.XmlPullParser.START_TAG && xp.name == "item") {
+                val comp = xp.getAttributeValue(null, "component"); val dr = xp.getAttributeValue(null, "drawable")
+                val m = if (comp != null && !dr.isNullOrEmpty()) re.find(comp) else null
+                if (m != null) {
+                    val ap = m.groupValues[1]; var cls = m.groupValues[2]
+                    if (cls.startsWith(".")) cls = ap + cls
+                    byComp.putIfAbsent("$ap/$cls", dr!!); byPkg.putIfAbsent(ap, dr)
+                }
+            }
+            ev = try { xp.next() } catch (_: Throwable) { break }
+        }
     }
 
     /** 96 px WebP instead of the old 128 px PNG: a smaller base64 payload for the page to decode. */
