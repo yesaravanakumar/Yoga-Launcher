@@ -355,6 +355,31 @@ html.light .drawer .cats button[aria-pressed=true]{background:linear-gradient(13
 @media (max-width:360px){.quick-actions{grid-template-columns:repeat(3,1fr)}}
 
 /* ============ Toast / flash / ripple ============ */
+/* v1.66: Edit home panel + widget resize grip */
+.emode{position:absolute;left:0;right:0;bottom:0;z-index:36;max-height:58%;display:flex;flex-direction:column;padding:10px 14px 14px;border-radius:22px 22px 0 0;background:rgba(14,15,21,.97);border-top:1px solid rgba(255,255,255,.12);transform:translateY(105%);opacity:0;pointer-events:none;transition:transform .3s var(--motion),opacity .2s ease}
+.emode.open{transform:none;opacity:1;pointer-events:auto}
+.em-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.em-h b{font:800 15px var(--f)}
+.em-tabs{display:flex;gap:6px;margin-bottom:8px}
+.em-tabs button{flex:1;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--fg);border-radius:12px;padding:7px 4px;font:700 11px var(--f);cursor:pointer}
+.em-tabs button[aria-selected=true]{background:var(--c1);color:#000;border-color:transparent}
+.em-b{overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch}
+.em-b .sl{margin:8px 0 4px}.em-b .row{display:flex;gap:6px;margin:6px 0}.em-b input[type=range]{width:100%}
+.em-b .tg{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:12px}
+.awh{height:22px;margin-top:4px;display:flex;align-items:center;justify-content:center;touch-action:none;cursor:ns-resize;border-radius:10px;background:rgba(255,255,255,.06)}
+.awh i{width:44px;height:4px;border-radius:2px;background:rgba(255,255,255,.4)}.awh:focus-visible{outline:2px solid var(--c1)}
+.awh-v{font-size:10px;color:var(--dim);margin-left:8px}
+/* v1.67: free placement - home widgets layer + arrange bar */
+#hwid{position:absolute;inset:0;z-index:6;pointer-events:none}
+.hw{position:absolute;box-sizing:border-box;border-radius:16px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;color:var(--dim);background:rgba(255,255,255,.05);overflow:hidden}
+.phone.arr .hw{pointer-events:auto;touch-action:none;border:1.5px dashed var(--c1);background:rgba(var(--c1rgb),.08);cursor:move;overflow:visible}
+.phone.arr #hicons{opacity:.35;pointer-events:none}
+.hw-r{display:none;position:absolute;right:-8px;bottom:-8px;width:26px;height:26px;border-radius:50%;background:var(--c1);touch-action:none;cursor:nwse-resize}
+.hw-b{display:none;position:absolute;left:4px;top:4px;gap:4px}
+.phone.arr .hw-r{display:block}.phone.arr .hw-b{display:flex}
+.hw-b button{border:0;border-radius:10px;padding:3px 8px;font:700 11px var(--f);background:rgba(0,0,0,.6);color:#fff;cursor:pointer}
+.arbar{position:absolute;left:10px;right:10px;bottom:14px;z-index:37;display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:16px;background:rgba(14,15,21,.96);border:1px solid rgba(255,255,255,.14);font-size:11px}
+.arbar[hidden]{display:none}.arbar span{flex:1}
+#hdrop.free .hcell{display:none}
 .toast{position:absolute;left:50%;bottom:104px;transform:translate(-50%,10px);z-index:40;padding:8px 14px;border-radius:14px;font-size:12px;background:rgba(16,17,24,.92);border:1px solid rgba(255,255,255,.14);opacity:0;pointer-events:none;transition:.25s;width:max-content;max-width:calc(100% - 24px);text-align:center;overflow-wrap:anywhere;}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 
@@ -1467,7 +1492,9 @@ html:not(.light) .hsearch,html:not(.light) .cmd-bar,html:not(.light) .cmd-close,
   <div id="clockBox" aria-hidden="true"><span>Clock</span></div>
   <div class="rz" id="rzC"></div><div class="rz" id="rzD"></div>
   <div class="laybar" id="laybar" role="dialog" aria-modal="true" aria-label="Move clock and date"><div><small>Layout</small><b>Drag to move · pull handles to resize</b></div><button class="mini ghost" id="layRst" type="button">Reset</button><button class="mini" id="layDone" type="button">Done</button></div>
-  <div id="hicons" aria-label="Home screen apps"></div><div id="hdrop" aria-hidden="true"></div><div id="hpg" role="group" aria-label="Home pages"></div>
+  <div id="hwid" aria-label="Home screen widgets"></div><div id="hicons" aria-label="Home screen apps"></div><div id="hdrop" aria-hidden="true"></div><div id="hpg" role="group" aria-label="Home pages"></div>
+  <div class="arbar" id="arbar" role="toolbar" aria-label="Arrange home widgets" hidden><span>Drag to move · pull the corner to resize</span><button class="mini ghost" id="arAdd" type="button">Add</button><button class="mini" id="arDone" type="button">Done</button></div>
+  <div class="emode" id="emode" role="dialog" aria-label="Edit home" aria-hidden="true"><div class="em-h"><b>Edit home</b><button class="mini" id="emDone" type="button">Done</button></div><div class="em-tabs" id="emTabs" role="tablist"></div><div class="em-b" id="emBody"></div></div>
   <div class="toast" id="toast" role="status"></div>
 </div>
 
@@ -1504,14 +1531,14 @@ addEventListener('error',ev=>ERR(ev.error||ev.message,'uncaught'));
 var ASET={pre:[],post:[]};
 addEventListener('unhandledrejection',ev=>ERR(ev.reason,'promise'));
 /* single source of truth for the version label: window title, Settings footer, About, and the Android build (window.APP_VER / <meta name="app-version">) */
-const APP_VER='v1.65';
+const APP_VER='v1.67';
 window.APP_VER=APP_VER;document.title='Yoga Launcher \u2022 '+APP_VER;
 {const m=document.createElement('meta');m.name='app-version';m.content=APP_VER;document.head.appendChild(m)}
 const NS='http://www.w3.org/2000/svg', $=id=>document.getElementById(id), p2=v=>String(v).padStart(2,'0');
 const D=['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
 const M=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 const svg=$('svg'), phone=document.querySelector('.phone');
-const SD={hcol:'4',hrow:'auto',hadd:'pick',hlb:100,hlab:true,hlock:false,wu:(/^en-US/i.test(navigator.language||'')?'f':'c'),wloc:'auto',wcity:'',wlat:null,wlon:null,cdx:0,cdy:0,ddx:0,ddy:0,csc:100,dsc:100,dwx:true,logo:true,lsplash:true,apv:true,tod:false,ptilt:false,pinv:false,ptn:60,hsb:true,drail:true,dflow:true,dloop:false,dfb:100,dside:'l',disz:100,dcv:100,dln:true,dgl:true,dlt:true,dlb:true,dfy:'m',dsp:'n',dtl:true,duc:true,dhp:true,dsq:true,dmass:true,dpred:true,dbeat:true,dorg:true,drot:true,dflood:true,dlite:true,dpar:true,dgrav:true,dliq:true,dtap:false,dfx:'full',h24:false,cs:false,pcs:false,dt:true,fx:true,hap:true,dock:true,dmin:true,dsec:true,dnum:true,dsz:100,dop:100,mand:true,mspin:false,mop:45,dring:true,dtrail:true,dmag:true,dtk:'n',dfs:'n',dsm:'tick',dn:'4',dz:'m',dks:'glass',dab:true,amb:true,fvib:true,fshow:true,hic:true,da:'cascade',bl:10,mst:'lotus',mpal:'gold',mc1:'#ffd36e',mc2:'#ff6f61',mc3:'#8e44ad',mcm:'radial',mbg:'core',mdt:'m',mdr:'cw',ng:true,nga:true,gon:true,gsu:'apps',gsd:'search',gsl:'widgets',gsr:'apps',gdt:'search',gdist:60,wp:'none',wdim:0,wbl:0,wgcl:true,wgwe:true,wgbt:true,wgca:true,wgta:true,wgfo:true,wgre:true,ipk:'default',ish:'sq',isz:100,aspd:100,gcol:'4',grow:'5',dcat:true,pmon:true,ngp:'facet',nge:70,ngh:18,ngsp:3,ngz:28,mgs:65,mlt:100,msa:100,mhu:0,mgl:0,mw:7,mfl:8,msz:100,mspd:2,mrl0:3,mrl1:-2,mrl2:2,mrl3:-1,mrl4:1,mrl5:-1,mbr:true,perf:'auto'};
+const SD={hfree:false,hcol:'4',hrow:'auto',hadd:'pick',hlb:100,hlab:true,hlock:false,wu:(/^en-US/i.test(navigator.language||'')?'f':'c'),wloc:'auto',wcity:'',wlat:null,wlon:null,cdx:0,cdy:0,ddx:0,ddy:0,csc:100,dsc:100,dwx:true,logo:true,lsplash:true,apv:true,tod:false,ptilt:false,pinv:false,ptn:60,hsb:true,drail:true,dflow:true,dloop:false,dfb:100,dside:'l',disz:100,dcv:100,dln:true,dgl:true,dlt:true,dlb:true,dfy:'m',dsp:'n',dtl:true,duc:true,dhp:true,dsq:true,dmass:true,dpred:true,dbeat:true,dorg:true,drot:true,dflood:true,dlite:true,dpar:true,dgrav:true,dliq:true,dtap:false,dfx:'full',h24:false,cs:false,pcs:false,dt:true,fx:true,hap:true,dock:true,dmin:true,dsec:true,dnum:true,dsz:100,dop:100,mand:true,mspin:false,mop:45,dring:true,dtrail:true,dmag:true,dtk:'n',dfs:'n',dsm:'tick',dn:'4',dz:'m',dks:'glass',dab:true,amb:true,fvib:true,fshow:true,hic:true,da:'cascade',bl:10,mst:'lotus',mpal:'gold',mc1:'#ffd36e',mc2:'#ff6f61',mc3:'#8e44ad',mcm:'radial',mbg:'core',mdt:'m',mdr:'cw',ng:true,nga:true,gon:true,gsu:'apps',gsd:'search',gsl:'widgets',gsr:'apps',gdt:'search',gdist:60,wp:'none',wdim:0,wbl:0,wgcl:true,wgwe:true,wgbt:true,wgca:true,wgta:true,wgfo:true,wgre:true,ipk:'default',ish:'sq',isz:100,aspd:100,gcol:'4',grow:'5',dcat:true,pmon:true,ngp:'facet',nge:70,ngh:18,ngsp:3,ngz:28,mgs:65,mlt:100,msa:100,mhu:0,mgl:0,mw:7,mfl:8,msz:100,mspd:2,mrl0:3,mrl1:-2,mrl2:2,mrl3:-1,mrl4:1,mrl5:-1,mbr:true,perf:'auto'};
 const MINI_KEYS=['mand','mspin','mbr','amb','fx','ptilt','ng','nga','ngp','dtrail','dmag','dring','lsplash','bl','perf','da','pmon','tod','cs','pcs','wp','dsm','dsec','dt','hap','logo','wgwe','wgbt','wgca','wgta','wgre','amoled','sdim','shnm','sgry','shin'];
 const MINI_ON={mand:true,mspin:true,mbr:false,amb:false,fx:false,ptilt:false,ng:false,nga:false,ngp:'none',dtrail:false,dmag:false,dring:false,lsplash:false,bl:0,perf:'on',da:'off',pmon:false,tod:false,cs:false,pcs:false,wp:'none'};
 const MINI_OFF={mand:true,mspin:false,mbr:false,amb:true,fx:true,ptilt:false,ng:true,nga:true,ngp:'facet',dtrail:true,dmag:true,dring:true,lsplash:true,bl:10,perf:'auto',da:'cascade',pmon:true,tod:false,cs:false,pcs:false,wp:'none'};
@@ -2828,7 +2855,7 @@ function renderGrid(){
 const openDrawer=()=>YD.open();
 const openApps=openDrawer;
 let RET=null;   /* v1.57: the page (Home grid / Widgets) the drawer was opened from; closing the drawer goes back there instead of the default home */
-const closeAll=keep=>{const was=$('drawer').classList.contains('open');['drawer','sheet','command','amenu','pgW','pgF'].forEach(i=>$(i).classList.remove('open'));$('command').setAttribute('aria-hidden','true');$('q').blur();YD.stop(was);if(keep!==true)RET=null};
+const closeAll=keep=>{const was=$('drawer').classList.contains('open');['drawer','sheet','command','amenu','pgW','pgF','emode'].forEach(i=>$(i).classList.remove('open'));$('command').setAttribute('aria-hidden','true');$('q').blur();YD.stop(was);if(keep!==true)RET=null};
 const closeDrawer=()=>{const r=$('drawer').classList.contains('open')?RET:null;closeAll(true);RET=null;if(r)openPage(r)};
 $('yClr').onclick=()=>{$('q').value='';$('q').oninput();$('q').focus()};$('yClr').addEventListener('mousedown',e=>e.preventDefault());
 let qRaf=0;$('q').oninput=()=>{cancelAnimationFrame(qRaf);qRaf=requestAnimationFrame(renderGrid)};
@@ -2896,7 +2923,7 @@ const SEGS=[['wu','Temperature unit',[['c','\u00b0C'],['f','\u00b0F']],'wxSegs']
 ['ngp','Glass pattern',[['facet','Facets'],['lines','Fluted'],['prism','Prism'],['frost','Frosted'],['none','None']],'m4'],
 ['perf','Performance mode',[['auto','Auto'],['on','Smooth'],['off','Full effects']],'mperf']];
 const saveS=()=>{try{localStorage.setItem('mdc-set',JSON.stringify(S))}catch(e){ERR(e,"c23")}if(window.Android&&typeof Android.saveSettings==='function')Android.saveSettings(JSON.stringify(S))};
-const BOOL=['hic','hlab','hlock','logo','lsplash','apv','tod','ptilt','pinv','hsb','drail','dflow','dloop','mand','mspin','dring','dtrail','dmag','dmin','dsec','dnum','h24','cs','pcs','dt','fx','hap','dock','dab','amb','fvib','fshow','mbr','ng','nga','dln','dgl','dlt','dlb','dtl','duc','dhp','dsq','dmass','dpred','dbeat','dorg','drot','dflood','dlite','dpar','dgrav','dliq','dtap','gon','wgcl','wgwe','wgbt','wgca','wgta','wgfo','wgre','dcat','pmon','mini','amoled','shnm','sgry','shin','abs','dwx'];
+const BOOL=['hfree','hic','hlab','hlock','logo','lsplash','apv','tod','ptilt','pinv','hsb','drail','dflow','dloop','mand','mspin','dring','dtrail','dmag','dmin','dsec','dnum','h24','cs','pcs','dt','fx','hap','dock','dab','amb','fvib','fshow','mbr','ng','nga','dln','dgl','dlt','dlb','dtl','duc','dhp','dsq','dmass','dpred','dbeat','dorg','drot','dflood','dlite','dpar','dgrav','dliq','dtap','gon','wgcl','wgwe','wgbt','wgca','wgta','wgfo','wgre','dcat','pmon','mini','amoled','shnm','sgry','shin','abs','dwx'];
 function normS(){
   if(S.dst==='glass'||S.dst==='clear'){S.dks=S.dst;S.dst='cls'}
   BOOL.forEach(k=>{S[k]=S[k]===true||S[k]==='true'||S[k]===1});
@@ -3155,7 +3182,7 @@ const ARUN={contacts:()=>{openApps();DC='Contacts';renderGrid()},layout:()=>{win
   s.onchange=()=>{S[k]=s.value;saveS()};$('gsel').append(h,s)});
 (function(){
   let st=null,lastTap=0,lx=0,ly=0;
-  const busy=()=>['drawer','sheet','command','amenu','pgW','pgF'].some(i=>$(i).classList.contains('open'))||$('pvbar').classList.contains('on')||phone.classList.contains('lay');
+  const busy=()=>['drawer','sheet','command','amenu','pgW','pgF','emode'].some(i=>$(i).classList.contains('open'))||$('pvbar').classList.contains('on')||phone.classList.contains('lay');
   phone.addEventListener('pointerdown',e=>{st=(!S.gon||busy()||e.target.closest('button,input,select,textarea,a,#hour,.dock,.sheet,.smart-card,.pg,.drawer,.command,.amenu,.command'))?null:{x:e.clientX,y:e.clientY,t:performance.now()}});
   phone.addEventListener('pointerup',e=>{
     if(!st||inField()){st=null;return}
@@ -3710,7 +3737,7 @@ try{ENG.init()}catch(e){console.error(e)}
 
 /* ===== Hold any part of the home screen to open that part's settings ===== */
 (function(){
-  const IDS=['drawer','sheet','command','amenu','pgW','pgF'],dial=$('dial'),man=$('mandala');
+  const IDS=['drawer','sheet','command','amenu','pgW','pgF','emode'],dial=$('dial'),man=$('mandala');
   const hits=(x,y)=>document.elementsFromPoint(x,y);
   function pick(x,y){
     phone.classList.add('hp');
@@ -3735,14 +3762,15 @@ try{ENG.init()}catch(e){console.error(e)}
   }
   let t=0,sx=0,sy=0,blk=0;
   phone.addEventListener('pointerdown',e=>{
-    clearTimeout(t);t=0;
+    clearTimeout(t);t=0;blk=0;   /* a new touch means the click after the last long-press release is already gone */
     if(phone.classList.contains('lay'))return;
     if(e.pointerType==='mouse'&&e.button!==0)return;
-    if(IDS.some(i=>$(i).classList.contains('open')))return;
-    if(e.target.closest('input,textarea,select,#hour,#gear,#hsearch,#dock .app,#dock .dab,.hic'))return;
+    if(IDS.some(i=>$(i).classList.contains('open'))||phone.classList.contains('arr'))return;
+    if(e.target.closest('input,textarea,select,#hour,#gear,#hsearch,#dock .app,#dock .dab,.hic,.hw,.arbar'))return;
     sx=e.clientX;sy=e.clientY;
     t=setTimeout(()=>{t=0;if(phone.classList.contains('lay'))return;const sec=pick(sx,sy);if(!sec)return;if(sec==='Wallpaper'&&S.gon&&(S.glp||'none')!=='none')return;   /* an assigned long-press gesture owns empty home */
-    vib(18);window.HOLDSEC=sec;$('gear').click();blk=Date.now()+1500},600);
+    vib(18);if(sec==='Wallpaper'&&window.EDITMODE){blk=Date.now()+1500;window.EDITMODE.open();return}   /* v1.66: empty space = one Edit home panel */
+    window.HOLDSEC=sec;$('gear').click();blk=Date.now()+1500},600);
   },true);
   ['pointerup','pointercancel'].forEach(ev=>phone.addEventListener(ev,()=>{clearTimeout(t);t=0},true));
   phone.addEventListener('pointermove',e=>{if(t&&Math.hypot(e.clientX-sx,e.clientY-sy)>10){clearTimeout(t);t=0}},true);
@@ -4125,8 +4153,8 @@ try{ENG.init()}catch(e){console.error(e)}
   function render(popP){
     hic.textContent='';if(!S.hic)return;const R=rows();hic.style.setProperty('--hcw',CW+'px');hic.style.setProperty('--hch',CH+'px');
     Object.keys(hpos).forEach(p=>{
-      const v=hpos[p],a=appOf(p);if(!a||!v||v.c>=HC||v.r>=R||pgOf(p)!==HPG)return;
-      const b=document.createElement('button');b.className='hic'+(p===popP?' pop':'');b.style.left=v.c*CW+'px';b.style.top=(TOP+v.r*CH)+'px';b.setAttribute('aria-label',a.n);
+      const v=hpos[p],a=appOf(p);if(!a||!v||(v.fx==null&&(v.c>=HC||v.r>=R))||pgOf(p)!==HPG)return;
+      const b=document.createElement('button');b.className='hic'+(p===popP?' pop':'');if(v.fx!=null){const W=phone.offsetWidth||320;b.style.left=Math.max(0,Math.min(W-CW,v.fx))+'px';b.style.top=v.fy+'px'}else{b.style.left=v.c*CW+'px';b.style.top=(TOP+v.r*CH)+'px'}b.setAttribute('aria-label',a.n);
       b.appendChild(icon(a));const s=document.createElement('span');s.textContent=a.n;b.appendChild(s);
       b.onclick=()=>launch(a);if(!a.ct)hold(b,a);hic.appendChild(b);
     });
@@ -4144,7 +4172,7 @@ try{ENG.init()}catch(e){console.error(e)}
   }
   function setPage(i){
     i=Math.max(0,Math.min(HPN-1,i));if(i===HPG){dots();return}
-    const dir=i>HPG?1:-1;HPG=i;sv('mdc-hpg',HPG);render();try{vib(8)}catch(_){}
+    const dir=i>HPG?1:-1;HPG=i;sv('mdc-hpg',HPG);render();try{window.dispatchEvent(new Event('yogahpage'))}catch(_){}try{vib(8)}catch(_){}
     if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&S.mode!=='perf'&&S.mode!=='stealth')try{hic.animate([{opacity:.2,transform:'translateX('+(dir*36)+'px)'},{opacity:1,transform:'none'}],{duration:160,easing:'ease-out'})}catch(_){}
   }
   window.HOMEPG={go:i=>setPage(i),get i(){return HPG},get n(){return HPN}};
@@ -4159,7 +4187,7 @@ try{ENG.init()}catch(e){console.error(e)}
     if(HPN<MAXPG){const f=freeCells(p,HPN)[0];if(f){HPN++;sv('mdc-hpn',HPN);place(p,f.c,f.r,HPN-1);return HPN}}
     return 0;
   }
-  function place(p,c,r,pg){hpos[p]={c:c,r:r,pg:pg==null?HPG:pg};saveP();if(!lst().includes(p)){home.push(p);sv('mdc-home',home)}render(p);try{renderHome()}catch(_){ERR(_,"c57")}}
+  function place(p,c,r,pg,fxy){hpos[p]=fxy?{c:-1,r:-1,fx:fxy.x,fy:fxy.y,pg:pg==null?HPG:pg}:{c:c,r:r,pg:pg==null?HPG:pg};saveP();if(!lst().includes(p)){home.push(p);sv('mdc-home',home)}render(p);try{renderHome()}catch(_){ERR(_,"c57")}}
   function remove(p){delete hpos[p];saveP();home=lst().filter(x=>x!==p);sv('mdc-home',home);render();try{renderHome()}catch(_){ERR(_,"c58")}}
   /* "Add to home screen" in the app menu drops the app on the first free cell */
   const _ah=$('amHome').onclick;
@@ -4237,8 +4265,8 @@ try{ENG.init()}catch(e){console.error(e)}
     phone.classList.add('dragging');
     if(DRG.fh){DRG.src=A.el;A.el.classList.add('lift')}
     const gh=document.createElement('div');gh.className='dghost';gh.appendChild(icon(A.a));phone.appendChild(gh);DRG.ghost=gh;
-    hd.textContent='';hd.classList.toggle('fh',DRG.fh);
-    const note=document.createElement('div');note.className='hd-note';note.textContent=DRG.fh?'Drop on a cell to move \u00b7 on a dock slot to pin':'Drop on a cell for home \u00b7 on a dock slot to pin';hd.appendChild(note);
+    hd.textContent='';hd.classList.toggle('fh',DRG.fh);hd.classList.toggle('free',!!S.hfree);
+    const note=document.createElement('div');note.className='hd-note';note.textContent=S.hfree?'Drop anywhere on the home screen \u00b7 on a dock slot to pin':DRG.fh?'Drop on a cell to move \u00b7 on a dock slot to pin':'Drop on a cell for home \u00b7 on a dock slot to pin';hd.appendChild(note);
     const rm=document.createElement('div');rm.className='hd-rm';rm.textContent='DROP HERE TO REMOVE';hd.appendChild(rm);DRG.rm=rm;
     DRG.cells=freeCells(A.a.p).map(o=>{const c=document.createElement('div'),r=cellR(o.c,o.r);c.className='hcell';c.style.cssText='left:'+(r.l+3)+'px;top:'+(r.t+3)+'px;width:'+(CW-6)+'px;height:'+(CH-6)+'px';hd.appendChild(c);return {c:o.c,r:o.r,e:c,x:(r.l+r.r)/2,y:(r.t+r.b)/2}});
     vib(14);move(e);
@@ -4252,6 +4280,10 @@ try{ENG.init()}catch(e){console.error(e)}
     if(onDots){const ds=[...hg.querySelectorAll('.hpd')];let bi=-1,bd=1e9;ds.forEach((e,i)=>{const r=rc(e),d=Math.abs((r.l+r.r)/2-p.x);if(d<bd){bd=d;bi=i}});if(bi>=0)t={type:'pg',i:bi}}
     if(t){}else if(inDock){const ds=[...$('dock').querySelectorAll('.app')];let bi=0,bd=1e9;ds.forEach((e,i)=>{const r=rc(e),d=Math.abs((r.l+r.r)/2-p.x);if(d<bd){bd=d;bi=i}});t={type:'dock',i:bi}}
     else if(DRG.fh&&p.y<TOP-50)t={type:'rm'};
+    else if(S.hfree){   /* v1.67: free placement - the icon lands exactly where you let go (not under the clock or date) */
+      const W=phone.offsetWidth||320,fx=Math.max(0,Math.min(W-CW,p.x-CW/2)),fy=Math.max(44,Math.min(dk.t-CH+6,p.y-CH/2-6));
+      const me={l:fx,t:fy,r:fx+CW,b:fy+CH};if(!blockers().some(b=>ov(me,b,-10)))t={type:'free',x:Math.round(fx),y:Math.round(fy)};
+    }
     else{let best=1e9;DRG.cells.forEach(c=>{const d=Math.hypot(c.x-p.x,c.y-p.y);if(d<best){best=d;t={type:'cell',c:c.c,r:c.r}}})}
     DRG.t=t;
     document.querySelectorAll('#hpg .hpd').forEach((e,i)=>e.classList.toggle('dslot',!!t&&t.type==='pg'&&t.i===i));
@@ -4280,7 +4312,8 @@ try{ENG.init()}catch(e){console.error(e)}
     $('dock').classList.remove('dk');$('dock').querySelectorAll('.dslot').forEach(e=>e.classList.remove('dslot'));document.querySelectorAll('#hpg .dslot').forEach(e=>e.classList.remove('dslot'));phone.classList.remove('dragging');
     if(DRG.imm&&!DRG.moved&&!cancel){DRG.imm=false;restore();setTimeout(()=>openMenu(a),120);return}
     DRG.imm=false;
-    if(t&&t.type==='cell'){closeAll();place(a.p,t.c,t.r);vib(10);toast(a.n+(DRG.fh?' moved':' added to home screen'))}
+    if(t&&t.type==='free'){closeAll();place(a.p,0,0,null,{x:t.x,y:t.y});vib(10);toast(a.n+(DRG.fh?' moved':' added to home screen'))}
+    else if(t&&t.type==='cell'){closeAll();place(a.p,t.c,t.r);vib(10);toast(a.n+(DRG.fh?' moved':' added to home screen'))}
     else if(t&&t.type==='pg'){const f=freeCells(a.p,t.i)[0];closeAll();if(f){setPage(t.i);place(a.p,f.c,f.r,t.i);vib(10);toast(a.n+(DRG.fh?' moved':' added')+' to page '+(t.i+1))}else{toast('Page '+(t.i+1)+' is full');restore()}}
     else if(t&&t.type==='rm'){remove(a.p);toast(a.n+' removed from home screen')}
     else if(t&&t.type==='dock'){dockDrop(a,t.i||0);closeAll()}
@@ -4396,9 +4429,9 @@ try{ENG.init()}catch(e){console.error(e)}
 
   /* ── widgets page: media, up next, Android widgets ── */
   let AW=ls('mdc-aw',[]);if(!Array.isArray(AW))AW=[];
-  const saveAW=()=>sv('mdc-aw',AW);
-  let target=-1;
-  const HPX={1:80,2:160,3:240};
+  const saveAW=()=>{sv('mdc-aw',AW);try{renderHW()}catch(_){}};
+  let target=-1,pinNew=false;
+  const HPX={1:80,2:160,3:240},HMIN=60,HMAX=420,hpx=s=>s.px>=HMIN?Math.min(HMAX,s.px):HPX[s.h||2]||160;
 
   const _rw=renderWidgets;
   renderWidgets=function(){
@@ -4431,14 +4464,24 @@ try{ENG.init()}catch(e){console.error(e)}
     AW.forEach((s,si)=>{
       const cur=s.w[s.i]||s.w[0];if(!cur)return;
       const box=el('div','aws',null,aw);
-      const p=el('div','awp',cur.label||'Widget',box);p.style.height=HPX[s.h||2]+'px';p.dataset.id=cur.id;p.dataset.si=si;
+      const p=el('div','awp',cur.label||'Widget',box);p.style.height=hpx(s)+'px';p.dataset.id=cur.id;p.dataset.si=si;
+      const grip=el('div','awh',null,box);el('i',null,null,grip);const gv=el('span','awh-v',Math.round(hpx(s))+' px',grip);
+      grip.tabIndex=0;grip.setAttribute('role','slider');grip.setAttribute('aria-label','Drag to resize widget height');grip.setAttribute('aria-valuemin',HMIN);grip.setAttribute('aria-valuemax',HMAX);grip.setAttribute('aria-valuenow',Math.round(hpx(s)));
+      const setH=(h,final)=>{h=Math.max(HMIN,Math.min(HMAX,Math.round(h)));s.px=h;s.h=h<120?1:h<200?2:3;p.style.height=h+'px';gv.textContent=h+' px';grip.setAttribute('aria-valuenow',h);placeSoon();if(final){saveAW();renderWidgets()}};
+      let gy=0,g0=0,gd=false;
+      grip.addEventListener('pointerdown',e=>{gd=true;gy=e.clientY;g0=hpx(s);try{grip.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault()});
+      grip.addEventListener('pointermove',e=>{if(gd)setH(g0+(e.clientY-gy))});
+      ['pointerup','pointercancel'].forEach(t=>grip.addEventListener(t,e=>{if(!gd)return;gd=false;try{grip.releasePointerCapture(e.pointerId)}catch(_){}setH(hpx(s),true)}));
+      grip.addEventListener('keydown',e=>{if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();setH(hpx(s)+(e.key==='ArrowDown'?20:-20),true)}});
       const bar=el('div','awbar',null,box);
-      [[1,'S'],[2,'M'],[3,'L']].forEach(([h,l])=>{const b=el('button','mini'+((s.h||2)===h?'':' ghost'),l,bar);b.setAttribute('aria-label','Height '+l);b.onclick=()=>{s.h=h;saveAW();renderWidgets()}});
+      [[1,'S'],[2,'M'],[3,'L']].forEach(([h,l])=>{const b=el('button','mini'+(!s.px&&(s.h||2)===h?'':' ghost'),l,bar);b.setAttribute('aria-label','Height '+l);b.onclick=()=>{s.h=h;delete s.px;saveAW();renderWidgets()}});
       if(s.w.length>1){
         const pv=el('button','mini ghost','\u2039',bar);pv.setAttribute('aria-label','Previous widget in stack');pv.onclick=()=>{s.i=(s.i-1+s.w.length)%s.w.length;saveAW();renderWidgets()};
         const dots=el('span','awd',null,bar);s.w.forEach((_,i)=>el('i',i===s.i?'on':'',null,dots));
         const nx=el('button','mini ghost','\u203a',bar);nx.setAttribute('aria-label','Next widget in stack');nx.onclick=()=>{s.i=(s.i+1)%s.w.length;saveAW();renderWidgets()};
       }
+      if(s.w.length>1)el('span','awd-n',(s.i+1)+'/'+s.w.length,bar);
+      const pn=el('button','mini ghost',s.hm?'Unpin':'Pin to home',bar);pn.onclick=()=>{if(s.hm){delete s.hm;saveAW();renderWidgets();toast('Removed from the home screen')}else{pinHome(s);closeAll();arrange(true)}};
       const st=el('button','mini ghost','Stack',bar);st.onclick=()=>{target=si;addWidget()};
       const rm=el('button','mini ghost','\u2715',bar);rm.setAttribute('aria-label','Remove widget');rm.onclick=()=>removeActive(si);
     });
@@ -4450,15 +4493,18 @@ try{ENG.init()}catch(e){console.error(e)}
 
   function addWidget(){
     if(hasA('pickWidget')){call('pickWidget');return}
+    if(!(window.Android||window.YogaNative)){   /* browser/preview: a placeholder so stacking and resizing can be tried */
+      const n=AW.reduce((a,s)=>a+s.w.length,0)+1;window.onWidgetAdded({id:'demo'+Date.now()+n,label:'Demo widget '+n});return}
     toast('Widgets need the Android app');
   }
+  window.__awAdd=()=>{target=-1;addWidget()};
   window.onWidgetAdded=o=>{
     if(!o||o.id==null)return;
     const w={id:String(o.id),label:String(o.label||'Widget')};
     if(AW.some(s=>s.w.some(x=>x.id===w.id)))return;
     if(target>=0&&AW[target]){AW[target].w.push(w);AW[target].i=AW[target].w.length-1}
-    else AW.push({w:[w],i:0,h:o.h>=1&&o.h<=3?o.h:2});
-    target=-1;saveAW();refreshW();
+    else{const ns={w:[w],i:0,h:o.h>=1&&o.h<=3?o.h:2};AW.push(ns);if(pinNew){pinHome(ns);pinNew=false}}
+    target=-1;saveAW();refreshW();placeSoon();
   };
   window.onWidgetRemoved=id=>{
     id=String(id);
@@ -4475,13 +4521,15 @@ try{ENG.init()}catch(e){console.error(e)}
 
   /* tell the native side where each placeholder sits so it can overlay the real widget */
   const placed={};
-  const covered=()=>['amenu','sheet','command','drawer','pvbar'].some(open);
+  const covered=()=>['amenu','sheet','command','drawer','pvbar','emode'].some(open);
+  const lockUp=()=>{const l=$('lockscr');return !!l&&!l.hidden};
+  const homeOK=()=>!covered()&&!open('pgW')&&!open('pgF')&&!lockUp()&&!['lay','dragging','cov','arr','picking'].some(c=>phone.classList.contains(c));
   function hideAll(){
     Object.keys(placed).forEach(id=>{if(placed[id]!=='hidden'){call('hideWidget',id);placed[id]='hidden'}});
   }
   function place(){
     if(!hasA('placeWidget'))return;
-    if(!open('pgW')||covered()){hideAll();return}
+    if(!open('pgW')||covered()){if(!open('pgW')&&homeOK()){placeHome();return}hideAll();return}
     const view=$('wgBody').getBoundingClientRect(),vis=new Set();
     AW.forEach(s=>s.w.forEach((w,i)=>{
       if(i===s.i)return;
@@ -4496,10 +4544,61 @@ try{ENG.init()}catch(e){console.error(e)}
       vis.add(id);
     });
   }
+
   let pl=0;const placeSoon=()=>{cancelAnimationFrame(pl);pl=requestAnimationFrame(place)};
   $('wgBody').addEventListener('scroll',placeSoon,{passive:true});
+
+  /* ===== v1.67: widgets placed freely on the home screen ===== */
+  const hwl=$('hwid'),arbar=$('arbar'),zk=()=>(phone.getBoundingClientRect().width/phone.offsetWidth)||1;
+  const curPg=()=>(window.HOMEPG&&HOMEPG.i)||0;
+  function pinHome(s){const W=phone.offsetWidth||320,w=Math.min(W-24,Math.max(140,Math.round(W*.86))),h=hpx(s);s.hm={x:Math.round((W-w)/2),y:150,w:w,h:Math.min(h,Math.max(60,(PH||640)-300)),pg:curPg()};saveAW()}
+  function renderHW(){
+    if(!hwl)return;hwl.textContent='';const arr=phone.classList.contains('arr'),W=phone.offsetWidth||320;
+    AW.forEach((s,si)=>{const m=s.hm;if(!m||(m.pg||0)!==curPg())return;const cur=s.w[s.i]||s.w[0];if(!cur)return;
+      const d=document.createElement('div');d.className='hw';d.dataset.id=cur.id;d.dataset.si=si;d.textContent=cur.label||'Widget';
+      d.style.cssText='left:'+m.x+'px;top:'+m.y+'px;width:'+m.w+'px;height:'+m.h+'px';hwl.appendChild(d);
+      if(!arr)return;
+      const bx=document.createElement('div');bx.className='hw-b';d.appendChild(bx);
+      const mk=(t,l,f)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.setAttribute('aria-label',l);b.onpointerdown=e=>e.stopPropagation();b.onclick=e=>{e.stopPropagation();f()};bx.appendChild(b)};
+      if(s.w.length>1){mk('\u2039','Previous widget in stack',()=>{s.i=(s.i-1+s.w.length)%s.w.length;saveAW();placeSoon()});mk('\u203a','Next widget in stack',()=>{s.i=(s.i+1)%s.w.length;saveAW();placeSoon()})}
+      mk('\u2715','Take off the home screen',()=>{delete s.hm;saveAW();placeSoon();toast('Taken off the home screen')});
+      const rz=document.createElement('div');rz.className='hw-r';rz.setAttribute('aria-label','Resize widget');d.appendChild(rz);
+      let mode=0,sx=0,sy=0,o=null;
+      const down=(k)=>e=>{mode=k;sx=e.clientX;sy=e.clientY;o={x:m.x,y:m.y,w:m.w,h:m.h};try{(k===2?rz:d).setPointerCapture(e.pointerId)}catch(_){}e.preventDefault();e.stopPropagation()};
+      const mv=e=>{if(!mode)return;const z=zk(),dx=(e.clientX-sx)/z,dy=(e.clientY-sy)/z,H=PH||640;
+        if(mode===1){m.x=Math.round(Math.max(0,Math.min(W-m.w,o.x+dx)));m.y=Math.round(Math.max(40,Math.min(H-60-m.h,o.y+dy)))}
+        else{m.w=Math.round(Math.max(90,Math.min(W-m.x,o.w+dx)));m.h=Math.round(Math.max(60,Math.min(H-40-m.y,o.h+dy)))}
+        d.style.left=m.x+'px';d.style.top=m.y+'px';d.style.width=m.w+'px';d.style.height=m.h+'px'};
+      const up=e=>{if(!mode)return;mode=0;try{d.releasePointerCapture(e.pointerId)}catch(_){}try{rz.releasePointerCapture(e.pointerId)}catch(_){}saveAW();placeSoon()};
+      d.addEventListener('pointerdown',down(1));rz.addEventListener('pointerdown',down(2));
+      [d,rz].forEach(t=>{t.addEventListener('pointermove',mv);t.addEventListener('pointerup',up);t.addEventListener('pointercancel',up)});
+    });
+  }
+  function placeHome(){
+    const view=phone.getBoundingClientRect(),vis=new Set();
+    hwl.querySelectorAll('.hw').forEach(p=>{const id=p.dataset.id,r=p.getBoundingClientRect();
+      if(!(r.width>0)){return}
+      const k=[r.left,r.top,r.width,r.height].map(v=>Math.round(v)).join(',');
+      if(placed[id]!==k){call('placeWidget',id,Math.round(r.left),Math.round(r.top),Math.round(r.width),Math.round(r.height));placed[id]=k}vis.add(id)});
+    AW.forEach(s=>s.w.forEach(w=>{if(!vis.has(w.id)&&placed[w.id]!=='hidden'&&placed[w.id]!=null){call('hideWidget',w.id);placed[w.id]='hidden'}}));
+  }
+  function arrange(on){
+    if(on){if(S.hlock){toast('Home layout is locked');return}try{closeAll()}catch(_){}
+      phone.classList.add('arr');arbar.hidden=false;renderHW();hideAll();
+      if(!AW.some(s=>s.hm&&(s.hm.pg||0)===curPg()))toast('No widgets on this page yet. Tap Add.')}
+    else{phone.classList.remove('arr');arbar.hidden=true;renderHW();placeSoon()}
+  }
+  $('arDone').onclick=()=>arrange(false);
+  $('arAdd').onclick=()=>{pinNew=true;target=-1;if(hasA('pickWidget')||!(window.Android||window.YogaNative))addWidget();else{pinNew=false;toast('Widgets need the Android app')}};
+  window.HOMEARR={enter:()=>arrange(true),exit:()=>arrange(false),get on(){return phone.classList.contains('arr')}};
+  window.addEventListener('yogahpage',()=>{renderHW();placeSoon()});
+  new MutationObserver(placeSoon).observe(phone,{attributes:true,attributeFilter:['class']});
+  {const l=$('lockscr');if(l)new MutationObserver(placeSoon).observe(l,{attributes:true,attributeFilter:['hidden']})}
+  addEventListener('keydown',e=>{if(e.key==='Escape'&&phone.classList.contains('arr')){arrange(false)}},true);
+  try{ASET.post.push(()=>{renderHW();placeSoon()})}catch(_){}
+  renderHW();
   addEventListener('resize',()=>{Object.keys(placed).forEach(k=>delete placed[k]);placeSoon()});
-  ['pgW','amenu','sheet','command','drawer','pvbar'].forEach(id=>{const e=$(id);if(e)new MutationObserver(placeSoon).observe(e,{attributes:true,attributeFilter:['class']})});
+  ['pgW','amenu','sheet','command','drawer','pvbar','emode'].forEach(id=>{const e=$(id);if(e)new MutationObserver(placeSoon).observe(e,{attributes:true,attributeFilter:['class']})});
 
   /* ── settings panel ── */
   function stat(){
@@ -4653,7 +4752,7 @@ try{ENG.init()}catch(e){console.error(e)}
     else if(r==='on'||r==='off')toast('Flashlight '+r)};
   Object.assign(ACTS,{shade:'Notification shade',qs:'Quick settings',torch:'Flashlight',camera:'Camera',shot:'Screenshot',recents:'Recent apps (system)',rpanel:'Recent apps (launcher)'});
   ['shade','qs','torch','camera','shot','recents'].forEach(n=>{ARUN[n]=()=>sys(n)});
-  ARUN.rpanel=()=>openRP();
+  ARUN.rpanel=()=>openRP();ACTS.edit='Edit home';ARUN.edit=()=>window.EDITMODE&&window.EDITMODE.open();
   const HOME=[['glp','Long-press on empty home'],['gpi','Pinch in'],['gpo','Pinch out'],['g2u','Two-finger swipe up'],['g2d','Two-finger swipe down']],ICON=[['giu','Swipe up on an app icon'],['gid','Swipe down on an app icon']];
   const DEF={glp:'none',gpi:'none',gpo:'none',g2u:'none',g2d:'none',giu:'menu',gid:'none'};
   Object.keys(DEF).forEach(k=>{if(S[k]==null)S[k]=DEF[k]});
@@ -7257,7 +7356,7 @@ html.nbdoff #aw .awbd,html.shin #aw .awbd,html.shin #aw .awnw{display:none}
 /* swipe right on the home screen opens the app drawer. More forgiving than the old gesture: fires as soon as the swipe is clearly sideways, even if your thumb drifts. */
 (function(){try{
  let st=null,lastFire=0;
- const busy=()=>['drawer','sheet','command','amenu','pgW','pgF'].some(i=>{const e=document.getElementById(i);return e&&e.classList.contains('open')})||phone.classList.contains('lay');
+ const busy=()=>['drawer','sheet','command','amenu','pgW','pgF','emode'].some(i=>{const e=document.getElementById(i);return e&&e.classList.contains('open')})||phone.classList.contains('lay');
  const skip=t=>t&&t.closest&&t.closest('input,select,textarea,.dock,.sheet,.smart-card,.pg,.drawer,.command,.amenu,.hsearch');
  const sc=()=>(phone.getBoundingClientRect().width/phone.offsetWidth)||1;
  const fire=()=>{const n=performance.now();if(n-lastFire<500)return;lastFire=n;st=null;try{(typeof ARUN!=='undefined'&&ARUN[S.gsr]||ARUN.apps)()}catch(e){try{ERR(e,'v66')}catch(_){}}};
@@ -8480,7 +8579,7 @@ void main(){
 /* v1.62: swipe sideways on the home screen to change home page. On the first page a swipe right still opens apps, on the last page a swipe left still does your Swipe left action. */
 (function(){try{
  const ph=document.querySelector('.phone');let st=null,hit=0,eat=false;
- const busy=()=>['drawer','sheet','command','amenu','pgW','pgF'].some(i=>{const e=document.getElementById(i);return e&&e.classList.contains('open')})||ph.classList.contains('lay')||ph.classList.contains('dragging')||!!document.getElementById('v75help')||(window.DRG&&DRG.on);
+ const busy=()=>['drawer','sheet','command','amenu','pgW','pgF','emode'].some(i=>{const e=document.getElementById(i);return e&&e.classList.contains('open')})||ph.classList.contains('lay')||ph.classList.contains('dragging')||!!document.getElementById('v75help')||(window.DRG&&DRG.on);
  const skip=t=>!t||!t.closest||t.closest('input,select,textarea,.dock,.sheet,.smart-card,.pg,.drawer,.command,.amenu,#hsearch,#hpg,.laybar,.pvbar,.xrp,.xban');
  const sc=()=>(ph.getBoundingClientRect().width/ph.offsetWidth)||1;
  const down=(x,y,t,id)=>{eat=false;const H=window.HOMEPG;st=(!H||H.n<2||!S.hic||busy()||skip(t)||!ph.contains(t))?null:{x,y,t:performance.now(),id}};
@@ -8717,6 +8816,59 @@ html.light .v60tabs{background:#eef1f7}
  new MutationObserver(fix).observe(sh,{attributes:true,attributeFilter:['class']});fix();
  lkSync();
 }catch(e){try{ERR(e,'v160settings')}catch(_){console.error('v160',e)}}})();
+
+/* ===== v1.66: Edit home - ONE place for wallpaper, widgets, grid and settings (long-press empty home) ===== */
+(function(){try{
+  const em=$('emode'),tabs=$('emTabs'),body=$('emBody');if(!em)return;
+  const TABS=[['wall','Wallpaper'],['wid','Widgets'],['grid','Grid'],['set','Settings']];let cur='wall',tm=0;
+  const el=(t,c,x,p)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;if(p)p.appendChild(e);return e};
+  const commit=()=>{saveS();applySettings()};
+  const lazy=()=>{clearTimeout(tm);tm=setTimeout(saveS,250)};
+  function seg(k,lab){const d=SEGS.find(x=>x[0]===k);if(!d)return;el('div','sl',lab||d[1],body);const g=el('div','seg',null,body);
+    d[2].forEach(([v,t])=>{const b=el('button',null,t,g);b.setAttribute('aria-pressed',String(S[k])===v);b.onclick=()=>{S[k]=v;commit();render()}})}
+  function range(k,lab){const d=MSL.find(x=>x[0]===k);if(!d)return;const [,,mn,mx,st,u]=d;
+    const h=el('div','sl',lab||d[1],body);const v=el('b',null,S[k]+u,h);v.style.marginLeft='6px';
+    const i=el('input',null,null,body);i.type='range';i.min=mn;i.max=mx;i.step=st;i.value=S[k];i.setAttribute('aria-label',lab||d[1]);
+    i.oninput=()=>{S[k]=+i.value;v.textContent=S[k]+u;try{extrasSync()}catch(_){}lazy()}}
+  function tog(k,lab){const l=el('label','tg',null,body);el('span',null,lab,l);const i=el('input',null,null,l);i.type='checkbox';i.checked=!!S[k];el('i',null,null,l);i.onchange=()=>{S[k]=i.checked;commit()}}
+  function btn(t,f,ghost,p){const b=el('button','mini'+(ghost?' ghost':''),t,p||body);b.type='button';b.onclick=f;return b}
+  function render(){
+    [...tabs.children].forEach(b=>b.setAttribute('aria-selected',b.dataset.t===cur));
+    const st=body.scrollTop;body.textContent='';
+    if(cur==='wall'){
+      const pal=el('div','mch sw',null,body);
+      WPS.forEach(([id,t,bg])=>{const b=el('button',null,t,pal);b.dataset.v=id;b.style.background=id==='theme'?'linear-gradient(90deg,var(--c1),var(--c2))':bg;b.setAttribute('aria-pressed',S.wp===id);b.onclick=()=>{if(id==='custom'&&!wpImg){$('wpFile').click();return}S.wp=id;commit();render()}});
+      const r=el('div','row',null,body);btn('Choose image',()=>$('wpFile').click(),false,r).style.flex='1';btn('Remove',()=>$('wpClr').click(),true,r);
+      range('wdim','Dim');range('wbl','Blur');
+    }else if(cur==='wid'){
+      el('div','sl','Cards on the Widgets page',body);
+      [['wgcl','Clock and date'],['wgwe','Weather'],['wgbt','Battery'],['wgca','Calendar'],['wgta','Tasks'],['wgfo','Focus timer'],['wgre','Recent apps']].forEach(([k,l])=>tog(k,l));
+      const r=el('div','row',null,body);
+      btn('Add widget',()=>{close();openPage('pgW');setTimeout(()=>window.__awAdd&&window.__awAdd(),380)},false,r).style.flex='1';
+      btn('Stacks & sizes',()=>{close();openPage('pgW')},true,r).style.flex='1';
+      const r3=el('div','row',null,body);btn('Arrange home widgets',()=>{close();setTimeout(()=>window.HOMEARR&&HOMEARR.enter(),320)},false,r3).style.flex='1';
+      const r2=el('div','row',null,body);btn('Move clock & date',()=>{close();setTimeout(()=>window.LAYOUT&&window.LAYOUT.enter(),320)},true,r2).style.flex='1';
+      el('div','sl','Pin to home on the Widgets page puts a widget on the home screen. Arrange home widgets lets you drag it anywhere and pull its corner to resize. Resize and stack on the Widgets page with the grip, S/M/L and Stack.',body).style.opacity='.7';
+    }else if(cur==='grid'){
+      seg('hcol','Home screen columns');seg('hrow','Home screen rows');seg('gcol','Home page grid columns');seg('grow','Home page grid rows');
+      range('isz','Icon size');tog('hfree','Free placement (drop icons anywhere, no grid)');tog('hlab','Show app names on home');tog('hic','Apps on home screen');tog('hlock','Lock home layout');
+    }else{
+      const r=el('div','row',null,body);btn('All settings',()=>{close();window.HOLDSEC=null;setTimeout(()=>$('gear').click(),260)},false,r).style.flex='1';
+      el('div','sl','Jump straight to',body);
+      const q=el('div','row',null,body);q.style.flexWrap='wrap';
+      [['Clock','Clock'],['Date bar','Date'],['Search','Search'],['Dock','Dock'],['Widgets','Weather']].forEach(([n,l])=>btn(l,()=>{close();window.HOLDSEC=n;setTimeout(()=>$('gear').click(),260)},true,q));
+      el('div','sl','Tip: hold the clock, date, search bar or dock itself to open just that part of Settings.',body).style.opacity='.7';
+    }
+    body.scrollTop=st;
+  }
+  TABS.forEach(([id,t])=>{const b=el('button',null,t,tabs);b.type='button';b.dataset.t=id;b.setAttribute('role','tab');b.onclick=()=>{cur=id;render()}});
+  function open(tab){if(tab&&TABS.some(x=>x[0]===tab))cur=tab;closeAll();render();em.classList.add('open');em.setAttribute('aria-hidden','false')}
+  function close(){em.classList.remove('open');em.setAttribute('aria-hidden','true')}
+  $('emDone').onclick=close;
+  window.EDITMODE={open,close,get active(){return em.classList.contains('open')},tab:id=>{cur=id;if(em.classList.contains('open'))render()}};
+  /* Back / Escape closes it first */
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&em.classList.contains('open')){close();e.stopPropagation()}},true);
+}catch(e){try{ERR(e,'v166edit')}catch(_){console.error('v166',e)}}})();
 </script>
 </body>
 </html>
