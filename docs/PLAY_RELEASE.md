@@ -17,11 +17,17 @@
 3. Release: `git tag v1.62.3 && git push origin v1.62.3`. Upload the `.aab` to Play Console (Play needs the AAB, not the APK).
 
 ## Play Console declarations to prepare
-- **QUERY_ALL_PACKAGES**: needs the "core functionality" justification (a launcher must list every installed app). Launchers are a permitted use.
+- **QUERY_ALL_PACKAGES**: ready-to-paste justification and a check for whether the permission can be dropped are in `docs/QUERY_ALL_PACKAGES_JUSTIFICATION.md`. Play's permitted-use list names device search, antivirus, file managers and browsers, not launchers, so do not assume approval.
 - **Accessibility service (LockService)**: Play requires an Accessibility API declaration and a short video showing why it is needed (screen lock). If it can be avoided, removing it makes review much easier.
 - **Notification access (BadgeService)**, **READ/WRITE_CONTACTS**, **READ_CALENDAR**, **location**, **REQUEST_DELETE_PACKAGES**: each must be explained in the Data safety form and match what the app really does.
-- **Privacy policy**: a public URL is required, covering location, contacts, calendar and notification access.
+- **Privacy policy**: written in `docs/privacy-policy.html`. Fill in `[DEVELOPER NAME]` and `[CONTACT EMAIL]`, publish it at a public URL (GitHub Pages: Settings > Pages > main /docs, giving `https://<user>.github.io/<repo>/privacy-policy.html`), paste that URL in Play Console, and link it inside the app too.
 - Data safety form, content rating, and an app category (Personalization) are also needed.
+
+## Smaller, faster release build
+- Release builds run R8 code shrinking and resource shrinking (`app/proguard-rules.pro` keeps every `@JavascriptInterface` method the page calls).
+- The release workflow rebuilds the page with `MINIFY=1` (HTML, CSS and JS minified, about 14% smaller) and fails the build if the minified page logs script errors.
+- Debug builds stay unminified so errors are readable.
 
 ## Not verified
 The AGP / Gradle / SDK 36 bump could not be built here (no network). Run the workflow once on `main` and check it is green before tagging.
+- The R8 / resource-shrinking release build has not been run (no Gradle network here). First release run: install the signed APK and tap through the drawer, widgets, contacts, calendar and lock gestures, since a missing keep rule only shows up at runtime.

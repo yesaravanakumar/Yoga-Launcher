@@ -1,0 +1,30 @@
+// Pill colour option: theme-following default, palettes, custom colours, theme switch, reset
+const {JSDOM,VirtualConsole}=require('jsdom');const fs=require('fs'),path=require('path');
+const html=fs.readFileSync(process.argv[2]||path.join(__dirname,'../../app/src/main/assets/index.html'),'utf8');
+const errs=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>errs.push(String(e.detail&&e.detail.message||e.message)));
+const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,virtualConsole:vc,url:'https://appassets.test/index.html',
+ beforeParse(w){w.matchMedia=q=>({matches:false,addEventListener(){},removeEventListener(){},addListener(){},removeListener(){}});
+  w.HTMLCanvasElement.prototype.getContext=()=>null;w.scrollTo=()=>{};w.ResizeObserver=class{observe(){}unobserve(){}disconnect(){}};w.IntersectionObserver=class{observe(){}unobserve(){}disconnect(){}};w.requestIdleCallback=f=>setTimeout(f,1);
+  w.Element.prototype.animate=function(){return{cancel(){},finish(){},set onfinish(f){}}};w.addEventListener('error',e=>errs.push('onerror '+e.message))}});
+let ok=0,bad=0;const t=(n,c)=>{c?ok++:bad++;console.log((c?'PASS ':'FAIL ')+n)};
+setTimeout(()=>{const w=dom.window,d=w.document,sel=d.getElementById('ckc'),R=d.getElementById('read');
+ const pick=v=>{sel.value=v;sel.dispatchEvent(new w.Event('change',{bubbles:true}))};
+ const mcol=()=>R.children[0].style.color,scol=()=>R.children[1].style.color;
+ t('select exists with 11 options',!!sel&&sel.options.length===11);
+ t('default follows theme',sel.value==='theme'&&!R.style.getPropertyValue('--c1'));
+ const th=w.eval('THEMES').find(x=>x.n==='Sunset').c;w.setTheme(th);
+ t('theme minute colour follows',mcol().length>0);
+ const norm=c=>{const x=d.createElement('i');x.style.color=c;return x.style.color};
+ t('theme: minutes=c1 seconds=c2',mcol()===norm(th[1])&&scol()===norm(th[2]));
+ pick('swap');t('swap',mcol()===norm(th[2])&&scol()===norm(th[1]));
+ pick('accent');t('accent only',mcol()===norm(th[1])&&scol()===norm(th[1]));
+ pick('gold');t('gold palette',mcol()===norm('#ffd76b')&&scol()===norm('#ff9d4d'));
+ t('gold sets pill tint var',R.style.getPropertyValue('--c1rgb')==='255,215,107');
+ w.setTheme(w.eval('THEMES').find(x=>x.n==='Ocean').c);t('fixed palette survives theme change',mcol()===norm('#ffd76b'));
+ pick('custom');const row=d.getElementById('ckcRow');t('custom row shown',row.style.display==='');
+ const i1=d.getElementById('ckc1');i1.value='#112233';i1.dispatchEvent(new w.Event('input',{bubbles:true}));
+ t('custom minute colour',mcol()===norm('#112233'));t('saved in settings',w.eval('S').ckc==='custom'&&w.eval('S').ckc1==='#112233');
+ pick('theme');t('back to theme clears override',!R.style.getPropertyValue('--c1')&&row.style.display==='none');
+ w.eval("S.ckc='bogus'");w.paintPill();t('invalid value falls back to theme',mcol()===norm(w.eval('cur')[1]));
+ console.log('page errors:',errs.length);errs.slice(0,5).forEach(e=>console.log(' -',e));
+ console.log(ok+' passed, '+bad+' failed');process.exit(bad||errs.length?1:0)},3500);

@@ -11,7 +11,7 @@ val canSign = !ksFile.isNullOrBlank() && file(ksFile).exists() && !ksPass.isNull
 android {
     namespace = "com.yoga.launcher"
     compileSdk = 36
-    defaultConfig { applicationId = "com.yoga.launcher"; minSdk = 26; targetSdk = 36; versionCode = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toIntOrNull() ?: 1; versionName = "1.67" }
+    defaultConfig { applicationId = "com.yoga.launcher"; minSdk = 26; targetSdk = 36; versionCode = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toIntOrNull() ?: 1; versionName = "1.68" }
     signingConfigs {
         if (canSign) create("release") {
             storeFile = file(ksFile!!)
@@ -22,8 +22,11 @@ android {
     }
     buildTypes {
         release {
-            // No code shrinking: the page talks to Kotlin through @JavascriptInterface methods that R8 could rename.
-            isMinifyEnabled = false
+            // R8 shrinks and obfuscates the Kotlin side. app/proguard-rules.pro keeps every @JavascriptInterface
+            // method (the page calls them by name) so the page <-> Kotlin bridge keeps working.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             if (canSign) signingConfig = signingConfigs.getByName("release")
         }
     }

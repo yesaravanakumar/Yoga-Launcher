@@ -52,6 +52,17 @@ jobs:
           if [ -n "$KS" ] && [ -n "$KP" ] && [ -n "$KA" ]; then echo "ok=true" >> "$GITHUB_OUTPUT"; else echo "ok=false" >> "$GITHUB_OUTPUT"; fi
           if [ "${GITHUB_REF_TYPE}" = "tag" ] && [ -z "$KS" ]; then echo "::error::Tag build needs the signing secrets (YOGA_KEYSTORE_BASE64, YOGA_KEYSTORE_PASSWORD, YOGA_KEY_ALIAS)"; exit 1; fi
 
+      - name: Minify web bundle for release
+        if: steps.sign.outputs.ok == 'true'
+        run: |
+          (cd tools && npm ci --no-audit --no-fund)
+          (cd tools/smoke && npm ci --no-audit --no-fund)
+          MINIFY=1 node tools/build-web.js
+          # the minified page must still load without script errors, and the pill colour option must still work
+          node tools/smoke/smoke-load.js | tee smoke.log
+          grep -q '^errors: 0' smoke.log || { echo "::error::Minified page logs script errors"; exit 1; }
+          node tools/smoke/pillcolor-test.js
+
       - name: Build signed release APK and AAB
         if: steps.sign.outputs.ok == 'true'
         env:

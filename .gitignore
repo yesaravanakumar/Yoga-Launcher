@@ -17,3 +17,4 @@ local.properties
 *.pem
 keystore.properties
 .env
+node_modules/

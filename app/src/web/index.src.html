@@ -5215,7 +5215,7 @@ try{ENG.init()}catch(e){console.error(e)}
     lay();
     const W=phone.offsetWidth||320,H=phone.offsetHeight||640,CY=H*LY;
     vg.setAttribute('viewBox','0 0 '+W+' '+H);vg.textContent='';
-    const c1=css('--c1'),c2=css('--c2');cM.style.color=c1;cS.style.color=c2;cS.style.display=S.lksec?'':'none';
+    const c1=css('--c1'),c2=css('--c2'),pc=window.pillCols?window.pillCols():[c1,c2];cM.style.color=pc[0];cS.style.color=pc[1];cS.style.display=S.lksec?'':'none';
     rings=DEF.filter(d=>d.k!=='s'||S.lksec).map(d=>{
       const u=Object.assign({},d);u.c=css(d.ci);u.g=sn('g',{});u.q='';u.off=[0,0];u.L=[];u.T=[];u.lit=new Set();u.CY=CY;
       u.trail=Math.min(12,Math.round(u.n*.25));
@@ -8219,7 +8219,36 @@ html.ck-b #hour{animation:ckBreath 4.2s ease-in-out infinite}
    const n=document.createElement('span');n.textContent=txt;cell.appendChild(n);if(!old)return;
    const o=Object.assign({fill:'both'},k[2]),rm=()=>old.remove(),a=old.animate(k[0],o);a.onfinish=a.oncancel=rm;setTimeout(rm,600);n.animate(k[1],o)}}
  /* ---- settings ---- */
- const apply=()=>{cls();arc()};apply();
+ /* ---- pill colours: follow the theme (default), a ready palette, or the user's own two colours ---- */
+ const PC={
+  theme:['Follow theme (default)',null],
+  swap:['Theme, swapped',null],
+  accent:['Theme accent only',null],
+  white:['Soft white',['#ffffff','#c8cde0']],
+  gold:['Gold',['#ffd76b','#ff9d4d']],
+  sunset:['Sunset',['#ff9f6b','#ff5f8f']],
+  rose:['Rose',['#ff8fd0','#b58cff']],
+  mint:['Mint',['#7ef0c9','#7dd3fc']],
+  sky:['Sky',['#36c9ff','#3f78ff']],
+  lime:['Lime',['#7dff9b','#2fd6c0']],
+  custom:['Custom\u2026',null]};
+ const okc=x=>typeof x==='string'&&/^#[0-9a-f]{6}$/i.test(x);
+ window.pillCols=()=>{const t=(typeof cur!=='undefined'&&cur)||['#fff','#7df9ff','#b58cff'],k=S.ckc;
+  if(k==='swap')return [t[2],t[1]];if(k==='accent')return [t[1],t[1]];
+  if(k==='custom')return [okc(S.ckc1)?S.ckc1:t[1],okc(S.ckc2)?S.ckc2:t[2]];
+  const p=PC[k]&&PC[k][1];return p?p.slice():[t[1],t[2]]};
+ const paint=()=>{try{
+  const c=window.pillCols(),own=!!S.ckc&&S.ckc!=='theme',R2=$('read');
+  if(typeof cells!=='undefined'){if(cells.m)cells.m.style.color=c[0];if(cells.s)cells.s.style.color=c[1]}
+  if(R2){if(own){R2.style.setProperty('--c1',c[0]);R2.style.setProperty('--c1rgb',rgb(c[0]));R2.style.setProperty('--c2',c[1]);R2.style.setProperty('--c2rgb',rgb(c[1]))}
+   else['--c1','--c1rgb','--c2','--c2rgb'].forEach(q=>R2.style.removeProperty(q))}
+  const lk=document.querySelector('.lk-pill');if(lk&&lk.children.length>1){lk.children[0].style.color=c[0];lk.children[1].style.color=c[1];
+   if(own)lk.style.setProperty('--c1rgb',rgb(c[0]));else lk.style.removeProperty('--c1rgb')}
+  const row=$('ckcRow');if(row)row.style.display=S.ckc==='custom'?'':'none';
+ }catch(e){try{ERR(e,'pillcol')}catch(_){}}};
+ window.paintPill=paint;
+ const at=window.applyTheme;if(typeof at==='function')window.applyTheme=function(){const r=at.apply(this,arguments);paint();return r};
+ const apply=()=>{cls();arc();paint()};apply();
  const ss=window.setSettings;if(ss)window.setSettings=function(){const r=ss.apply(this,arguments);apply();return r};
  const sh=$('sheet');if(!sh)return;
  const next=[...sh.querySelectorAll('details.acc')].find(d=>{const q=d.querySelector(':scope>summary');return q&&/^Icons/.test(q.textContent.trim())});if(!next)return;
@@ -8232,6 +8261,14 @@ html.ck-b #hour{animation:ckBreath 4.2s ease-in-out infinite}
   const c=r.querySelector('input');c.id=id;c.checked=!!S[key];c.onchange=()=>{S[key]=c.checked;saveS();apply()};sels[id]=[c,()=>!!S[key],1];b.append(r)};
  mk('ckPre','Preset',[['','Choose a preset\u2026'],...Object.keys(PRE).map(k=>[k,k])],()=>'',v=>{if(!PRE[v])return;Object.assign(S,PRE[v]);saveS();apply();Object.values(sels).forEach(([e,g,t])=>{if(t)e.checked=g();else if(e.id!=='ckPre')e.value=g()})});
  Object.keys(OPT).forEach(k=>mk('ck_'+k,OPT[k][0],OPT[k][1],()=>S[k]||OPT[k][1][0][0],v=>{S[k]=v;saveS();apply()}));
+ mk('ckc','Pill colour',Object.keys(PC).map(k=>[k,PC[k][0]]),()=>PC[S.ckc]?S.ckc:'theme',v=>{S.ckc=v;
+   if(v==='custom'){const t=(typeof cur!=='undefined'&&cur)||[];if(!okc(S.ckc1))S.ckc1=t[1]||'#7df9ff';if(!okc(S.ckc2))S.ckc2=t[2]||'#b58cff';ci1.value=S.ckc1;ci2.value=S.ckc2}
+   saveS();apply()});
+ const crow=document.createElement('div');crow.id='ckcRow';crow.className='cp';crow.style.display='none';
+ const ci=(id,lab,key)=>{const l=document.createElement('label');l.style.cssText='display:flex;align-items:center;gap:8px;font-size:12px';l.append(lab+' ');
+  const i=document.createElement('input');i.type='color';i.id=id;i.setAttribute('aria-label','Pill '+lab.toLowerCase()+' colour');i.value=okc(S[key])?S[key]:'#7df9ff';
+  i.oninput=()=>{S[key]=i.value;saveS();apply()};l.append(i);crow.append(l);return i};
+ const ci1=ci('ckc1','Minutes','ckc1'),ci2=ci('ckc2','Seconds','ckc2');b.append(crow);
  tog('ckS','Seconds arc around the dial','cks');tog('ckB','Breathing glow on the hour','ckb');
  next.before(det);
 }catch(e){try{ERR(e,'v156clock')}catch(_){}}})();
@@ -8683,7 +8720,7 @@ html.light .v60tabs{background:#eef1f7}
   const dial=flat([$('dlRow'),kids(pane('Dial'))]);
   const time=flat([lab('h24'),lab('fx'),lk.filter(k=>k.classList&&k.classList.contains('row')),lk.filter(k=>k.classList&&k.classList.contains('sl'))]);
   subs('home-clock',c,[['style','Style & pill',style],['dial','Dial',dial],['time','Time & position',time]]);
-  gone(ck);gone(pane('Dial'));put(c);addReset(c,['ckp','ckf','ckh','cka','cks','ckb','hck','hcs','hcd','hca']);
+  gone(ck);gone(pane('Dial'));put(c);addReset(c,['ckp','ckc','ckc1','ckc2','ckf','ckh','cka','cks','ckb','hck','hcs','hcd','hca']);
   c._old=[oldClock,lay]}
  /* Mandala */
  {const c=comp('Mandala','home');const p=pane('Mandala');kids(p).forEach(k=>c.b.appendChild(k));gone(p);put(c)}

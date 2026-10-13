@@ -1,0 +1,1 @@
+{"name":"yoga-launcher-tools","private":true,"description":"Build tools (web bundle + minify)","devDependencies":{"html-minifier-terser":"7.2.0"}}
