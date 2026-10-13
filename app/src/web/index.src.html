@@ -746,9 +746,9 @@ html.shin .gapp.bd .ic::after,html.shin #dock .app.bd .ic::after,html.shin .gapp
 .sg.core{background:radial-gradient(closest-side,rgba(var(--c1rgb),.34),rgba(var(--c1rgb),.1) 45%,rgba(var(--c1rgb),0) 70%)}
 .wxl{cursor:pointer}
 #hicons{position:absolute;inset:0;z-index:7;pointer-events:none;transition:opacity .2s}
-.hic{position:absolute;width:80px;height:68px;padding:3px 0 0;border:0;background:none;color:var(--fg);display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;pointer-events:auto;touch-action:none;-webkit-tap-highlight-color:transparent;transition:transform .2s var(--spring),opacity .2s}
-.hic .ic{width:calc(44px*var(--izs,1));height:calc(44px*var(--izs,1));flex:none}
-.hic span{font:600 9px/1.1 var(--f);max-width:74px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 5px rgba(0,0,0,.75)}
+.hic{position:absolute;width:var(--hcw,80px);height:var(--hch,68px);padding:3px 0 0;border:0;background:none;color:var(--fg);display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;pointer-events:auto;touch-action:none;-webkit-tap-highlight-color:transparent;transition:transform .2s var(--spring),opacity .2s}
+.hic .ic{width:min(calc(44px*var(--izs,1)),calc(var(--hcw,80px) - 8px));height:min(calc(44px*var(--izs,1)),calc(var(--hcw,80px) - 8px));flex:none}
+.hic span{font:600 calc(9px*var(--hlb,1))/1.1 var(--f);max-width:calc(var(--hcw,80px) - 6px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 5px rgba(0,0,0,.75)}
 .hic:active{transform:scale(.92)}.hic.lift{opacity:.25}
 .hic.pop .ic{animation:hicPop .55s var(--spring) backwards}
 @keyframes hicPop{from{transform:scale(.3);opacity:0}}
@@ -771,6 +771,13 @@ html.shin .gapp.bd .ic::after,html.shin #dock .app.bd .ic::after,html.shin .gapp
 #hpg .hpa,#hpg .hpr{font:700 15px/1 var(--f);opacity:.55}
 .hcell{position:absolute;border:1.5px dashed rgba(255,255,255,.2);border-radius:16px;transition:background .12s,border-color .12s}
 .hcell.on{border-color:var(--c1);background:rgba(var(--c1rgb),.16);box-shadow:none}
+.phone.hlab-off .hic span{display:none}
+.phone.picking #hpg button{pointer-events:auto}
+.phone.picking #hdrop,.phone.picking #hdrop .hcell,.phone.picking #hdrop .hd-bar button{pointer-events:auto}
+.phone.picking .hcell{border-color:rgba(var(--c1rgb),.6);cursor:pointer}.phone.picking .hcell:active{background:rgba(var(--c1rgb),.22)}
+.hd-bar{position:absolute;left:0;right:0;top:90px;display:flex;gap:10px;justify-content:center}
+.hd-bar button{font:700 11px var(--f);padding:8px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:var(--fg);cursor:pointer}
+.hd-bar button:active{background:rgba(var(--c1rgb),.25)}
 .hd-note{position:absolute;left:0;right:0;top:60px;text-align:center;font:600 10px var(--f);letter-spacing:.6px;color:var(--dim)}
 .hd-rm{display:none;position:absolute;left:20px;right:20px;top:84px;height:44px;border-radius:14px;border:1.5px dashed rgba(255,107,107,.6);color:#ff8c8c;place-items:center;font:700 11px var(--f);letter-spacing:.8px}
 #hdrop.fh .hd-rm{display:grid}.hd-rm.on{background:rgba(255,107,107,.18)}
@@ -1265,6 +1272,10 @@ html:not(.light) .hsearch,html:not(.light) .cmd-bar,html:not(.light) .cmd-close,
       <label class="tg"><span>Calendar</span><input type="checkbox" data-k="wgca"><i></i></label>
       <label class="tg"><span>Tasks</span><input type="checkbox" data-k="wgta"><i></i></label>
       <label class="tg"><span>Apps on home screen</span><input type="checkbox" data-k="hic"><i></i></label>
+      <label class="tg"><span>Lock home layout</span><input type="checkbox" data-k="hlock"><i></i></label>
+      <label class="tg"><span>Show app names on home</span><input type="checkbox" data-k="hlab"><i></i></label>
+      <div id="hsegs"></div><div id="mslh"></div>
+      <div class="sl" style="opacity:.7">Lock home layout: icons cannot be dragged, moved or removed, and pages cannot be deleted. Adding apps still works. \u201cI choose the cell\u201d shows the free cells so you tap where a single app goes; adding several apps at once uses the first free cells.</div>
       <div class="row" style="margin:4px 0 8px"><button class="mini ghost" id="hicClear" type="button" style="flex:1">Remove all home screen apps</button></div>
       <label class="tg"><span>Focus timer</span><input type="checkbox" data-k="wgfo"><i></i></label>
       <label class="tg"><span>Recent apps</span><input type="checkbox" data-k="wgre"><i></i></label>
@@ -1493,14 +1504,14 @@ addEventListener('error',ev=>ERR(ev.error||ev.message,'uncaught'));
 var ASET={pre:[],post:[]};
 addEventListener('unhandledrejection',ev=>ERR(ev.reason,'promise'));
 /* single source of truth for the version label: window title, Settings footer, About, and the Android build (window.APP_VER / <meta name="app-version">) */
-const APP_VER='v1.62';
+const APP_VER='v1.64';
 window.APP_VER=APP_VER;document.title='Yoga Launcher \u2022 '+APP_VER;
 {const m=document.createElement('meta');m.name='app-version';m.content=APP_VER;document.head.appendChild(m)}
 const NS='http://www.w3.org/2000/svg', $=id=>document.getElementById(id), p2=v=>String(v).padStart(2,'0');
 const D=['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
 const M=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 const svg=$('svg'), phone=document.querySelector('.phone');
-const SD={wu:(/^en-US/i.test(navigator.language||'')?'f':'c'),wloc:'auto',wcity:'',wlat:null,wlon:null,cdx:0,cdy:0,ddx:0,ddy:0,csc:100,dsc:100,dwx:true,logo:true,lsplash:true,apv:true,tod:false,ptilt:false,pinv:false,ptn:60,hsb:true,drail:true,dflow:true,dloop:false,dfb:100,dside:'l',disz:100,dcv:100,dln:true,dgl:true,dlt:true,dlb:true,dfy:'m',dsp:'n',dtl:true,duc:true,dhp:true,dsq:true,dmass:true,dpred:true,dbeat:true,dorg:true,drot:true,dflood:true,dlite:true,dpar:true,dgrav:true,dliq:true,dtap:false,dfx:'full',h24:false,cs:false,pcs:false,dt:true,fx:true,hap:true,dock:true,dmin:true,dsec:true,dnum:true,dsz:100,dop:100,mand:true,mspin:false,mop:45,dring:true,dtrail:true,dmag:true,dtk:'n',dfs:'n',dsm:'tick',dn:'4',dz:'m',dks:'glass',dab:true,amb:true,fvib:true,fshow:true,hic:true,da:'cascade',bl:10,mst:'lotus',mpal:'gold',mc1:'#ffd36e',mc2:'#ff6f61',mc3:'#8e44ad',mcm:'radial',mbg:'core',mdt:'m',mdr:'cw',ng:true,nga:true,gon:true,gsu:'apps',gsd:'search',gsl:'widgets',gsr:'apps',gdt:'search',gdist:60,wp:'none',wdim:0,wbl:0,wgcl:true,wgwe:true,wgbt:true,wgca:true,wgta:true,wgfo:true,wgre:true,ipk:'default',ish:'sq',isz:100,aspd:100,gcol:'4',grow:'5',dcat:true,pmon:true,ngp:'facet',nge:70,ngh:18,ngsp:3,ngz:28,mgs:65,mlt:100,msa:100,mhu:0,mgl:0,mw:7,mfl:8,msz:100,mspd:2,mrl0:3,mrl1:-2,mrl2:2,mrl3:-1,mrl4:1,mrl5:-1,mbr:true,perf:'auto'};
+const SD={hcol:'4',hrow:'auto',hadd:'pick',hlb:100,hlab:true,hlock:false,wu:(/^en-US/i.test(navigator.language||'')?'f':'c'),wloc:'auto',wcity:'',wlat:null,wlon:null,cdx:0,cdy:0,ddx:0,ddy:0,csc:100,dsc:100,dwx:true,logo:true,lsplash:true,apv:true,tod:false,ptilt:false,pinv:false,ptn:60,hsb:true,drail:true,dflow:true,dloop:false,dfb:100,dside:'l',disz:100,dcv:100,dln:true,dgl:true,dlt:true,dlb:true,dfy:'m',dsp:'n',dtl:true,duc:true,dhp:true,dsq:true,dmass:true,dpred:true,dbeat:true,dorg:true,drot:true,dflood:true,dlite:true,dpar:true,dgrav:true,dliq:true,dtap:false,dfx:'full',h24:false,cs:false,pcs:false,dt:true,fx:true,hap:true,dock:true,dmin:true,dsec:true,dnum:true,dsz:100,dop:100,mand:true,mspin:false,mop:45,dring:true,dtrail:true,dmag:true,dtk:'n',dfs:'n',dsm:'tick',dn:'4',dz:'m',dks:'glass',dab:true,amb:true,fvib:true,fshow:true,hic:true,da:'cascade',bl:10,mst:'lotus',mpal:'gold',mc1:'#ffd36e',mc2:'#ff6f61',mc3:'#8e44ad',mcm:'radial',mbg:'core',mdt:'m',mdr:'cw',ng:true,nga:true,gon:true,gsu:'apps',gsd:'search',gsl:'widgets',gsr:'apps',gdt:'search',gdist:60,wp:'none',wdim:0,wbl:0,wgcl:true,wgwe:true,wgbt:true,wgca:true,wgta:true,wgfo:true,wgre:true,ipk:'default',ish:'sq',isz:100,aspd:100,gcol:'4',grow:'5',dcat:true,pmon:true,ngp:'facet',nge:70,ngh:18,ngsp:3,ngz:28,mgs:65,mlt:100,msa:100,mhu:0,mgl:0,mw:7,mfl:8,msz:100,mspd:2,mrl0:3,mrl1:-2,mrl2:2,mrl3:-1,mrl4:1,mrl5:-1,mbr:true,perf:'auto'};
 const MINI_KEYS=['mand','mspin','mbr','amb','fx','ptilt','ng','nga','ngp','dtrail','dmag','dring','lsplash','bl','perf','da','pmon','tod','cs','pcs','wp','dsm','dsec','dt','hap','logo','wgwe','wgbt','wgca','wgta','wgre','amoled','sdim','shnm','sgry','shin'];
 const MINI_ON={mand:true,mspin:true,mbr:false,amb:false,fx:false,ptilt:false,ng:false,nga:false,ngp:'none',dtrail:false,dmag:false,dring:false,lsplash:false,bl:0,perf:'on',da:'off',pmon:false,tod:false,cs:false,pcs:false,wp:'none'};
 const MINI_OFF={mand:true,mspin:false,mbr:false,amb:true,fx:true,ptilt:false,ng:true,nga:true,ngp:'facet',dtrail:true,dmag:true,dring:true,lsplash:true,bl:10,perf:'auto',da:'cascade',pmon:true,tod:false,cs:false,pcs:false,wp:'none'};
@@ -1574,7 +1585,7 @@ function placeMandala(){const m=$('mandala').style;m.left=(CX-200+(S.cdx||0))+'p
 const MST=[['lotus','Lotus'],['star','Starburst'],['flower','Floral'],['sacred','Flower of life'],['spiro','Spirograph'],['wheel','Dharma wheel'],['crystal','Crystal'],['hex','Rosette'],['zen','Zen rings'],['sun','Sunburst'],['radar','Precision arcs'],['yantra','Yantra'],['padma','Padma'],['mehndi','Mehndi'],['peacock','Peacock'],['guil','Guilloche'],['orbit','Orbit']];
 const MPAL={theme:null,gold:['#fff3b0','#ffc94d','#d9822b'],sunset:['#ffd36e','#ff6f61','#8e44ad'],ocean:['#b8fff2','#3ac7ff','#3a4bff'],aurora:['#8affc1','#38d6ff','#b36bff'],rose:['#ffe3ec','#ff7eb6','#c2185b'],forest:['#eaffb0','#5fe08a','#0f8f6b'],fire:['#fff6a8','#ff9a3c','#e0262b'],rainbow:['#ff5e7e','#ffd84d','#5bf0a0','#4db8ff','#b36bff'],mono:['#ffffff','#bfc9ff','#7d8bd6'],custom:null};
 const MPN=[['theme','Theme'],['gold','Gold'],['sunset','Sunset'],['ocean','Ocean'],['aurora','Aurora'],['rose','Rose'],['forest','Forest'],['fire','Fire'],['rainbow','Rainbow'],['mono','Moonlight'],['custom','Custom']];
-const MSL=[['mop','Brightness',10,100,5,'%'],['mgs','Brightness gradient strength',0,100,5,'%'],['mlt','Lightness',50,150,5,'%'],['msa','Saturation',0,200,5,'%'],['mhu','Hue shift',0,360,5,'\u00b0'],['mgl','Glow',0,20,1,'px'],['mw','Line weight',3,30,1,''],['mfl','Petal fill',0,60,5,'%'],['msz','Size',60,140,5,'%'],['mspd','Spin speed',1,10,1,'\u00d7'],['nge','Glow intensity',10,100,5,'%','n'],['ngh','Glow spread',4,40,2,'px','n'],['ngz','Pattern size',10,60,2,'px','n'],['ngsp','Drift speed',1,10,1,'\u00d7','n'],['gdist','Swipe distance',30,120,5,'px','g'],['wdim','Wallpaper dim',0,80,5,'%','w'],['wbl','Wallpaper blur',0,20,1,'px','w'],['isz','Icon size',80,130,5,'%','i'],['aspd','Page animation speed',50,200,10,'%','i'],['mrl0','1 \u00b7 Centre',-10,10,1,'\u00d7','r'],['mrl1','2 \u00b7 Inner petals',-10,10,1,'\u00d7','r'],['mrl2','3 \u00b7 Middle petals',-10,10,1,'\u00d7','r'],['mrl3','4 \u00b7 Outer petals',-10,10,1,'\u00d7','r'],['mrl4','5 \u00b7 Leaf ring',-10,10,1,'\u00d7','r'],['mrl5','6 \u00b7 Dotted rim',-10,10,1,'\u00d7','r']];
+const MSL=[['mop','Brightness',10,100,5,'%'],['mgs','Brightness gradient strength',0,100,5,'%'],['mlt','Lightness',50,150,5,'%'],['msa','Saturation',0,200,5,'%'],['mhu','Hue shift',0,360,5,'\u00b0'],['mgl','Glow',0,20,1,'px'],['mw','Line weight',3,30,1,''],['mfl','Petal fill',0,60,5,'%'],['msz','Size',60,140,5,'%'],['mspd','Spin speed',1,10,1,'\u00d7'],['nge','Glow intensity',10,100,5,'%','n'],['ngh','Glow spread',4,40,2,'px','n'],['ngz','Pattern size',10,60,2,'px','n'],['ngsp','Drift speed',1,10,1,'\u00d7','n'],['gdist','Swipe distance',30,120,5,'px','g'],['wdim','Wallpaper dim',0,80,5,'%','w'],['wbl','Wallpaper blur',0,20,1,'px','w'],['isz','Icon size',80,130,5,'%','i'],['hlb','Home app name size',70,150,5,'%','h'],['aspd','Page animation speed',50,200,10,'%','i'],['mrl0','1 \u00b7 Centre',-10,10,1,'\u00d7','r'],['mrl1','2 \u00b7 Inner petals',-10,10,1,'\u00d7','r'],['mrl2','3 \u00b7 Middle petals',-10,10,1,'\u00d7','r'],['mrl3','4 \u00b7 Outer petals',-10,10,1,'\u00d7','r'],['mrl4','5 \u00b7 Leaf ring',-10,10,1,'\u00d7','r'],['mrl5','6 \u00b7 Dotted rim',-10,10,1,'\u00d7','r']];
 const MKEYS=['mst','mpal','mc1','mc2','mc3','mcm','mbg','mdt','mgs','mw','mfl'];
 function h2r(h){h=String(h||'').trim();if(/^#[0-9a-f]{3}$/i.test(h))h='#'+h[1]+h[1]+h[2]+h[2]+h[3]+h[3];const m=/^#([0-9a-f]{6})$/i.exec(h),n=m?parseInt(m[1],16):0xffffff;return[n>>16&255,n>>8&255,n&255]}
 function mandalaStops(id){return id==='theme'?[css('--c1'),css('--c2')]:id==='custom'?[S.mc1,S.mc2,S.mc3]:MPAL[id]}
@@ -2175,12 +2186,12 @@ const matches=()=>{
     else if(i===0)sc=150;
     else if(ws.some(w=>w.startsWith(q)))sc=120;
     else if(qc.length>=2&&ini.startsWith(qc))sc=100;
-    else if(i>0)sc=70-Math.min(i,30);
+    else if(i>0&&qc.length>=2)sc=70-Math.min(i,30);   /* v1.64: one letter only matches the start of a name or a word, not the middle */
     else if(qc.length>=3&&sub(n.replace(/\s+/g,''),qc))sc=30;
     else if(qc.length>=3&&norm(a.p).includes(qc))sc=15;
     if(sc>=0)sc+=Math.min(9,Math.log2((+u[a.p]||0)+1));
     return {a,score:sc};})
-    .filter(x=>x.score>=0).sort((x,y)=>y.score-x.score||x.a.n.localeCompare(y.a.n)).map(x=>x.a);
+    .filter((x,_i,all)=>x.score>=0&&(x.score>=60||!all.some(y=>y.score>=100)))   /* v1.64: loose (fuzzy / package name) matches only show when no name starts with the text */.sort((x,y)=>y.score-x.score||x.a.n.localeCompare(y.a.n)).map(x=>x.a);
 };
 /* v42: with a search typed the best match comes first (not A to Z) */
 const ranked=l=>$('q').value.trim()?l:sortApps(l);
@@ -2880,11 +2891,11 @@ const SEGS=[['wu','Temperature unit',[['c','\u00b0C'],['f','\u00b0F']],'wxSegs']
 ['mcm','Colour flow',[['radial','Radial'],['angular','Angular'],['blend','Blend'],['solid','Solid']],'m2'],
 ['mbg','Brightness grading',[['flat','Flat'],['core','Core glow'],['edge','Edge glow'],['ripple','Ripple']],'m2'],
 ['mdr','Spin direction',[['cw','Clockwise'],['ccw','Anti-clockwise']],'m3'],
-['gcol','Grid columns',[['3','3'],['4','4'],['5','5']],'m6'],['grow','Grid rows',[['4','4'],['5','5'],['6','6']],'m6'],['ish','Icon shape',[['sq','Squircle'],['ci','Circle'],['rs','Square'],['lf','Leaf']],'m7'],
+['gcol','Home page grid columns',[['3','3'],['4','4'],['5','5']],'m6'],['grow','Home page grid rows',[['4','4'],['5','5'],['6','6']],'m6'],['hcol','Home screen columns',[['3','3'],['4','4'],['5','5'],['6','6']],'hsegs'],['hrow','Home screen rows',[['auto','Auto'],['4','4'],['5','5'],['6','6'],['7','7']],'hsegs'],['hadd','When I add an app',[['pick','I choose the cell'],['auto','First free cell']],'hsegs'],['ish','Icon shape',[['sq','Squircle'],['ci','Circle'],['rs','Square'],['lf','Leaf']],'m7'],
 ['ngp','Glass pattern',[['facet','Facets'],['lines','Fluted'],['prism','Prism'],['frost','Frosted'],['none','None']],'m4'],
 ['perf','Performance mode',[['auto','Auto'],['on','Smooth'],['off','Full effects']],'mperf']];
 const saveS=()=>{try{localStorage.setItem('mdc-set',JSON.stringify(S))}catch(e){ERR(e,"c23")}if(window.Android&&typeof Android.saveSettings==='function')Android.saveSettings(JSON.stringify(S))};
-const BOOL=['hic','logo','lsplash','apv','tod','ptilt','pinv','hsb','drail','dflow','dloop','mand','mspin','dring','dtrail','dmag','dmin','dsec','dnum','h24','cs','pcs','dt','fx','hap','dock','dab','amb','fvib','fshow','mbr','ng','nga','dln','dgl','dlt','dlb','dtl','duc','dhp','dsq','dmass','dpred','dbeat','dorg','drot','dflood','dlite','dpar','dgrav','dliq','dtap','gon','wgcl','wgwe','wgbt','wgca','wgta','wgfo','wgre','dcat','pmon','mini','amoled','shnm','sgry','shin','abs','dwx'];
+const BOOL=['hic','hlab','hlock','logo','lsplash','apv','tod','ptilt','pinv','hsb','drail','dflow','dloop','mand','mspin','dring','dtrail','dmag','dmin','dsec','dnum','h24','cs','pcs','dt','fx','hap','dock','dab','amb','fvib','fshow','mbr','ng','nga','dln','dgl','dlt','dlb','dtl','duc','dhp','dsq','dmass','dpred','dbeat','dorg','drot','dflood','dlite','dpar','dgrav','dliq','dtap','gon','wgcl','wgwe','wgbt','wgca','wgta','wgfo','wgre','dcat','pmon','mini','amoled','shnm','sgry','shin','abs','dwx'];
 function normS(){
   if(S.dst==='glass'||S.dst==='clear'){S.dks=S.dst;S.dst='cls'}
   BOOL.forEach(k=>{S[k]=S[k]===true||S[k]==='true'||S[k]===1});
@@ -2987,7 +2998,7 @@ function _renderChipsNow(){
     const i=document.createElement('input');i.type='range';i.id='ms_'+k;i.min=mn;i.max=mx;i.step=st;i.setAttribute('aria-label',lab);
     if(k==='mhu')i.style.accentColor='var(--c2)';
     i.oninput=()=>{S[k]=+i.value;$('msv_'+k).textContent=mfmt(k,u);cancelAnimationFrame(raf);raf=requestAnimationFrame(mandalaSync);clearTimeout(tm);tm=setTimeout(saveS,250)};
-    $(({a:'msl3',n:'msl2',g:'msl4',w:'msl5',i:'msl6',r:'mslr'})[z]||'msl').append(h,i)});
+    $(({a:'msl3',n:'msl2',g:'msl4',w:'msl5',i:'msl6',h:'mslh',r:'mslr'})[z]||'msl').append(h,i)});
   ['mc1','mc2','mc3'].forEach(id=>$(id).oninput=e=>{S[id]=e.target.value;S.mpal='custom';cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{mandalaSync();mandalaUI()});clearTimeout(tm);tm=setTimeout(saveS,250)});
   const MR=['mst','mpal','mc1','mc2','mc3','mcm','mbg','mdt','mdr','mgs','mlt','msa','mhu','mgl','mw','mfl','msz','mspd','mop','mand','mspin','mbr','mrl0','mrl1','mrl2','mrl3','mrl4','mrl5'];
   const RLD=[3,-2,2,-1,1,-1],setRL=fn=>{for(let i=0;i<6;i++)S['mrl'+i]=fn(i);S.mspin=true;saveS();applySettings()};
@@ -3009,7 +3020,7 @@ function extrasSync(){
   const def=WPS.find(x=>x[0]===p);
   w.style.background=p==='custom'?'url('+wpImg+') center/cover':p==='theme'?'linear-gradient(160deg,rgba(var(--c1rgb),.45),rgba(var(--c2rgb),.4)),#06070b':(def?def[2]:'none');
   r.setProperty('--wd',S.wdim/100);r.setProperty('--wbl',S.wbl+'px');w.style.filter=S.wbl?'blur('+S.wbl+'px)':'none';
-  r.setProperty('--izs',S.isz/100);r.setProperty('--asp',S.aspd/100);r.setProperty('--gc',S.gcol);
+  r.setProperty('--izs',S.isz/100);r.setProperty('--hlb',(+S.hlb||100)/100);phone.classList.toggle('hlab-off',!S.hlab);r.setProperty('--asp',S.aspd/100);r.setProperty('--gc',S.gcol);
   IPK.forEach(([k])=>phone.classList.toggle('ip-'+k,S.ipk===k));['sq','ci','rs','lf'].forEach(k=>phone.classList.toggle('sh-'+k,S.ish===k));
   $('drawer').classList.toggle('nodcat',!S.dcat);$('drawer').classList.toggle('norail',!S.drail);$('hsearch').classList.toggle('off',!S.hsb);phone.classList.toggle('nodock',!S.dock);
   [...$('wpals').children].forEach(b=>{b.setAttribute('aria-pressed',S.wp===b.dataset.v)});
@@ -3251,10 +3262,10 @@ window.ENG=(()=>{
       const n=nn(a),ws=n.split(/[\s\-_.]+/).filter(Boolean),ini=ws.map(w=>w[0]).join(''),i=n.indexOf(q);
       let sc=-1;
       if(n===q)sc=200;else if(i===0)sc=150;else if(ws.some(w=>w.startsWith(q)))sc=120;
-      else if(qc.length>=2&&ini.startsWith(qc))sc=100;else if(i>0)sc=70-Math.min(i,30);
+      else if(qc.length>=2&&ini.startsWith(qc))sc=100;else if(i>0&&qc.length>=2)sc=70-Math.min(i,30);
       else if(qc.length>=3&&sub(n.replace(/\s+/g,''),qc))sc=30;
       if(sc>=0)sc+=Math.min(9,Math.log2((+u[a.p]||0)+1));
-      return {a,sc}}).filter(x=>x.sc>=0).sort((x,y)=>y.sc-x.sc||x.a.n.localeCompare(y.a.n)).map(x=>x.a);
+      return {a,sc}}).filter((x,_i,all)=>x.sc>=0&&(x.sc>=60||!all.some(y=>y.sc>=100))).sort((x,y)=>y.sc-x.sc||x.a.n.localeCompare(y.a.n)).map(x=>x.a);
   };
   /* contacts: one cached, debounced bridge call (it used to run on every keystroke and every re-render) */
   let ctC={t:'',l:[]},ctT=0;
@@ -3281,14 +3292,14 @@ window.ENG=(()=>{
     const items=[],web=q?{label:'Search '+eng.n+' for \u201c'+q+'\u201d',glyph:eng.g,run:()=>ENG.go(eng,q)}:null;
     if(pf)items.push(web);
     if(!pf&&term){
-      if(/^[\d\s.+\-*/%()^]+$/.test(term)&&/[+*/%^]|.-/.test(term)){try{const v=ENG.calc(term.replace(/\s+/g,''));if(isFinite(v))items.push({label:'= '+(+v.toFixed(10))+'  (tap to copy)',glyph:'=',run:()=>{yCopy(String(+v.toFixed(10))).then(ok=>toast(ok?'Copied':'Could not copy'));closeCommand()}})}catch(x){}}
+      if(/^[\d\s.+\-*/%()^]+$/.test(term)&&/[+*/%^]|.-/.test(term)){try{const v=ENG.calc(term.replace(/\s+/g,''));if(isFinite(v))items.push({label:(+v.toFixed(10))+'  (tap to copy)',glyph:'=',run:()=>{yCopy(String(+v.toFixed(10))).then(ok=>toast(ok?'Copied':'Could not copy'));closeCommand()}})}catch(x){}}
       if(/^(https?:\/\/)?([\w-]+\.)+[a-z]{2,}(\/\S*)?$/i.test(raw))items.push({label:'Open '+raw,glyph:'\u2197',run:()=>ENG.open(/^https?:/i.test(raw)?raw:'https://'+raw)});
     }
     if(!pf){
       const hd=window.HID||[],vis=apps.filter(a=>!hd.includes(a.p)||(term&&nn(a)===norm(term)));
       const aa=term?rankApps(vis,term).slice(0,12):sortApps(vis).slice(0,10);
       aa.forEach(a=>items.push({label:a.n,icon:a,run:()=>{closeCommand();closeAll();launch(a)}}));
-      actions.filter(a=>!term||a[1].toLowerCase().includes(term)).forEach(a=>items.push({label:a[1],run:a[2],glyph:a[0]}));
+      actions.filter(a=>{if(!term)return true;const l=a[1].toLowerCase();if(!(l.startsWith(term)||l.split(/\s+/).some(w=>w.startsWith(term))))return false;return !aa.some(x=>norm(x.n)===l)}).forEach(a=>items.push({label:a[1],run:a[2],glyph:a[0]}));
       if(web)items.push(web);
       contactsFor(term).forEach(c=>items.push({label:c.n+(c.p?' \u00b7 '+c.p:''),glyph:'\u260e',run:()=>c.p?ENG.open('tel:'+c.p):toast('No number')}));
       if(!term)ENG.hist().slice(0,5).forEach(h=>items.push({label:h,glyph:'\u21ba',run:()=>ENG.go(ENG.cur(),h)}));
@@ -4085,13 +4096,20 @@ try{ENG.init()}catch(e){console.error(e)}
 
 /* ===== v21: place apps on the home screen (hold, drag, drop) ===== */
 (function(){
-  const HC=4,CW=80,CH=68,TOP=150,BOT=150,hic=$('hicons'),hd=$('hdrop');
+  let HC=4,CW=80,CH=68;const TOP=150,BOT=150,hic=$('hicons'),hd=$('hdrop');
+  let PICK=null;
   let hpos=ls('mdc-hpos',{});if(!hpos||typeof hpos!=='object'||Array.isArray(hpos))hpos={};
   /* v1.57: home pages. Each placed icon carries a page number (pg, 0 = first). The clock and date stay put; only the icons change. */
   const MAXPG=5;let HPN=Math.max(1,Math.min(MAXPG,+ls('mdc-hpn',1)||1)),HPG=Math.max(0,+ls('mdc-hpg',0)||0);
   const pgOf=p=>(hpos[p]&&+hpos[p].pg)||0;
   Object.keys(hpos).forEach(p=>{HPN=Math.max(HPN,Math.min(MAXPG,pgOf(p)+1))});if(HPG>=HPN)HPG=0;
-  const rows=()=>Math.max(3,Math.floor((PH-TOP-BOT)/CH));
+  /* v1.63: the grid follows Settings: columns 3-6 share the 320px width, rows are Auto (68px cells) or a fixed count that stretches the cells */
+  const rows=()=>{
+    HC=Math.max(3,Math.min(6,+S.hcol||4));CW=(phone.offsetWidth||320)/HC;
+    const av=PH-TOP-BOT,hr=S.hrow==='auto'?0:(+S.hrow||0);
+    CH=hr?Math.max(52,Math.min(110,Math.floor(av/hr))):68;
+    const n=Math.floor(av/CH);return hr?Math.max(2,Math.min(hr,n)):Math.max(3,n);
+  };
   const kk=()=>(phone.getBoundingClientRect().width/phone.offsetWidth)||1;
   const pt=(x,y)=>{const r=phone.getBoundingClientRect(),z=kk();return {x:(x-r.left)/z,y:(y-r.top)/z}};
   const rc=el=>{const r=el.getBoundingClientRect(),p=phone.getBoundingClientRect(),z=kk();return {l:(r.left-p.left)/z,t:(r.top-p.top)/z,r:(r.right-p.left)/z,b:(r.bottom-p.top)/z}};
@@ -4104,24 +4122,24 @@ try{ENG.init()}catch(e){console.error(e)}
   const occupied=(c,r,except,pg)=>Object.keys(hpos).some(p=>p!==except&&hpos[p]&&hpos[p].c===c&&hpos[p].r===r&&pgOf(p)===(pg==null?HPG:pg)&&!!appOf(p));
   function freeCells(except,pg){const bl=blockers(),R=rows(),o=[];for(let r=0;r<R;r++)for(let c=0;c<HC;c++)if(!blocked(c,r,bl)&&!occupied(c,r,except,pg))o.push({c:c,r:r});return o}
   function render(popP){
-    hic.textContent='';if(!S.hic)return;const R=rows();
+    hic.textContent='';if(!S.hic)return;const R=rows();hic.style.setProperty('--hcw',CW+'px');hic.style.setProperty('--hch',CH+'px');
     Object.keys(hpos).forEach(p=>{
       const v=hpos[p],a=appOf(p);if(!a||!v||v.c>=HC||v.r>=R||pgOf(p)!==HPG)return;
       const b=document.createElement('button');b.className='hic'+(p===popP?' pop':'');b.style.left=v.c*CW+'px';b.style.top=(TOP+v.r*CH)+'px';b.setAttribute('aria-label',a.n);
       b.appendChild(icon(a));const s=document.createElement('span');s.textContent=a.n;b.appendChild(s);
       b.onclick=()=>launch(a);if(!a.ct)hold(b,a);hic.appendChild(b);
     });
-    dots();
+    dots();if(PICK)pickPaint();
   }
   function dots(){
     const g=$('hpg');if(!g)return;g.hidden=!S.hic;if(!S.hic){g.textContent='';g.dataset.k='';return}
-    const emp=HPN>1&&!Object.keys(hpos).some(p=>pgOf(p)===HPG&&appOf(p)),key=HPN+'|'+(HPN<MAXPG)+'|'+emp;
+    const emp=HPN>1&&!S.hlock&&!Object.keys(hpos).some(p=>pgOf(p)===HPG&&appOf(p)),key=HPN+'|'+(HPN<MAXPG)+'|'+emp;
     if(g.dataset.k===key&&g.firstChild){g.querySelectorAll('.hpd').forEach((b,i)=>{b.classList.toggle('on',i===HPG);if(i===HPG)b.setAttribute('aria-current','true');else b.removeAttribute('aria-current')});return}
     g.dataset.k=key;g.textContent='';
     const mk=(cls,label,fn,txt)=>{const b=document.createElement('button');b.type='button';b.className=cls;b.setAttribute('aria-label',label);if(txt)b.textContent=txt;b.onclick=fn;g.appendChild(b);return b};
     for(let i=0;i<HPN;i++){const b=mk('hpd'+(i===HPG?' on':''),'Home page '+(i+1)+' of '+HPN,()=>setPage(i));if(i===HPG)b.setAttribute('aria-current','true')}
     if(HPN<MAXPG)mk('hpa','Add a home page',()=>{HPN++;sv('mdc-hpn',HPN);setPage(HPN-1);toast('Page '+HPN+' added')},'+');
-    if(HPN>1&&!Object.keys(hpos).some(p=>pgOf(p)===HPG&&appOf(p)))mk('hpr','Remove this empty page',delPage,'\u2212');
+    if(HPN>1&&!S.hlock&&!Object.keys(hpos).some(p=>pgOf(p)===HPG&&appOf(p)))mk('hpr','Remove this empty page',delPage,'\u2212');
   }
   function setPage(i){
     i=Math.max(0,Math.min(HPN-1,i));if(i===HPG){dots();return}
@@ -4130,7 +4148,7 @@ try{ENG.init()}catch(e){console.error(e)}
   }
   window.HOMEPG={go:i=>setPage(i),get i(){return HPG},get n(){return HPN}};
   function delPage(){
-    if(HPN<2)return;
+    if(HPN<2)return;if(S.hlock){toast('Home layout is locked');return}
     Object.keys(hpos).forEach(p=>{const g=pgOf(p);if(g===HPG)delete hpos[p];else if(g>HPG)hpos[p].pg=g-1});
     saveP();HPN--;sv('mdc-hpn',HPN);HPG=Math.min(HPG,HPN-1);sv('mdc-hpg',HPG);render();toast('Page removed');
   }
@@ -4145,23 +4163,72 @@ try{ENG.init()}catch(e){console.error(e)}
   /* "Add to home screen" in the app menu drops the app on the first free cell */
   const _ah=$('amHome').onclick;
   $('amHome').onclick=function(){
-    const a=menuApp;if(!a)return;const had=lst().includes(a.p);_ah.apply(this,arguments);
+    const a=menuApp;if(!a)return;
+    if(S.hlock&&hpos[a.p]){closeMenu();toast('Home layout is locked');return}
+    const had=lst().includes(a.p);_ah.apply(this,arguments);
     if(had){delete hpos[a.p];saveP();render()}
+    else if(S.hadd==='pick')enterPick(a,true);
     else{const n=putFree(a.p);if(!n)toast('Home screen is full');else if(n!==HPG+1)toast(a.n+' added to page '+n)}
   };
   /* v1.56: put an app on the first free home-screen cell (used by the arc's multi-select). Returns 'ok' | 'had' | 'full'.
      'had' means it already has a spot on the home screen (the saved home list alone does not count: it can hold apps that are not placed). */
   window.homeAdd=function(a){if(!a)return 'full';if(hpos[a.p]&&appOf(a.p))return 'had';return putFree(a.p)?'ok':'full'};
   window.homeCells=()=>freeCells().length;
-  $('hicClear').onclick=()=>{const ks=Object.keys(hpos);hpos={};saveP();HPN=1;HPG=0;sv('mdc-hpn',1);sv('mdc-hpg',0);home=lst().filter(p=>!ks.includes(p));sv('mdc-home',home);render();try{renderHome()}catch(_){ERR(_,"c59")}toast('Home screen apps removed')};
+  /* v1.63: add ONE app and let the user tap the cell. Returns 'pick' (picker opened) or 'had'. */
+  window.homePick=function(a){if(!a)return 'full';if(hpos[a.p]&&appOf(a.p))return 'had';enterPick(a,false);return 'pick'};
+  /* when columns or rows change, icons that no longer fit move to the nearest free cell (same page first) so none is lost */
+  let GEO=null;
+  function reflow(){
+    const g=(S.hcol||'4')+'|'+(S.hrow||'auto');if(GEO===null){GEO=g;return}if(g===GEO)return;GEO=g;
+    const R=rows();let moved=0,lost=0;
+    Object.keys(hpos).filter(p=>hpos[p]&&appOf(p)&&(hpos[p].c>=HC||hpos[p].r>=R)).forEach(p=>{
+      const pg=pgOf(p);let done=false;
+      for(let k=0;k<HPN&&!done;k++){const q=(pg+k)%HPN,f=freeCells(p,q)[0];if(f){hpos[p]={c:f.c,r:f.r,pg:q};done=true}}
+      if(!done&&HPN<MAXPG){const f=freeCells(p,HPN)[0];if(f){HPN++;sv('mdc-hpn',HPN);hpos[p]={c:f.c,r:f.r,pg:HPN-1};done=true}}
+      if(done)moved++;else lost++;
+    });
+    if(moved||lost){saveP();toast(moved?moved+(moved===1?' icon moved':' icons moved')+' to fit the new grid'+(lost?' \u2022 '+lost+' did not fit':''):lost+' icon(s) did not fit the new grid')}
+  }
+  /* ---- choose-the-cell mode ---- */
+  function enterPick(a,listAdded){
+    if(!S.hic){S.hic=true;try{saveS()}catch(_){}try{applySettings()}catch(_){}}
+    try{closeAll()}catch(_){}
+    PICK={a:a,la:!!listAdded};phone.classList.add('dragging','picking');
+    if(!freeCells(a.p).length){for(let k=1;k<HPN;k++){const q=(HPG+k)%HPN;if(freeCells(a.p,q).length){setPage(q);return}}}
+    pickPaint();
+  }
+  function endPick(){PICK=null;phone.classList.remove('dragging','picking');hd.textContent=''}
+  function cancelPick(){
+    const P=PICK;if(!P)return;endPick();
+    if(P.la&&!hpos[P.a.p]){home=lst().filter(x=>x!==P.a.p);sv('mdc-home',home);try{renderHome()}catch(_){}}
+    if(P.a.ct&&!hpos[P.a.p]&&typeof HCT!=='undefined'&&HCT[P.a.p]){delete HCT[P.a.p];sv('mdc-hcts',HCT)}
+    toast('Cancelled')
+  }
+  function pickPaint(){
+    if(!PICK)return;const a=PICK.a,free=freeCells(a.p);
+    hd.textContent='';hd.classList.remove('fh');
+    const note=document.createElement('div');note.className='hd-note';
+    note.textContent=free.length?('Tap a cell for '+a.n+(HPN>1?' \u00b7 page '+(HPG+1)+' of '+HPN:'')):('Page '+(HPG+1)+' is full \u00b7 pick another page with the dots');
+    hd.appendChild(note);
+    const bar=document.createElement('div');bar.className='hd-bar';
+    const mk=(t,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=fn;bar.appendChild(b)};
+    mk('Cancel',cancelPick);
+    mk('First free cell',()=>{const P=PICK;if(!P)return;endPick();const n=putFree(P.a.p);if(!n)toast('Home screen is full');else toast(P.a.n+' added'+(n!==HPG+1?' to page '+n:''))});
+    hd.appendChild(bar);
+    free.forEach(o=>{const c=document.createElement('div'),r=cellR(o.c,o.r);c.className='hcell';c.setAttribute('role','button');c.setAttribute('aria-label','Place '+a.n+' in row '+(o.r+1)+', column '+(o.c+1));
+      c.style.cssText='left:'+(r.l+3)+'px;top:'+r.t+'px;width:'+(CW-6)+'px;height:'+(CH-6)+'px;margin-top:3px';
+      c.onclick=()=>{const P=PICK;if(!P)return;endPick();place(P.a.p,o.c,o.r,HPG);vib(10);toast(P.a.n+' added to the home screen')};hd.appendChild(c)});
+  }
+  $('hicClear').onclick=()=>{if(S.hlock){toast('Home layout is locked');return}const ks=Object.keys(hpos);hpos={};saveP();HPN=1;HPG=0;sv('mdc-hpn',1);sv('mdc-hpg',0);home=lst().filter(p=>!ks.includes(p));sv('mdc-home',home);render();try{renderHome()}catch(_){ERR(_,"c59")}toast('Home screen apps removed')};
   const _rf=refreshApps;refreshApps=function(){_rf.apply(this,arguments);render()};
   const _sa=window.setApps;window.setApps=function(){_sa.apply(this,arguments);render()};
-  ASET.post.push(()=>{render()});
+  ASET.post.push(()=>{reflow();render()});
 
   /* ---- drag ---- */
   const DRG=window.DRG={on:false,armed:null,id:0,a:null,fh:false,t:null,cells:[],ghost:null,saved:[],src:null};
   DRG.arm=(a,el,x,y,id)=>{DRG.armed={a:a,el:el,x:x,y:y,id:id}};
-  DRG.go=(a,el,x,y,id)=>{if(DRG.on||window.SELON)return;DRG.arm(a,el,x,y,id);DRG.imm=true;DRG.moved=false;DRG.sx=x;DRG.sy=y;start({pointerId:id,clientX:x,clientY:y})};
+  DRG.go=(a,el,x,y,id)=>{if(DRG.on||window.SELON)return;
+    if(S.hlock&&el&&el.closest&&el.closest('#hicons')){vib(8);setTimeout(()=>{openMenu(a);if(hpos[a.p])$('amHome').textContent='Home layout is locked'},0);return}DRG.arm(a,el,x,y,id);DRG.imm=true;DRG.moved=false;DRG.sx=x;DRG.sy=y;start({pointerId:id,clientX:x,clientY:y})};
   function start(e){
     const A=DRG.armed;if(!DRG.imm){DRG.moved=true}DRG.on=true;DRG.id=e.pointerId;DRG.a=A.a;DRG.fh=!!A.el.closest('#hicons');DRG.t=null;
     closeMenu();
@@ -4226,7 +4293,8 @@ try{ENG.init()}catch(e){console.error(e)}
   const fin=e=>{if(DRG.on&&e.pointerId===DRG.id)finish(e.type==='pointercancel');else if(DRG.armed&&e.pointerId===DRG.armed.id)DRG.armed=null};
   document.addEventListener('pointerup',fin,true);document.addEventListener('pointercancel',fin,true);
   document.addEventListener('touchmove',e=>{if(DRG.on||DRG.armed){if(e.cancelable)e.preventDefault()}},{passive:false});
-  addEventListener('keydown',e=>{if(e.key==='Escape'&&DRG.on){e.stopImmediatePropagation();finish(true)}},true);
+  addEventListener('keydown',e=>{if(e.key==='Escape'&&PICK){e.stopImmediatePropagation();cancelPick();return}if(e.key==='Escape'&&DRG.on){e.stopImmediatePropagation();finish(true)}},true);
+  {const _ob=window.onBack;window.onBack=function(){if(PICK){cancelPick();return true}return typeof _ob==='function'?_ob.apply(this,arguments):false}}
   render();
 })();
 
@@ -5552,7 +5620,7 @@ ASET.post.push(()=>{try{wakeFrame()}catch(e){ERR(e,"c86")}});
   };
   var KEY={abs:'battery',amb:'sparkle',amoled:'moon',apv:'eye',cs:'dial',dab:'apps',dcat:'grid',dflow:'sparkle',dloop:'loop',dmag:'search',dmin:'dial',dnum:'text',
     dock:'dock',drail:'az',dring:'dial',dsec:'dial',dt:'cal',dtrail:'sparkle',dwx:'cloud',fshow:'timer',fx:'sparkle',gal:'clock',gcm:'car',gev:'cal',gl:'eye',
-    gmed:'music',gon:'swipe',h24:'clock',hap:'vibrate',hic:'apps',hsb:'search',logo:'sparkle',lsplash:'sparkle',mand:'mandala',mbr:'mandala',mspin:'mandala',
+    gmed:'music',gon:'swipe',h24:'clock',hap:'vibrate',hic:'apps',hlab:'tag',hlock:'lock',hsb:'search',logo:'sparkle',lsplash:'sparkle',mand:'mandala',mbr:'mandala',mspin:'mandala',
     nbd:'bell',nbn:'bell',nbp:'bell',ng:'sparkle',nga:'sparkle',pcs:'clock',pinv:'invert',pmon:'pkg',ptilt:'tilt',sgry:'apps',shin:'eyeoff',shnm:'eyeoff',tod:'sun',
     wgbt:'battery',wgca:'cal',wgcl:'clock',wgfo:'timer',wgre:'reset',wgta:'tasks',wgwe:'cloud',engSug:'search',engHist:'reset',uxbig:'text',uxhc:'eye'};
   window.V48IC={P:P,url:url,mark:mark,NAME:NAME,KEY:KEY};
@@ -5569,7 +5637,7 @@ ASET.post.push(()=>{try{wakeFrame()}catch(e){ERR(e,"c86")}});
     ['dock','Dock','dock','t home'],['hsb','Search bar','search','t home'],['h24','24-hour','clock','t dial'],['wgwe','Weather','cloud','t widgets'],
     ['nbd','Badges','bell','t alerts'],['hap','Haptics','vibrate','t alerts power'],['amb','Ambient','sparkle','t look'],['amoled','Black bg','moon','t look power'],['abs','Battery saver','battery','t power'],
     ['gon','Gestures','swipe','t home'],['mand','Mandala','mandala','t look'],
-    ['hic','Home apps','apps','home'],['logo','Logo','star','home'],['lsplash','Splash','play','home'],['dab','All-apps','grid','home'],
+    ['hic','Home apps','apps','home'],['hlock','Lock home','lock','home'],['logo','Logo','star','home'],['lsplash','Splash','play','home'],['dab','All-apps','grid','home'],
     ['mspin','Spin','spin','look'],['mbr','Breathe','wave','look'],['ng','Edge glow','pill','look'],['nga','Rim sheen','sparkle','look'],
     ['tod','Time tint','sun','look'],['sgry','Grey icons','half','look drawer'],['shnm','Hide names','tag','look drawer'],
     ['dt','Date','cal','dial'],['pcs','Centisecs','timer','dial'],['cs','Fast ms','hour','dial'],['dmin','Minutes','dial','dial'],
@@ -5659,7 +5727,7 @@ ASET.post.push(()=>{try{wakeFrame()}catch(e){ERR(e,"c86")}});
    ['Mandala & ambience','mandala','mand mspin mop mst mpal mc1 mc2 mc3 mcm mbg mdt mdr mgs mlt msa mhu mgl mw mfl msz mspd mbr amb tod'],
    ['Wallpaper & glass','image','wp wdim wbl wfit wx wy wz bl'],
    ['App drawer & Crescent arc','drawer','dfb dside disz dcv dln dgl dlt dlb dfy dsp dtl duc dhp dsq dmass dpred dbeat dorg drot dflood dlite dpar dgrav dliq dtap dfx da drail dflow dloop dcat axo axa axb arctn aspd'],
-   ['Icons, grid & packages','apps','ipk ish isz gcol grow shnm sgry shin pmon'],
+   ['Icons, grid & packages','apps','ipk ish isz gcol grow hcol hrow hadd hlb hlab shnm sgry shin pmon'],
    ['Dock','dock','dock dz dks dab ng nga ngp nge ngh ngsp ngz'],
    ['Gestures','swipe','gon gsu gsd gsl gsr gdt gdist glp gpi gpo g2u g2d giu gid'],
    ['Widgets & at a glance','widgets','wgcl wgwe wgbt wgca wgta wgfo wgre gl gmed gal gev gcm fshow'],
@@ -6734,11 +6802,13 @@ const glide=i=>{tgt=clamp(i,0,Math.max(0,list.length-1));go('snap')};
 function railBuild(){lets=[];list.forEach((a,i)=>{const L=letter(a);if(!lets.length||lets[lets.length-1].c!==L){if(!lets.some(x=>x.c===L))lets.push({c:L,i})}});
  rail.textContent='';const d0=document.createElement('div');d0.textContent='\u2022';d0.dataset.l='';rail.appendChild(d0);lets.forEach(x=>{const d=document.createElement('div');d.textContent=x.c;d.dataset.l=x.c;rail.appendChild(d)});arcRail();const a=cur();if(a){const L=letter(a);[...rail.children].forEach(c=>c.classList.toggle('on',c.dataset.l===L))}}
 function build(){if(!isOpen())return;const q=$('q').value.trim(),keep=cur();list=ranked(matches().filter(inCat));
+ /* v1.64: when the search text changes, the best match is the one in the centre (it used to keep the old centre app, so Enter opened a different app from the one shown) */
+ const qChanged=q!==build.lq;build.lq=q;
  /* hidden apps stay out of the arc (also when the drawer is opened again); typing a hidden app's exact name still finds it */
  {const H=window.HID||[],qn=norm(q);if(H.length)list=list.filter(a=>a.ct||!H.includes(a.p)||(qn&&norm(a.n)===qn))}
  els.forEach(e=>e.remove());els.clear();foc=-1;
  railBuild();
- const k=keep?list.findIndex(a=>a.p===keep.p):-1;pos=k>=0?k:0;tgt=pos;vel=0;mode='';
+ const k=keep&&!(q&&qChanged)?list.findIndex(a=>a.p===keep.p):-1;pos=k>=0?k:0;tgt=pos;vel=0;mode='';
  root.classList.toggle('empty',!list.length);
  if(!list.length){$('awEmpty').firstChild.textContent=ALLQ()?'No apps or contacts found':DC==='Contacts'?(q?'No contacts found':'No contacts'):(q?'No apps found':'No apps');const o=$('awEmpty').querySelector('button');if(o)o.remove();if(q&&DC!=='Contacts'){const b=document.createElement('button');b.type='button';b.textContent='Search the web';b.onclick=()=>webSearch(q);$('awEmpty').appendChild(b)}}
  paint()}
@@ -6768,7 +6838,7 @@ const relRail=()=>{bub.classList.remove('on');if(lastL===''){sbar.classList.add(
 rail.addEventListener('pointerup',relRail);rail.addEventListener('pointercancel',()=>{bub.classList.remove('on');lastL=null});
 /* search */
 qi.oninput=()=>{$('q').value=qi.value;build()};
-qi.onkeydown=e=>{if(e.key==='Enter'){const a=list[0];if(a){closeAll();launch(a)}else if(qi.value.trim())webSearch(qi.value.trim())}};
+qi.onkeydown=e=>{if(e.key==='Enter'){const a=cur()||list[0];if(a){closeAll();launch(a)}else if(qi.value.trim())webSearch(qi.value.trim())}};
 /* actions */
 const on=(id,fn)=>$(id).addEventListener('click',()=>{const a=cur();if(!a)return;menuApp=a;fn(a)});
 /* contacts: Edit opens the phone's editor, Star keeps a launcher favourite, Home puts the contact on the home screen, Delete removes it from the phone */
@@ -6788,7 +6858,7 @@ on('awHome',a=>{if(a.ct){const had=home.includes(a.p);
     $('amHome').onclick();
     if(had){delete HCT[a.p]}sv('mdc-hcts',HCT);return}
   /* not placed on the home screen yet: place it (the saved home list can hold apps that have no spot) */
-  {const hp=ls('mdc-hpos',{});if(window.homeAdd&&!(hp&&hp[a.p])){if(!S.hic){S.hic=true;try{saveS()}catch(e){}try{applySettings()}catch(e){}}const r=homeAdd(a);toast(r==='ok'?a.n+' added to the home screen':r==='full'?'Home screen is full':'Already on the home screen');return}}
+  {const hp=ls('mdc-hpos',{});if(window.homeAdd&&!(hp&&hp[a.p])){if(!S.hic){S.hic=true;try{saveS()}catch(e){}try{applySettings()}catch(e){}}if(S.hadd==='pick'&&window.homePick){const r0=homePick(a);if(r0==='had')toast('Already on the home screen');return}const r=homeAdd(a);toast(r==='ok'?a.n+' added to the home screen':r==='full'?'Home screen is full':'Already on the home screen');return}}
   $('amHome').onclick()});on('awInfo',a=>{if(a.ct){if(a.ph)ENG.open('sms:'+a.ph);return}$('amInfo').onclick()});on('awDel',a=>{if(a.ct){const A=window.Android;if(!a.ph){toast('No number for '+a.n);return}
     if(!(A&&typeof A.deleteContact==='function')){toast('Deleting contacts needs the Android app');return}
     if(!confirm('Delete '+a.n+' from your phone? This cannot be undone.'))return;
