@@ -1,0 +1,42 @@
+// Glass capsule colour option: fake WebGL records the colours the shader would receive
+const {JSDOM,VirtualConsole}=require('jsdom');const fs=require('fs'),path=require('path');
+const html=fs.readFileSync(process.argv[2]||path.join(__dirname,'../../app/src/main/assets/index.html'),'utf8');
+const errs=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>errs.push(String(e.detail&&e.detail.message||e.message)));
+const calls={paint:null,ink:null};
+const fakeGL=new Proxy({},{get(_,k){
+ if(k==='getShaderParameter'||k==='getProgramParameter')return()=>true;
+ if(k==='getUniformLocation')return (p,n)=>n;
+ if(k==='uniform3fv')return(l,v)=>{if(l==='u_paint')calls.paint=Array.from(v);if(l==='u_ink')calls.ink=Array.from(v)};
+ if(k==='getExtension')return()=>null;
+ if(typeof k==='string'&&/^[A-Z0-9_]+$/.test(k))return 1;
+ return()=>({})}});
+const fake2d=new Proxy({},{get(_,k){if(k==='measureText')return()=>({width:10,actualBoundingBoxAscent:8,actualBoundingBoxDescent:2});if(k==='getImageData')return()=>({data:new Uint8ClampedArray(4)});return()=>{}},set(){return true}});
+const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,virtualConsole:vc,url:'https://appassets.test/index.html',
+ beforeParse(w){w.matchMedia=q=>({matches:false,addEventListener(){},removeEventListener(){},addListener(){},removeListener(){}});
+  w.HTMLCanvasElement.prototype.getContext=function(t){return t==='webgl2'?fakeGL:(t==='2d'?fake2d:null)};w.scrollTo=()=>{};
+  w.ResizeObserver=class{observe(){}unobserve(){}disconnect(){}};w.IntersectionObserver=class{observe(){}unobserve(){}disconnect(){}};w.requestIdleCallback=f=>setTimeout(f,1);
+  w.Element.prototype.animate=function(){return{cancel(){},finish(){},set onfinish(f){}}};w.addEventListener('error',e=>errs.push('onerror '+e.message))}});
+let ok=0,bad=0;const t=(n,c)=>{c?ok++:bad++;console.log((c?'PASS ':'FAIL ')+n)};
+setTimeout(()=>{const w=dom.window,d=w.document,sel=d.getElementById('gcCol'),ev=w.eval;
+ t('capsule is the active home clock',ev('S.hck')==='capsule'&&d.querySelector('.phone').classList.contains('hck-cap'));
+ t('colour select exists, 9 options, default silver',!!sel&&sel.options.length===9&&sel.value==='silver');
+ const pick=v=>{sel.value=v;sel.dispatchEvent(new w.Event('change',{bubbles:true}))};
+ const near=(a,b)=>a.every((x,i)=>Math.abs(x-b[i])<.01);
+ pick('silver');t('silver = original look (paint .80/.81/.83, ink .025)',near(calls.paint.slice(0,3),[.8,.81,.83])&&near(calls.ink.slice(0,3),[.025,.025,.025]));
+ ev("setTheme(THEMES.find(x=>x.n==='Sunset').c)");pick('theme');
+ const p1=calls.paint.slice();t('theme: paint is tinted, not silver',!near(p1.slice(0,3),[.8,.81,.83]));
+ t('theme: seconds panel differs from minutes (second accent)',!near(calls.paint.slice(3,6),calls.paint.slice(6,9)));
+ ev("setTheme(THEMES.find(x=>x.n==='Ocean').c)");t('theme change repaints the capsule',!near(calls.paint.slice(0,3),p1.slice(0,3)));
+ pick('night');t('night: dark panel, bright digits',calls.paint[0]<.2&&calls.ink[0]+calls.ink[1]+calls.ink[2]>.6);
+ pick('gold');const g=calls.paint.slice();t('gold: warm panel, dark digits',g[0]>g[2]&&calls.ink[0]<.1);
+ ev("setTheme(THEMES.find(x=>x.n==='Sunset').c)");t('fixed colour survives theme change',near(calls.paint.slice(0,3),g.slice(0,3)));
+ pick('custom');t('custom row shown',d.getElementById('gcColRow').hidden===false);
+ const i1=d.getElementById('gcCol1'),i2=d.getElementById('gcCol2');
+ i1.value='#336699';i1.dispatchEvent(new w.Event('input',{bubbles:true}));i2.value='#ffffff';i2.dispatchEvent(new w.Event('input',{bubbles:true}));
+ t('custom: panel and digits follow pickers',near(calls.paint.slice(0,3),[.2*.92,.4*.92,.6*.92])&&near(calls.ink.slice(0,3),[1,1,1]));
+ t('saved in settings',ev('S.hcc')==='custom'&&ev('S.hcc1')==='#336699');
+ ev("S.hcc='bogus';S.hcc1='nope';applySettings()");t('invalid values fall back to silver',ev('S.hcc')==='silver'&&/^#/.test(ev('S.hcc1')));
+ pick('gold');ev("delete S.hcc;delete S.hcc1;delete S.hcc2;S.hcc=SD.hcc;S.hcc1=SD.hcc1;S.hcc2=SD.hcc2;applySettings()");
+ t('reset returns to silver and updates the select',sel.value==='silver'&&near(calls.paint.slice(0,3),[.8,.81,.83]));
+ console.log('page errors:',errs.length);errs.slice(0,5).forEach(e=>console.log(' -',e));
+ console.log(ok+' passed, '+bad+' failed');process.exit(bad||errs.length?1:0)},3500);

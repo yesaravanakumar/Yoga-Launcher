@@ -62,6 +62,7 @@ jobs:
           node tools/smoke/smoke-load.js | tee smoke.log
           grep -q '^errors: 0' smoke.log || { echo "::error::Minified page logs script errors"; exit 1; }
           node tools/smoke/pillcolor-test.js
+          node tools/smoke/capsulecolor-test.js
 
       - name: Build signed release APK and AAB
         if: steps.sign.outputs.ok == 'true'

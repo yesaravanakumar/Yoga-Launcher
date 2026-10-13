@@ -8245,9 +8245,12 @@ html.ck-b #hour{animation:ckBreath 4.2s ease-in-out infinite}
   const lk=document.querySelector('.lk-pill');if(lk&&lk.children.length>1){lk.children[0].style.color=c[0];lk.children[1].style.color=c[1];
    if(own)lk.style.setProperty('--c1rgb',rgb(c[0]));else lk.style.removeProperty('--c1rgb')}
   const row=$('ckcRow');if(row)row.style.display=S.ckc==='custom'?'':'none';
+  const sc=$('ckc'),want=PC[S.ckc]?S.ckc:'theme';if(sc&&sc.value!==want)sc.value=want;
+  [['ckc1',0],['ckc2',1]].forEach(([id,i])=>{const e=$(id);if(e&&e.value!==c[i])e.value=c[i]});
  }catch(e){try{ERR(e,'pillcol')}catch(_){}}};
  window.paintPill=paint;
  const at=window.applyTheme;if(typeof at==='function')window.applyTheme=function(){const r=at.apply(this,arguments);paint();return r};
+ const as0=window.applySettings;if(typeof as0==='function')window.applySettings=function(){const r=as0.apply(this,arguments);paint();return r};
  const apply=()=>{cls();arc();paint()};apply();
  const ss=window.setSettings;if(ss)window.setSettings=function(){const r=ss.apply(this,arguments);apply();return r};
  const sh=$('sheet');if(!sh)return;
@@ -8311,12 +8314,27 @@ html.cyber:not(.ck-p-matte):not(.ck-p-outline):not(.ck-p-neon) .pill::before{dis
  const cvs=document.createElement('canvas');
  let gl=null;try{gl=cvs.getContext('webgl2',{antialias:false,alpha:true,premultipliedAlpha:true})}catch(e){}
  const OK=!!gl;
- const D={hck:'capsule',hcs:true,hcd:true,hca:80,hcl:'day',hcf:'cond',hcz:100};
+ const D={hck:'capsule',hcs:true,hcd:true,hca:80,hcl:'day',hcf:'cond',hcz:100,hcc:'silver',hcc1:'#ccd0d8',hcc2:'#08090c'};
+ /* capsule colours: panel (the window behind the digits) and digit colour, per section (hours, minutes, seconds) */
+ const HX=/^#[0-9a-f]{6}$/i,h3=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255),SIL=[.80,.81,.83];
+ const tint=(c,a)=>SIL.map((v,i)=>v*(1-a)+c[i]*a);
+ const CAPC={silver:'Silver (original)',theme:'Follow theme',night:'Night, theme digits',gold:'Gold',rose:'Rose',mint:'Mint',sky:'Sky',sunset:'Sunset',custom:'Custom\u2026'};
+ const FIX={gold:'#ffd76b',rose:'#ff8fd0',mint:'#7ef0c9',sky:'#36c9ff',sunset:'#ff9f6b'};
+ let colKey='',colV=null;
+ function capCols(){const t=(typeof cur!=='undefined'&&cur)||['#ffffff','#7df9ff','#b58cff'],k=S.hcc,key=[k,S.hcc1,S.hcc2,t.join()].join();
+  if(key===colKey&&colV)return colV;colKey=key;
+  const a=h3(t[1]),b=h3(t[2]),dk=[.025,.025,.025];let P,I;
+  if(k==='theme'){P=[tint(a,.6),tint(a,.6),tint(b,.6)];I=[dk,dk,dk]}
+  else if(k==='night'){const g=[.07,.075,.085],f=c=>c.map(v=>v*1.6+.12);P=[g,g,g];I=[f(a),f(a),f(b)]}
+  else if(k==='custom'){const p=h3(S.hcc1).map(v=>v*.92),i=h3(S.hcc2);P=[p,p,p];I=[i,i,i]}
+  else if(FIX[k]){const p=tint(h3(FIX[k]),.7);P=[p,p,p];I=[dk,dk,dk]}
+  else{P=[SIL,SIL,SIL];I=[dk,dk,dk]}
+  colV={p:new Float32Array([].concat(P[0],P[1],P[2])),i:new Float32Array([].concat(I[0],I[1],I[2]))};return colV}
  const LABS=['day','full','date'],FONTS=['cond','heavy','serif','mono','script','casual'];
  Object.assign(SD,D);for(const k in D)if(S[k]==null)S[k]=D[k];
  ['hcs','hcd'].forEach(k=>{if(!BOOL.includes(k))BOOL.push(k)});
  const fix=()=>{if(S.hck!=='capsule'||!OK)S.hck='dial';S.hca=Number.isFinite(+S.hca)?Math.max(0,Math.min(100,Math.round(+S.hca))):80;
-  if(!LABS.includes(S.hcl))S.hcl='day';if(!FONTS.includes(S.hcf))S.hcf='cond';S.hcz=Number.isFinite(+S.hcz)?Math.max(60,Math.min(170,Math.round(+S.hcz))):100};
+  if(!LABS.includes(S.hcl))S.hcl='day';if(!CAPC[S.hcc])S.hcc='silver';if(!HX.test(S.hcc1))S.hcc1=D.hcc1;if(!HX.test(S.hcc2))S.hcc2=D.hcc2;if(!FONTS.includes(S.hcf))S.hcf='cond';S.hcz=Number.isFinite(+S.hcz)?Math.max(60,Math.min(170,Math.round(+S.hcz))):100};
  fix();
  ASET.pre.push(fix);
  const DAYS=['SUN','MON','TUE','WED','THU','FRI','SAT'],DFULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],MON=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
@@ -8335,7 +8353,7 @@ precision highp float;
 out vec4 outc;
 uniform vec2 u_res;uniform float u_amb;uniform vec2 u_tilt;
 uniform sampler2D u_tH,u_tM,u_tS,u_tL;
-uniform vec3 u_pos,u_N,u_blur;uniform vec2 u_gH,u_gM,u_gS;uniform float u_secOn;
+uniform vec3 u_pos,u_N,u_blur;uniform vec2 u_gH,u_gM,u_gS;uniform float u_secOn;uniform vec3 u_paint[3];uniform vec3 u_ink[3];
 const float A=2.95,RO=.485,RI=.418;
 const float HL=A*.5-.015-RO;
 const float IHW=HL+RI;
@@ -8405,12 +8423,12 @@ void main(){
     float dif=clamp(.56+.80*nyL-.10*(1.-n.z),0.,1.);
     vec3 ni=tubeN(p,RI);dif*=.80+.20*sqrt(ni.z);
     float hs=fract(sin(floor(p.y*700.)*12.9898)*43758.5453);
-    vec3 paint=(vec3(.80,.81,.83)+(hs-.5)*.04)*dif;
+    vec3 paint=(u_paint[k]+(hs-.5)*.04)*dif;
     paint*=.60+.40*smoothstep(0.,.05,-si);
     float db=min(abs(f-B1),abs(f-B2))*2.*IHW;
     paint*=1.-.55*(1.-smoothstep(0.,.0035,db));
     paint+=.05*(1.-smoothstep(.0035,.009,db))*step(.0035,db);
-    vec3 inkc=vec3(.025);
+    vec3 inkc=u_ink[k];
     paint=mix(paint,inkc,clamp(cov,0.,1.));
     paint=mix(paint,inkc,clamp(lab,0.,1.));
     col=paint*.97+env(r)*Fr*K;
@@ -8446,7 +8464,7 @@ void main(){
   gl.useProgram(prog);
   const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
   const l=gl.getAttribLocation(prog,'a');gl.enableVertexAttribArray(l);gl.vertexAttribPointer(l,2,gl.FLOAT,false,0,0);
-  ['u_res','u_amb','u_tilt','u_pos','u_N','u_blur','u_gH','u_gM','u_gS','u_secOn','u_tH','u_tM','u_tS','u_tL'].forEach(n=>U[n]=gl.getUniformLocation(prog,n));
+  ['u_res','u_amb','u_tilt','u_pos','u_N','u_blur','u_gH','u_gM','u_gS','u_secOn','u_paint','u_ink','u_tH','u_tM','u_tS','u_tL'].forEach(n=>U[n]=gl.getUniformLocation(prog,n));
   ['u_tH','u_tM','u_tS','u_tL'].forEach((n,i)=>gl.uniform1i(U[n],i));
   gl.pixelStorei(gl.UNPACK_ALIGNMENT,1);
   const an=gl.getExtension('EXT_texture_filter_anisotropic');
@@ -8523,7 +8541,7 @@ void main(){
   gl.uniform2f(U.u_res,cvs.width,cvs.height);gl.uniform1f(U.u_amb,S.hca/100);gl.uniform2f(U.u_tilt,nx,ny);
   gl.uniform3f(U.u_pos,DR.h.pos,DR.m.pos,DR.s.pos);gl.uniform3f(U.u_N,hourN,60,60);gl.uniform3f(U.u_blur,DR.h.blur,DR.m.blur,DR.s.blur);
   gl.uniform2f(U.u_gH,grids.H[0],Math.ceil(hourN/grids.H[0]));gl.uniform2f(U.u_gM,grids.M[0],8);gl.uniform2f(U.u_gS,grids.S[0],8);
-  gl.uniform1f(U.u_secOn,S.hcs?1:0);gl.drawArrays(gl.TRIANGLES,0,3)}
+  gl.uniform1f(U.u_secOn,S.hcs?1:0);const cc=capCols();gl.uniform3fv(U.u_paint,cc.p);gl.uniform3fv(U.u_ink,cc.i);gl.drawArrays(gl.TRIANGLES,0,3)}
  function paint(){if(dirty&&active){dirty=false;draw()}}
  function frame(t){let busy=false;for(const k in DR)busy=DR[k].tick(t)||busy;dirty=true;paint();raf=busy&&active?requestAnimationFrame(frame):0}
  function kick(){if(!raf&&active)raf=requestAnimationFrame(frame)}
@@ -8566,6 +8584,7 @@ void main(){
   setActive(on);if(on&&sig!==lastSig){lastSig=sig;buildLabel();dirty=true;resize();update(false)}else if(on){dirty=true;paint()}
   try{sync()}catch(_){}}
  ASET.post.push(apply);
+ {const at=window.applyTheme;if(typeof at==='function')window.applyTheme=function(){const r=at.apply(this,arguments);try{if(active&&S.hcc!=='silver'&&S.hcc!=='custom'&&!FIX[S.hcc]){dirty=true;paint()}}catch(e){}return r}}
  document.addEventListener('visibilitychange',()=>{if(active&&!document.hidden)loop()});
  new MutationObserver(()=>{if(active&&!COV)loop()}).observe(phone,{attributes:true,attributeFilter:['class']});
 
@@ -8575,7 +8594,8 @@ void main(){
   own.hidden=S.hck!=='capsule';if(dialBox)dialBox.hidden=S.hck==='capsule';
   const a=$('gcAmb');if(a){a.value=S.hca;$('gcAmbV').textContent=S.hca+'%'}
   const z=$('gcSz');if(z){z.value=S.hcz;$('gcSzV').textContent=S.hcz+'%'}
-  const l=$('gcLab');if(l)l.value=S.hcl;const f=$('gcFont');if(f)f.value=S.hcf};
+  const l=$('gcLab');if(l)l.value=S.hcl;const f=$('gcFont');if(f)f.value=S.hcf;
+  const cs=$('gcCol');if(cs)cs.value=S.hcc;const cr=$('gcColRow');if(cr)cr.hidden=S.hcc!=='custom';const c1=$('gcCol1');if(c1)c1.value=S.hcc1;const c2=$('gcCol2');if(c2)c2.value=S.hcc2};
  function ui(){
   const sh=$('sheet');if(!sh)return;
   let det=$('ckAcc');
@@ -8599,12 +8619,21 @@ void main(){
   const mkRange=(id,vid,lab,min,max,step,k,fn)=>{const h=document.createElement('div');h.className='sl';h.innerHTML=lab+' <b id="'+vid+'" style="color:var(--c1)"></b>';
    const r=document.createElement('input');r.type='range';r.id=id;r.min=min;r.max=max;r.step=step;r.setAttribute('aria-label',lab);let tm;
    r.oninput=()=>{S[k]=+r.value;$(vid).textContent=S[k]+'%';fn&&fn();clearTimeout(tm);tm=setTimeout(saveS,250)};return[h,r]};
+  const cl=document.createElement('div');cl.className='sl';cl.textContent='Capsule colour';
+  const csel=document.createElement('select');csel.className='in sel';csel.id='gcCol';csel.setAttribute('aria-label','Capsule colour');
+  Object.keys(CAPC).forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=CAPC[v];csel.appendChild(o)});csel.value=S.hcc;
+  const crow=document.createElement('div');crow.id='gcColRow';crow.className='cp';crow.hidden=S.hcc!=='custom';
+  const cin=(id,lab,k)=>{const L=document.createElement('label');L.style.cssText='display:flex;align-items:center;gap:8px;font-size:12px';L.append(lab+' ');
+   const i=document.createElement('input');i.type='color';i.id=id;i.value=S[k];i.setAttribute('aria-label','Capsule '+lab.toLowerCase());
+   i.oninput=()=>{S[k]=i.value;colKey='';saveS();dirty=true;paint()};L.append(i);crow.append(L)};
+  cin('gcCol1','Panel','hcc1');cin('gcCol2','Digits','hcc2');
+  csel.onchange=()=>{S.hcc=csel.value;colKey='';crow.hidden=S.hcc!=='custom';saveS();dirty=true;paint()};
   const [al,ar]=mkRange('gcAmb','gcAmbV','Glass reflection',0,100,5,'hca',()=>{dirty=true;paint()});
   const [ll,ls]=mkSel('gcLab','Label shows',[['day','Day (MON)'],['full','Day name'],['date','Date']],'hcl');
   const [fl,fs]=mkSel('gcFont','Label font',[['cond','Condensed caps'],['heavy','Heavy caps'],['serif','Serif caps'],['mono','Mono caps'],['script','Script'],['casual','Casual']],'hcf');
   const [zl,zr]=mkRange('gcSz','gcSzV','Label size',60,170,5,'hcz',()=>{buildLabel();dirty=true;paint()});
   const note=document.createElement('div');note.className='sl';note.textContent='Tap the capsule for apps, hold it for these settings. Use 24-hour time, Show date and Layout > Move clock & date as usual. Dial-only options are hidden while the capsule is on.';
-  own.append(tg('Show seconds','hcs'),tg('Show day / date label','hcd'),ll,ls,fl,fs,zl,zr,al,ar,note);
+  own.append(tg('Show seconds','hcs'),tg('Show day / date label','hcd'),cl,csel,crow,ll,ls,fl,fs,zl,zr,al,ar,note);
   box.append(head,own,dialBox);sync()}
  ui();
  window.glassCapsule={setStyle(v){S.hck=v;saveS();applySettings()},get active(){return active}};
@@ -8720,7 +8749,7 @@ html.light .v60tabs{background:#eef1f7}
   const dial=flat([$('dlRow'),kids(pane('Dial'))]);
   const time=flat([lab('h24'),lab('fx'),lk.filter(k=>k.classList&&k.classList.contains('row')),lk.filter(k=>k.classList&&k.classList.contains('sl'))]);
   subs('home-clock',c,[['style','Style & pill',style],['dial','Dial',dial],['time','Time & position',time]]);
-  gone(ck);gone(pane('Dial'));put(c);addReset(c,['ckp','ckc','ckc1','ckc2','ckf','ckh','cka','cks','ckb','hck','hcs','hcd','hca']);
+  gone(ck);gone(pane('Dial'));put(c);addReset(c,['ckp','ckc','ckc1','ckc2','ckf','ckh','cka','cks','ckb','hck','hcs','hcd','hca','hcc','hcc1','hcc2']);
   c._old=[oldClock,lay]}
  /* Mandala */
  {const c=comp('Mandala','home');const p=pane('Mandala');kids(p).forEach(k=>c.b.appendChild(k));gone(p);put(c)}

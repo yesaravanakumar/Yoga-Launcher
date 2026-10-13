@@ -26,5 +26,7 @@ setTimeout(()=>{const w=dom.window,d=w.document,sel=d.getElementById('ckc'),R=d.
  t('custom minute colour',mcol()===norm('#112233'));t('saved in settings',w.eval('S').ckc==='custom'&&w.eval('S').ckc1==='#112233');
  pick('theme');t('back to theme clears override',!R.style.getPropertyValue('--c1')&&row.style.display==='none');
  w.eval("S.ckc='bogus'");w.paintPill();t('invalid value falls back to theme',mcol()===norm(w.eval('cur')[1]));
+ pick('gold');w.eval("delete S.ckc;delete S.ckc1;delete S.ckc2;normS();saveS();applySettings()");
+ t('Reset section restores theme colour and select',sel.value==='theme'&&!R.style.getPropertyValue('--c1')&&mcol()===norm(w.eval('cur')[1]));
  console.log('page errors:',errs.length);errs.slice(0,5).forEach(e=>console.log(' -',e));
  console.log(ok+' passed, '+bad+' failed');process.exit(bad||errs.length?1:0)},3500);
