@@ -1,5 +1,5 @@
 // Glass capsule colour option: fake WebGL records the colours the shader would receive
-const {JSDOM,VirtualConsole}=require('jsdom');const fs=require('fs'),path=require('path');
+const {JSDOM,VirtualConsole}=require('/tmp/claude-0/jd/node_modules/jsdom');const fs=require('fs'),path=require('path');
 const html=fs.readFileSync(process.argv[2]||path.join(__dirname,'../../app/src/main/assets/index.html'),'utf8');
 const errs=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>errs.push(String(e.detail&&e.detail.message||e.message)));
 const calls={paint:null,ink:null};
@@ -19,7 +19,7 @@ const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,virtua
 let ok=0,bad=0;const t=(n,c)=>{c?ok++:bad++;console.log((c?'PASS ':'FAIL ')+n)};
 setTimeout(()=>{const w=dom.window,d=w.document,sel=d.getElementById('gcCol'),ev=w.eval;
  t('capsule is the active home clock',ev('S.hck')==='capsule'&&d.querySelector('.phone').classList.contains('hck-cap'));
- t('colour select exists, 9 options, default silver',!!sel&&sel.options.length===9&&sel.value==='silver');
+ t('colour select exists, 16 options, default silver',!!sel&&sel.options.length===16&&sel.value==='silver');
  const pick=v=>{sel.value=v;sel.dispatchEvent(new w.Event('change',{bubbles:true}))};
  const near=(a,b)=>a.every((x,i)=>Math.abs(x-b[i])<.01);
  pick('silver');t('silver = original look (paint .80/.81/.83, ink .025)',near(calls.paint.slice(0,3),[.8,.81,.83])&&near(calls.ink.slice(0,3),[.025,.025,.025]));
@@ -38,5 +38,16 @@ setTimeout(()=>{const w=dom.window,d=w.document,sel=d.getElementById('gcCol'),ev
  ev("S.hcc='bogus';S.hcc1='nope';applySettings()");t('invalid values fall back to silver',ev('S.hcc')==='silver'&&/^#/.test(ev('S.hcc1')));
  pick('gold');ev("delete S.hcc;delete S.hcc1;delete S.hcc2;S.hcc=SD.hcc;S.hcc1=SD.hcc1;S.hcc2=SD.hcc2;applySettings()");
  t('reset returns to silver and updates the select',sel.value==='silver'&&near(calls.paint.slice(0,3),[.8,.81,.83]));
+ 
+ const lsel=d.getElementById('gcLabCol');t('label colour select exists',!!lsel&&lsel.options.length===13&&lsel.value==='match');
+ pick('silver');lsel.value='custom';lsel.dispatchEvent(new w.Event('change',{bubbles:true}));
+ const li=d.getElementById('gcLabCol1');li.value='#ff0000';li.dispatchEvent(new w.Event('input',{bubbles:true}));
+ t('custom label colour saved',ev('S.hclc')==='custom'&&ev('S.hclc1')==='#ff0000');
+ pick('tri');t('tri-colour panels differ per section',!near(calls.paint.slice(0,3),calls.paint.slice(3,6)));
+ const ms=d.getElementById('gcMotM'),ss=d.getElementById('gcMotS');t('motion selects exist (6 options)',!!ms&&!!ss&&ms.options.length===6);
+ ['roll','smooth','bounce','spring','fade','snap'].forEach(m=>{ss.value=m;ss.dispatchEvent(new w.Event('change',{bubbles:true}));
+  const r=ev("(function(){const D=glassCapsule._dr;return 1})()");});
+ ss.value='bounce';ss.dispatchEvent(new w.Event('change',{bubbles:true}));t('seconds motion saved',ev('S.hcsm')==='bounce');
+ ev("S.hcmm='bogus';S.hclc='x';S.hcsp=9999;applySettings()");t('invalid motion/label/speed fall back',ev('S.hcmm')==='roll'&&ev('S.hclc')==='match'&&ev('S.hcsp')===250);
  console.log('page errors:',errs.length);errs.slice(0,5).forEach(e=>console.log(' -',e));
  console.log(ok+' passed, '+bad+' failed');process.exit(bad||errs.length?1:0)},3500);

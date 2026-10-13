@@ -8314,27 +8314,33 @@ html.cyber:not(.ck-p-matte):not(.ck-p-outline):not(.ck-p-neon) .pill::before{dis
  const cvs=document.createElement('canvas');
  let gl=null;try{gl=cvs.getContext('webgl2',{antialias:false,alpha:true,premultipliedAlpha:true})}catch(e){}
  const OK=!!gl;
- const D={hck:'capsule',hcs:true,hcd:true,hca:80,hcl:'day',hcf:'cond',hcz:100,hcc:'silver',hcc1:'#ccd0d8',hcc2:'#08090c'};
+ const D={hck:'capsule',hcs:true,hcd:true,hca:80,hcl:'day',hcf:'cond',hcz:100,hcc:'silver',hcc1:'#ccd0d8',hcc2:'#08090c',hclc:'match',hclc1:'#ffffff',hcmm:'roll',hcsm:'roll',hcsp:100,hcb:70};
  /* capsule colours: panel (the window behind the digits) and digit colour, per section (hours, minutes, seconds) */
  const HX=/^#[0-9a-f]{6}$/i,h3=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255),SIL=[.80,.81,.83];
  const tint=(c,a)=>SIL.map((v,i)=>v*(1-a)+c[i]*a);
- const CAPC={silver:'Silver (original)',theme:'Follow theme',night:'Night, theme digits',gold:'Gold',rose:'Rose',mint:'Mint',sky:'Sky',sunset:'Sunset',custom:'Custom\u2026'};
- const FIX={gold:'#ffd76b',rose:'#ff8fd0',mint:'#7ef0c9',sky:'#36c9ff',sunset:'#ff9f6b'};
+ const CAPC={silver:'Silver (original)',theme:'Follow theme',night:'Night, theme digits',gold:'Gold',rose:'Rose',mint:'Mint',sky:'Sky',sunset:'Sunset',ruby:'Ruby',ocean:'Ocean',lime:'Lime',violet:'Violet',copper:'Copper',graphite:'Graphite',tri:'Tri-colour (H / M / S)',custom:'Custom\u2026'};
+ const FIX={gold:'#ffd76b',rose:'#ff8fd0',mint:'#7ef0c9',sky:'#36c9ff',sunset:'#ff9f6b',ruby:'#ff5468',ocean:'#4d7cff',lime:'#b6f04d',violet:'#b58cff',copper:'#e0905a'};
+ const LABC={match:'Match digits',theme1:'Theme colour 1',theme2:'Theme colour 2',white:'White',black:'Black',gold:'Gold',rose:'Rose',mint:'Mint',sky:'Sky',sunset:'Sunset',ruby:'Ruby',lime:'Lime',custom:'Custom\u2026'};
+ const LFIX={white:'#ffffff',black:'#08090c',gold:'#ffd76b',rose:'#ff8fd0',mint:'#7ef0c9',sky:'#36c9ff',sunset:'#ff9f6b',ruby:'#ff5468',lime:'#b6f04d'};
+ const MOT={roll:'Roll (original)',smooth:'Smooth glide',bounce:'Bounce',spring:'Spring wobble',fade:'Fade',snap:'Instant'};
  let colKey='',colV=null;
- function capCols(){const t=(typeof cur!=='undefined'&&cur)||['#ffffff','#7df9ff','#b58cff'],k=S.hcc,key=[k,S.hcc1,S.hcc2,t.join()].join();
+ function capCols(){const t=(typeof cur!=='undefined'&&cur)||['#ffffff','#7df9ff','#b58cff'],k=S.hcc,key=[k,S.hcc1,S.hcc2,S.hclc,S.hclc1,t.join()].join();
   if(key===colKey&&colV)return colV;colKey=key;
   const a=h3(t[1]),b=h3(t[2]),dk=[.025,.025,.025];let P,I;
   if(k==='theme'){P=[tint(a,.6),tint(a,.6),tint(b,.6)];I=[dk,dk,dk]}
   else if(k==='night'){const g=[.07,.075,.085],f=c=>c.map(v=>v*1.6+.12);P=[g,g,g];I=[f(a),f(a),f(b)]}
+  else if(k==='graphite'){const g=[.09,.095,.105],w=[.93,.94,.96];P=[g,g,g];I=[w,w,w]}
+  else if(k==='tri'){const q=c=>tint(h3(c),.7);P=[q(FIX.gold),q(FIX.sky),q(FIX.rose)];I=[dk,dk,dk]}
   else if(k==='custom'){const p=h3(S.hcc1).map(v=>v*.92),i=h3(S.hcc2);P=[p,p,p];I=[i,i,i]}
   else if(FIX[k]){const p=tint(h3(FIX[k]),.7);P=[p,p,p];I=[dk,dk,dk]}
   else{P=[SIL,SIL,SIL];I=[dk,dk,dk]}
-  colV={p:new Float32Array([].concat(P[0],P[1],P[2])),i:new Float32Array([].concat(I[0],I[1],I[2]))};return colV}
+  const lk=S.hclc;let L=I[0];if(lk==='theme1')L=a;else if(lk==='theme2')L=b;else if(lk==='custom')L=h3(S.hclc1);else if(LFIX[lk])L=h3(LFIX[lk]);
+  colV={p:new Float32Array([].concat(P[0],P[1],P[2])),i:new Float32Array([].concat(I[0],I[1],I[2])),l:new Float32Array(L)};return colV}
  const LABS=['day','full','date'],FONTS=['cond','heavy','serif','mono','script','casual'];
  Object.assign(SD,D);for(const k in D)if(S[k]==null)S[k]=D[k];
  ['hcs','hcd'].forEach(k=>{if(!BOOL.includes(k))BOOL.push(k)});
  const fix=()=>{if(S.hck!=='capsule'||!OK)S.hck='dial';S.hca=Number.isFinite(+S.hca)?Math.max(0,Math.min(100,Math.round(+S.hca))):80;
-  if(!LABS.includes(S.hcl))S.hcl='day';if(!CAPC[S.hcc])S.hcc='silver';if(!HX.test(S.hcc1))S.hcc1=D.hcc1;if(!HX.test(S.hcc2))S.hcc2=D.hcc2;if(!FONTS.includes(S.hcf))S.hcf='cond';S.hcz=Number.isFinite(+S.hcz)?Math.max(60,Math.min(170,Math.round(+S.hcz))):100};
+  if(!LABS.includes(S.hcl))S.hcl='day';if(!CAPC[S.hcc])S.hcc='silver';if(!HX.test(S.hcc1))S.hcc1=D.hcc1;if(!HX.test(S.hcc2))S.hcc2=D.hcc2;if(!FONTS.includes(S.hcf))S.hcf='cond';if(!LABC[S.hclc])S.hclc='match';if(!HX.test(S.hclc1))S.hclc1=D.hclc1;if(!MOT[S.hcmm])S.hcmm='roll';if(!MOT[S.hcsm])S.hcsm='roll';S.hcb=Number.isFinite(+S.hcb)?Math.max(0,Math.min(100,Math.round(+S.hcb))):70;S.hcsp=Number.isFinite(+S.hcsp)?Math.max(50,Math.min(250,Math.round(+S.hcsp))):100;S.hcz=Number.isFinite(+S.hcz)?Math.max(60,Math.min(170,Math.round(+S.hcz))):100};
  fix();
  ASET.pre.push(fix);
  const DAYS=['SUN','MON','TUE','WED','THU','FRI','SAT'],DFULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],MON=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
@@ -8353,7 +8359,7 @@ precision highp float;
 out vec4 outc;
 uniform vec2 u_res;uniform float u_amb;uniform vec2 u_tilt;
 uniform sampler2D u_tH,u_tM,u_tS,u_tL;
-uniform vec3 u_pos,u_N,u_blur;uniform vec2 u_gH,u_gM,u_gS;uniform float u_secOn;uniform vec3 u_paint[3];uniform vec3 u_ink[3];
+uniform vec3 u_pos,u_N,u_blur;uniform vec2 u_gH,u_gM,u_gS;uniform float u_secOn;uniform vec3 u_paint[3];uniform vec3 u_ink[3];uniform vec3 u_lab;uniform vec3 u_fade;uniform float u_edge;
 const float A=2.95,RO=.485,RI=.418;
 const float HL=A*.5-.015-RO;
 const float IHW=HL+RI;
@@ -8404,11 +8410,14 @@ void main(){
   float u=(f-cx)/gw+.5;
   float phi=asin(clamp(p.y/R,-.999,.999));
   float a0=pos+phi/stp;
-  vec2 dux=vec2(dFdx(u),dFdy(u));vec2 dax=vec2(dFdx(a0),dFdy(a0));
+  float ed=smoothstep(.3,1.15,abs(phi)/stp)*u_edge;
+  vec2 dux=vec2(dFdx(u),dFdy(u))*(1.+ed*9.);vec2 dax=vec2(dFdx(a0),dFdy(a0))*(1.+ed*9.);
+  vec3 ub=u_blur+vec3(ed*.8);
   float cov=0.;
-  if(k==0)cov=glyph(u_tH,u_gH,u_N.x,u,a0,u_blur.x,dux,dax);
-  else if(k==1)cov=glyph(u_tM,u_gM,u_N.y,u,a0,u_blur.y,dux,dax);
-  else cov=glyph(u_tS,u_gS,u_N.z,u,a0,u_blur.z,dux,dax)*u_secOn;
+  if(k==0)cov=glyph(u_tH,u_gH,u_N.x,u,a0,ub.x,dux,dax);
+  else if(k==1)cov=glyph(u_tM,u_gM,u_N.y,u,a0,ub.y,dux,dax);
+  else cov=glyph(u_tS,u_gS,u_N.z,u,a0,ub.z,dux,dax)*u_secOn;
+  cov*=(k==0?u_fade.x:(k==1?u_fade.y:u_fade.z))*(1.-.3*ed);
   float lab=texture(u_tL,vec2(p.x/A+.5,.5-p.y)).r;
   float so=sdCap(p,RO),si=sdCap(p,RI);
   float alpha=1.-smoothstep(-px,px,so);
@@ -8430,7 +8439,7 @@ void main(){
     paint+=.05*(1.-smoothstep(.0035,.009,db))*step(.0035,db);
     vec3 inkc=u_ink[k];
     paint=mix(paint,inkc,clamp(cov,0.,1.));
-    paint=mix(paint,inkc,clamp(lab,0.,1.));
+    paint=mix(paint,u_lab,clamp(lab,0.,1.));
     col=paint*.97+env(r)*Fr*K;
   }else{
     float cl=1.-clamp(si/(RO-RI),0.,1.);
@@ -8464,7 +8473,7 @@ void main(){
   gl.useProgram(prog);
   const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
   const l=gl.getAttribLocation(prog,'a');gl.enableVertexAttribArray(l);gl.vertexAttribPointer(l,2,gl.FLOAT,false,0,0);
-  ['u_res','u_amb','u_tilt','u_pos','u_N','u_blur','u_gH','u_gM','u_gS','u_secOn','u_paint','u_ink','u_tH','u_tM','u_tS','u_tL'].forEach(n=>U[n]=gl.getUniformLocation(prog,n));
+  ['u_res','u_amb','u_tilt','u_pos','u_N','u_blur','u_gH','u_gM','u_gS','u_secOn','u_paint','u_ink','u_lab','u_fade','u_edge','u_tH','u_tM','u_tS','u_tL'].forEach(n=>U[n]=gl.getUniformLocation(prog,n));
   ['u_tH','u_tM','u_tS','u_tL'].forEach((n,i)=>gl.uniform1i(U[n],i));
   gl.pixelStorei(gl.UNPACK_ALIGNMENT,1);
   const an=gl.getExtension('EXT_texture_filter_anisotropic');
@@ -8521,17 +8530,26 @@ void main(){
   buildLabel();dirty=true}
 
  /* ---------------- drums: same timing as before ---------------- */
+ const EZ={
+  roll:ease,
+  smooth:p=>.5-.5*Math.cos(Math.PI*p),
+  bounce:p=>{const c1=2.2,c3=c1+1;return 1+c3*Math.pow(p-1,3)+c1*Math.pow(p-1,2)},
+  spring:p=>p>=1?1:1-Math.exp(-6.5*p)*Math.cos(p*Math.PI*3.2),
+  fade:p=>p,snap:p=>1};
+ const MDUR={roll:1,smooth:1.25,bounce:1.3,spring:2.1,fade:1.1,snap:1};
  class Drum{
-  constructor(dur,bk){this.dur=dur;this.bk=bk;this.pos=0;this.to=0;this.from=0;this.t0=0;this.anim=false;this.blur=0;this.N=60}
-  conf(N,v){this.N=N;this.anim=false;this.pos=this.to=this.from=v;this.blur=0}
-  set(v,animate){const base=this.anim?this.to:Math.round(this.pos),d=mod(v-mod(base,this.N),this.N);if(!d)return;const to=base+d;
-   if(animate&&d<=2){this.from=this.pos;this.to=to;this.t0=performance.now();this.dur0=this.dur*(d>1?.8:1);this.anim=true;kick()}
-   else{this.anim=false;this.pos=this.to=mod(to,this.N);this.blur=0;dirty=true}}
+  constructor(dur,bk,mk){this.dur=dur;this.bk=bk;this.mk=mk;this.pos=0;this.to=0;this.from=0;this.t0=0;this.anim=false;this.blur=0;this.N=60;this.fade=1;this.mode='roll'}
+  conf(N,v){this.N=N;this.anim=false;this.pos=this.to=this.from=v;this.blur=0;this.fade=1}
+  set(v,animate){const mode=this.mk?S[this.mk]:'roll',base=this.anim?this.to:Math.round(this.pos),d=mod(v-mod(base,this.N),this.N);if(!d)return;const to=base+d;
+   if(animate&&d<=2&&mode!=='snap'){this.mode=mode;this.from=this.pos;this.to=to;this.t0=performance.now();this.dur0=this.dur*(d>1?.8:1)*(MDUR[mode]||1)*100/(this.mk?S.hcsp:100);this.anim=true;kick()}
+   else{this.anim=false;this.pos=this.to=mod(to,this.N);this.blur=0;this.fade=1;dirty=true}}
   tick(t){if(!this.anim)return false;const p=Math.max(0,(t-this.t0)/this.dur0);
-   if(p>=1){this.pos=this.to=mod(this.to,this.N);this.anim=false;this.blur=0;return true}
-   this.pos=this.from+(this.to-this.from)*ease(p);
-   this.blur=Math.min(1.1,Math.abs(this.to-this.from)*dEase(p)/(this.dur0/1000)*this.bk*.05);return true}}
- const DR={h:new Drum(1400,1),m:new Drum(760,1.2),s:new Drum(340,1.6)};
+   if(p>=1){this.pos=this.to=mod(this.to,this.N);this.anim=false;this.blur=0;this.fade=1;return true}
+   if(this.mode==='fade'){const q=p<.5?1-p*2:(p-.5)*2;this.pos=p<.5?this.from:this.to;this.fade=q*q*(3-2*q);this.blur=0;return true}
+   this.fade=1;const E=EZ[this.mode]||ease;this.pos=this.from+(this.to-this.from)*E(p);
+   const dv=this.mode==='roll'?dEase(p):Math.abs(E(Math.min(1,p+.01))-E(Math.max(0,p-.01)))/.02;
+   this.blur=Math.min(1.1,Math.abs(this.to-this.from)*dv/(this.dur0/1000)*this.bk*.05);return true}}
+ const DR={h:new Drum(1400,1,null),m:new Drum(760,1.2,'hcmm'),s:new Drum(340,1.6,'hcsm')};
  let active=false,raf=0,timer=0,lastMin=-1,lastFmt=null,lastDay=-1;
  function resize(){if(!gl||lost)return;const r=cvs.getBoundingClientRect(),W0=cvs.offsetWidth||300;
   const dpr=Math.min(window.devicePixelRatio||1,de.classList.contains('lite')?1.5:2),w=Math.max(8,Math.round(W0*dpr)),h=Math.max(3,Math.round(w/A));
@@ -8541,7 +8559,7 @@ void main(){
   gl.uniform2f(U.u_res,cvs.width,cvs.height);gl.uniform1f(U.u_amb,S.hca/100);gl.uniform2f(U.u_tilt,nx,ny);
   gl.uniform3f(U.u_pos,DR.h.pos,DR.m.pos,DR.s.pos);gl.uniform3f(U.u_N,hourN,60,60);gl.uniform3f(U.u_blur,DR.h.blur,DR.m.blur,DR.s.blur);
   gl.uniform2f(U.u_gH,grids.H[0],Math.ceil(hourN/grids.H[0]));gl.uniform2f(U.u_gM,grids.M[0],8);gl.uniform2f(U.u_gS,grids.S[0],8);
-  gl.uniform1f(U.u_secOn,S.hcs?1:0);const cc=capCols();gl.uniform3fv(U.u_paint,cc.p);gl.uniform3fv(U.u_ink,cc.i);gl.drawArrays(gl.TRIANGLES,0,3)}
+  gl.uniform1f(U.u_secOn,S.hcs?1:0);const cc=capCols();gl.uniform3fv(U.u_paint,cc.p);gl.uniform3fv(U.u_ink,cc.i);gl.uniform3fv(U.u_lab,cc.l);gl.uniform1f(U.u_edge,S.hcb/100);gl.uniform3f(U.u_fade,DR.h.fade,DR.m.fade,DR.s.fade);gl.drawArrays(gl.TRIANGLES,0,3)}
  function paint(){if(dirty&&active){dirty=false;draw()}}
  function frame(t){let busy=false;for(const k in DR)busy=DR[k].tick(t)||busy;dirty=true;paint();raf=busy&&active?requestAnimationFrame(frame):0}
  function kick(){if(!raf&&active)raf=requestAnimationFrame(frame)}
@@ -8584,7 +8602,7 @@ void main(){
   setActive(on);if(on&&sig!==lastSig){lastSig=sig;buildLabel();dirty=true;resize();update(false)}else if(on){dirty=true;paint()}
   try{sync()}catch(_){}}
  ASET.post.push(apply);
- {const at=window.applyTheme;if(typeof at==='function')window.applyTheme=function(){const r=at.apply(this,arguments);try{if(active&&S.hcc!=='silver'&&S.hcc!=='custom'&&!FIX[S.hcc]){dirty=true;paint()}}catch(e){}return r}}
+ {const at=window.applyTheme;if(typeof at==='function')window.applyTheme=function(){const r=at.apply(this,arguments);try{if(active){dirty=true;paint()}}catch(e){}return r}}
  document.addEventListener('visibilitychange',()=>{if(active&&!document.hidden)loop()});
  new MutationObserver(()=>{if(active&&!COV)loop()}).observe(phone,{attributes:true,attributeFilter:['class']});
 
@@ -8595,6 +8613,7 @@ void main(){
   const a=$('gcAmb');if(a){a.value=S.hca;$('gcAmbV').textContent=S.hca+'%'}
   const z=$('gcSz');if(z){z.value=S.hcz;$('gcSzV').textContent=S.hcz+'%'}
   const l=$('gcLab');if(l)l.value=S.hcl;const f=$('gcFont');if(f)f.value=S.hcf;
+  const lc=$('gcLabCol');if(lc)lc.value=S.hclc;const lr=$('gcLabRow');if(lr)lr.hidden=S.hclc!=='custom';const l1=$('gcLabCol1');if(l1)l1.value=S.hclc1;const mm=$('gcMotM');if(mm)mm.value=S.hcmm;const ms=$('gcMotS');if(ms)ms.value=S.hcsm;const bb=$('gcBlr');if(bb){bb.value=S.hcb;$('gcBlrV').textContent=S.hcb+'%'}const sp=$('gcSpd');if(sp){sp.value=S.hcsp;$('gcSpdV').textContent=S.hcsp+'%'}
   const cs=$('gcCol');if(cs)cs.value=S.hcc;const cr=$('gcColRow');if(cr)cr.hidden=S.hcc!=='custom';const c1=$('gcCol1');if(c1)c1.value=S.hcc1;const c2=$('gcCol2');if(c2)c2.value=S.hcc2};
  function ui(){
   const sh=$('sheet');if(!sh)return;
@@ -8628,12 +8647,25 @@ void main(){
    i.oninput=()=>{S[k]=i.value;colKey='';saveS();dirty=true;paint()};L.append(i);crow.append(L)};
   cin('gcCol1','Panel','hcc1');cin('gcCol2','Digits','hcc2');
   csel.onchange=()=>{S.hcc=csel.value;colKey='';crow.hidden=S.hcc!=='custom';saveS();dirty=true;paint()};
+  const lcl=document.createElement('div');lcl.className='sl';lcl.textContent='Label colour (MON)';
+  const lsel=document.createElement('select');lsel.className='in sel';lsel.id='gcLabCol';lsel.setAttribute('aria-label','Label colour');
+  Object.keys(LABC).forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=LABC[v];lsel.appendChild(o)});lsel.value=S.hclc;
+  const lrow=document.createElement('div');lrow.id='gcLabRow';lrow.className='cp';lrow.hidden=S.hclc!=='custom';
+  {const L=document.createElement('label');L.style.cssText='display:flex;align-items:center;gap:8px;font-size:12px';L.append('Label ');const i=document.createElement('input');i.type='color';i.id='gcLabCol1';i.value=S.hclc1;i.setAttribute('aria-label','Label custom colour');
+   i.oninput=()=>{S.hclc1=i.value;colKey='';saveS();dirty=true;paint()};L.append(i);lrow.append(L)}
+  lsel.onchange=()=>{S.hclc=lsel.value;colKey='';lrow.hidden=S.hclc!=='custom';saveS();dirty=true;paint()};
+  const motSel=(id,lab,k)=>{const h=document.createElement('div');h.className='sl';h.textContent=lab;const s2=document.createElement('select');s2.className='in sel';s2.id=id;s2.setAttribute('aria-label',lab);
+   Object.keys(MOT).forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=MOT[v];s2.appendChild(o)});s2.value=S[k];
+   s2.onchange=()=>{S[k]=s2.value;saveS();try{const D2=DR[k==='hcmm'?'m':'s'];D2.anim=false;D2.fade=1}catch(_){}};return[h,s2]};
+  const [mml,mms]=motSel('gcMotM','Minutes change motion','hcmm'),[sml,sms]=motSel('gcMotS','Seconds change motion','hcsm');
+  const [spl,spr]=mkRange('gcSpd','gcSpdV','Motion speed',50,250,10,'hcsp');
+  const [bll,blr]=mkRange('gcBlr','gcBlrV','Blur on previous / next digits',0,100,5,'hcb',()=>{dirty=true;paint()});
   const [al,ar]=mkRange('gcAmb','gcAmbV','Glass reflection',0,100,5,'hca',()=>{dirty=true;paint()});
   const [ll,ls]=mkSel('gcLab','Label shows',[['day','Day (MON)'],['full','Day name'],['date','Date']],'hcl');
   const [fl,fs]=mkSel('gcFont','Label font',[['cond','Condensed caps'],['heavy','Heavy caps'],['serif','Serif caps'],['mono','Mono caps'],['script','Script'],['casual','Casual']],'hcf');
   const [zl,zr]=mkRange('gcSz','gcSzV','Label size',60,170,5,'hcz',()=>{buildLabel();dirty=true;paint()});
   const note=document.createElement('div');note.className='sl';note.textContent='Tap the capsule for apps, hold it for these settings. Use 24-hour time, Show date and Layout > Move clock & date as usual. Dial-only options are hidden while the capsule is on.';
-  own.append(tg('Show seconds','hcs'),tg('Show day / date label','hcd'),cl,csel,crow,ll,ls,fl,fs,zl,zr,al,ar,note);
+  own.append(tg('Show seconds','hcs'),tg('Show day / date label','hcd'),cl,csel,crow,lcl,lsel,lrow,bll,blr,mml,mms,sml,sms,spl,spr,ll,ls,fl,fs,zl,zr,al,ar,note);
   box.append(head,own,dialBox);sync()}
  ui();
  window.glassCapsule={setStyle(v){S.hck=v;saveS();applySettings()},get active(){return active}};
@@ -8749,7 +8781,7 @@ html.light .v60tabs{background:#eef1f7}
   const dial=flat([$('dlRow'),kids(pane('Dial'))]);
   const time=flat([lab('h24'),lab('fx'),lk.filter(k=>k.classList&&k.classList.contains('row')),lk.filter(k=>k.classList&&k.classList.contains('sl'))]);
   subs('home-clock',c,[['style','Style & pill',style],['dial','Dial',dial],['time','Time & position',time]]);
-  gone(ck);gone(pane('Dial'));put(c);addReset(c,['ckp','ckc','ckc1','ckc2','ckf','ckh','cka','cks','ckb','hck','hcs','hcd','hca','hcc','hcc1','hcc2']);
+  gone(ck);gone(pane('Dial'));put(c);addReset(c,['ckp','ckc','ckc1','ckc2','ckf','ckh','cka','cks','ckb','hck','hcs','hcd','hca','hcc','hcc1','hcc2','hclc','hclc1','hcmm','hcsm','hcsp','hcb']);
   c._old=[oldClock,lay]}
  /* Mandala */
  {const c=comp('Mandala','home');const p=pane('Mandala');kids(p).forEach(k=>c.b.appendChild(k));gone(p);put(c)}
@@ -8936,5 +8968,53 @@ html.light .v60tabs{background:#eef1f7}
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&em.classList.contains('open')){close();e.stopPropagation()}},true);
 }catch(e){try{ERR(e,'v166edit')}catch(_){console.error('v166',e)}}})();
 </script>
+<style id="v70-css">
+#v70dim{position:fixed;inset:0;z-index:8998;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .22s}
+#v70dim.on{opacity:1;pointer-events:auto}
+#v70t{position:fixed;left:0;right:0;bottom:0;z-index:8999;background:#17191f;color:#f2f2f2;border-radius:18px 18px 0 0;padding:10px 16px calc(14px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 24px rgba(0,0,0,.35);transform:translateY(105%);transition:transform .22s ease-out;font-family:inherit}
+#v70t.on{transform:none}
+#v70t .g{width:30px;height:3px;border-radius:2px;background:#3a3d48;margin:0 auto 10px}
+#v70t .r1{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+#v70t .nm{font-size:12px;opacity:.7}
+#v70t .vl{font-size:24px;font-weight:500}
+#v70t button{background:transparent;color:#f2f2f2;border:.5px solid #3a3d48;border-radius:10px;min-width:40px;height:40px;font-size:16px;cursor:pointer;touch-action:manipulation}
+#v70t .rw{display:flex;align-items:center;gap:8px;margin-top:4px}
+#v70t .rwb{position:relative;flex:1;padding-top:22px}
+#v70t input[type=range]{width:100%;accent-color:#ff7a1a;margin:0}
+#v70t .bub{position:absolute;top:0;transform:translateX(-50%);background:#ff7a1a;color:#1a0d00;font-size:11px;font-weight:500;padding:2px 7px;border-radius:6px;pointer-events:none;white-space:nowrap}
+#v70t .ft{display:flex;gap:8px;margin-top:10px}
+#v70t .ft button{flex:1;font-size:12px}
+#v70t .ft .dn{background:#ff7a1a;color:#1a0d00;border:0}
+</style>
+<div id="v70dim"></div>
+<div id="v70t" role="dialog" aria-label="Fine tune setting"><div class="g"></div><div class="r1"><div><div class="nm"></div><div class="vl"></div></div><button type="button" class="rs" aria-label="Reset to start value">&#8634;</button></div><div class="rw"><button type="button" class="mn" aria-label="Decrease">&minus;</button><div class="rwb"><div class="bub"></div><input type="range" aria-label="Value"></div><button type="button" class="pl" aria-label="Increase">+</button></div><div class="ft"><button type="button" class="cmp">Hold to compare</button><button type="button" class="dn">Done</button></div></div>
+<script id="v70-spotlight-js">
+/* v1.70: spotlight tray - a bottom panel for any Settings slider; drives the real slider so every existing live handler applies */
+(function(){try{
+var sh=document.getElementById('sheet'),t=document.getElementById('v70t'),dim=document.getElementById('v70dim');
+var tr=t.querySelector('input'),bub=t.querySelector('.bub'),nm=t.querySelector('.nm'),vl=t.querySelector('.vl'),cmp=t.querySelector('.cmp');
+var src=null,start=null,held=null;
+function lbl(inp){var a=inp.getAttribute('aria-label');if(a)return a;var s=inp.previousElementSibling;while(s&&!(s.classList&&s.classList.contains('sl')))s=s.previousElementSibling;if(!s)return inp.id||'Setting';var c=s.cloneNode(true);c.querySelectorAll('b').forEach(function(x){x.remove()});return c.textContent.replace(/\s+/g,' ').trim()}
+function unit(inp){var u=inp.dataset.unit;return u!=null?u:''}
+function fire(){if(!src)return;src.dispatchEvent(new Event('input',{bubbles:true}));src.dispatchEvent(new Event('change',{bubbles:true}))}
+function paint(){if(!src)return;var mn=+tr.min,mx=+tr.max,v=+tr.value,p=mx>mn?(v-mn)/(mx-mn):0;vl.textContent=Math.round(v*100)/100+unit(src);bub.textContent=vl.textContent;bub.style.left=(9+p*(tr.offsetWidth-18))+'px';bub.style.opacity=1}
+function setVal(v){tr.value=v;src.value=v;fire();paint()}
+function open(inp){src=inp;start=inp.value;tr.min=inp.min;tr.max=inp.max;tr.step=inp.step||'any';tr.value=inp.value;nm.textContent=lbl(inp);paint();t.classList.add('on');dim.classList.add('on')}
+function close(){t.classList.remove('on');dim.classList.remove('on');src=null}
+tr.addEventListener('input',function(){if(!src)return;src.value=tr.value;fire();paint()});
+t.querySelector('.rs').onclick=function(){if(src)setVal(start)};
+t.querySelector('.mn').onclick=function(){if(!src)return;var s=+src.step||1;setVal(Math.max(+tr.min,+tr.value-s))};
+t.querySelector('.pl').onclick=function(){if(!src)return;var s=+src.step||1;setVal(Math.min(+tr.max,+tr.value+s))};
+t.querySelector('.dn').onclick=close;
+function holdOn(e){if(!src)return;e.preventDefault();held=src.value;src.value=start;fire();cmp.textContent='Original'}
+function holdOff(){if(!src||held==null)return;src.value=held;held=null;fire();cmp.textContent='Hold to compare';paint()}
+cmp.addEventListener('pointerdown',holdOn);['pointerup','pointerleave','pointercancel'].forEach(function(ev){cmp.addEventListener(ev,holdOff)});
+dim.onclick=close;
+sh.addEventListener('pointerdown',function(e){var r=e.target;if(r.tagName==='INPUT'&&r.type==='range'){open(r)}},true);
+new MutationObserver(function(){if(!sh.classList.contains('open'))close()}).observe(sh,{attributes:true,attributeFilter:['class']});
+window.addEventListener('resize',paint);
+}catch(e){console.error('v70',e)}})();
+</script>
+
 </body>
 </html>
