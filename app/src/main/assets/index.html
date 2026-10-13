@@ -1504,7 +1504,7 @@ addEventListener('error',ev=>ERR(ev.error||ev.message,'uncaught'));
 var ASET={pre:[],post:[]};
 addEventListener('unhandledrejection',ev=>ERR(ev.reason,'promise'));
 /* single source of truth for the version label: window title, Settings footer, About, and the Android build (window.APP_VER / <meta name="app-version">) */
-const APP_VER='v1.64';
+const APP_VER='v1.65';
 window.APP_VER=APP_VER;document.title='Yoga Launcher \u2022 '+APP_VER;
 {const m=document.createElement('meta');m.name='app-version';m.content=APP_VER;document.head.appendChild(m)}
 const NS='http://www.w3.org/2000/svg', $=id=>document.getElementById(id), p2=v=>String(v).padStart(2,'0');
@@ -2703,9 +2703,10 @@ const YD=window.YD=(()=>{
         const used=new Set(),find=p=>apps.find(a=>a.p===p);
         const top=(title,arr,max)=>{arr=arr.filter(a=>a&&!used.has(a.p)).slice(0,max);if(!arr.length)return;arr.forEach(a=>used.add(a.p));frag.appendChild(head(title));frag.appendChild(gridOf(arr))};
         const sg=suggSet(),sc=sg.sc||{};
+        if(!window.XREON){
         top('Favourites',vf().map(find),8);
         top('Suggested now',[...sg].sort((x,y)=>(sc[y]||0)-(sc[x]||0)).map(find),4);
-        top('Recent',recent().map(find),4);
+        top('Recent',recent().map(find),4);}
         const groups=['Games',...CATS.map(c=>c[0]),'Other'];
         frag.appendChild(head('All apps'));
         groups.forEach(nm=>{const arr=list.filter(a=>appCat(a)===nm);if(!arr.length)return;const t=head(nm);t.classList.add('sub');frag.appendChild(t);frag.appendChild(gridOf(arr))});
@@ -4601,22 +4602,39 @@ try{ENG.init()}catch(e){console.error(e)}
   const _rg=renderGrid;renderGrid=function(){$('drawer').classList.toggle('xs',window.XSORT!=='az');return _rg.apply(this,arguments)};
   /* multi-select */
   const dr=$('drawer'),g=$('grid'),SEL=new Set();window.SELON=false;
-  const bar=document.createElement('div');bar.className='xbar';phone.appendChild(bar);
+  const bar=document.createElement('div');bar.className='xbar';dr.appendChild(bar);
+  /* v1.65: Reorder and Select share one slim strip in the empty band above the search box (nothing is drawn over the apps) */
+  const tb=window.XTB=document.createElement('div');tb.className='xtools';
+  const hint=window.XHINT=document.createElement('span');hint.className='xhint';tb.appendChild(hint);
+  dr.appendChild(tb);
   const cnt=document.createElement('b');bar.appendChild(cnt);
-  const act=(t,f)=>{const b=document.createElement('button');b.className='mini';b.textContent=t;b.onclick=f;bar.appendChild(b)};
+  const act=(t,f,need)=>{const b=document.createElement('button');b.className='mini';b.textContent=t;if(need)b.dataset.need='1';b.onclick=f;bar.appendChild(b)};
   const picked=()=>apps.filter(a=>SEL.has(a.p));
   const nm=el=>el.getAttribute('aria-label')||((el.querySelector('span')||{}).textContent);
   const items=()=>g.querySelectorAll('.eli,.gapp');
-  function mark(){items().forEach(el=>{const a=apps.find(x=>x.n===nm(el));el.classList.toggle('xsel',!!a&&SEL.has(a.p))});cnt.textContent=SEL.size+' selected'}
-  function mode(on){window.SELON=on;SEL.clear();bar.classList.toggle('on',on);sel.classList.toggle('xon',on);mark()}
-  const sel=document.createElement('button');sel.className='mini';sel.textContent='Select';sel.style.cssText='position:absolute;top:10px;right:60px;z-index:5';sel.onclick=()=>mode(!window.SELON);dr.appendChild(sel);
-  act('Pin',()=>{const l=picked();if(!l.length){toast('Select apps first');return}let n=0;l.forEach(a=>{try{if(!shown().includes(a.p)){togglePin(a);n++}}catch(e){ERR(e,"c62")}});toast(n?n+(n===1?' app pinned':' apps pinned'):'Already pinned');mode(false)});
-  act('Hide',()=>{const l=picked();if(!l.length){toast('Select apps first');return}let n=0;l.forEach(a=>{if(!window.HID.includes(a.p)){window.HID.push(a.p);n++}});sv('mdc-hid',window.HID);toast(n?n+(n===1?' app hidden':' apps hidden'):'Already hidden');mode(false);refreshApps()});
+  const appOf=el=>el._p!=null?apps.find(x=>x.p===el._p):apps.find(x=>x.n===nm(el));
+  function mark(){items().forEach(el=>{const a=appOf(el);el.classList.toggle('xsel',!!a&&SEL.has(a.p))});cnt.textContent=SEL.size?SEL.size+' selected':'Select';
+    [...bar.querySelectorAll('button')].forEach(b=>{if(b.dataset.need)b.disabled=!SEL.size});dr.classList.toggle('xselon',window.SELON===true)}
+  function mode(on){if(on===window.SELON)return;
+    if(on){if($('dcats').querySelector('[aria-pressed=true]')&&/^Contacts/.test(($('dcats').querySelector('[aria-pressed=true]').firstChild||{}).textContent||'')){toast('Select works with apps');return}
+      try{window.XRE&&XRE.off()}catch(_){}}
+    window.SELON=on;SEL.clear();bar.classList.toggle('on',on);sel.classList.toggle('xon',on);mark()}
+  window.XSEL={off:()=>mode(false)};
+  const sel=document.createElement('button');sel.className='mini xselbtn';sel.textContent='Select';sel.onclick=()=>mode(!window.SELON);tb.appendChild(sel);
+  act('All',()=>{const els=[...items()].map(appOf).filter(a=>a&&!a.ct);if(els.length&&els.every(a=>SEL.has(a.p)))SEL.clear();else els.forEach(a=>SEL.add(a.p));mark()});
+  act('Home',()=>{const l=picked();if(!l.length){toast('Select apps first');return}
+    if(!S.hic){S.hic=true;try{saveS()}catch(e){}try{applySettings()}catch(e){}}
+    let n=0,full=0;l.forEach(a=>{try{const r=window.homeAdd?homeAdd(a):'full';if(r==='ok')n++;else if(r==='full')full++}catch(e){ERR(e,'c66')}});
+    toast(n?n+(n===1?' app added to the home screen':' apps added to the home screen')+(full?' \u2022 '+full+' did not fit':''):full?'Home screen is full':'Already on the home screen');
+    try{renderHome()}catch(_){}mode(false)},1);
+  act('Pin',()=>{const l=picked();if(!l.length){toast('Select apps first');return}let n=0;l.forEach(a=>{try{if(!shown().includes(a.p)){togglePin(a);n++}}catch(e){ERR(e,"c62")}});toast(n?n+(n===1?' app pinned':' apps pinned'):'Already pinned');mode(false)},1);
+  act('Hide',()=>{const l=picked();if(!l.length){toast('Select apps first');return}let n=0;l.forEach(a=>{if(!window.HID.includes(a.p)){window.HID.push(a.p);n++}});sv('mdc-hid',window.HID);toast(n?n+(n===1?' app hidden':' apps hidden'):'Already hidden');mode(false);refreshApps()},1);
   act('Uninstall',()=>{const l=picked();if(!l.length){toast('Select apps first');return}if(!(window.Android&&typeof Android.uninstall==='function')){toast('Uninstall needs the Android app');return}
     if(l.length&&!confirm(l.length===1?'Uninstall "'+l[0].n+'"?':'Uninstall '+l.length+' apps?'))return;
-    l.forEach(a=>{try{Android.uninstall(a.p)}catch(e){ERR(e,"c63")}});mode(false)});
+    l.forEach(a=>{try{Android.uninstall(a.p)}catch(e){ERR(e,"c63")}});mode(false)},1);
+  {const ub=bar.lastElementChild;ub.innerHTML='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';ub.setAttribute('aria-label','Uninstall');ub.title='Uninstall';ub.classList.add('xdel')}
   act('Done',()=>mode(false));
-  g.addEventListener('click',e=>{if(!window.SELON)return;const el=e.target.closest('.eli,.gapp');if(!el)return;e.preventDefault();e.stopImmediatePropagation();const a=apps.find(x=>x.n===nm(el));if(!a)return;SEL.has(a.p)?SEL.delete(a.p):SEL.add(a.p);mark()},true);
+  g.addEventListener('click',e=>{if(!window.SELON)return;const el=e.target.closest('.eli,.gapp');if(!el)return;e.preventDefault();e.stopImmediatePropagation();const a=appOf(el);if(!a)return;SEL.has(a.p)?SEL.delete(a.p):SEL.add(a.p);try{vib(6)}catch(_){}mark()},true);
   new MutationObserver(()=>{if(window.SELON)mark()}).observe(g,{childList:true,subtree:true});
   new MutationObserver(()=>{if(!dr.classList.contains('open')&&window.SELON)mode(false)}).observe(dr,{attributes:true,attributeFilter:['class']});
   if(window.XSORT!=='az')refreshApps();
@@ -6301,7 +6319,7 @@ html.dmv .drawer .gapp span{text-shadow:none!important}
 (function(){try{
   const dr=$('drawer'),g=$('grid'),KEY='mdc-xord',NOT=['Recent','Top','Suggested','Pinned','Contacts'];
   const css=document.createElement('style');
-  css.textContent='.xrbtn{position:absolute;top:12px;right:96px;z-index:7;padding:0 12px;height:26px;border-radius:13px;font-size:10px}.xrbtn.xon{background:linear-gradient(135deg,var(--c1,#6cf),var(--c2,#a8f));color:#06070b}'
+  css.textContent='.xrbtn.xon{background:linear-gradient(135deg,var(--c1,#6cf),var(--c2,#a8f));color:#06070b}'
    +'.drawer.xro .gapp .ic{animation:xwob .45s ease-in-out infinite alternate}@keyframes xwob{from{transform:rotate(-2deg)}to{transform:rotate(2deg)}}'
    +'.drawer.xro .gapp.xdrag{opacity:.25}.drawer.xro .gapp.xdrag .ic{animation:none}'
    +'.xgh{position:absolute;left:0;top:0;z-index:300;pointer-events:none;will-change:transform;filter:drop-shadow(0 8px 14px rgba(0,0,0,.55))}'
@@ -6310,13 +6328,16 @@ html.dmv .drawer .gapp span{text-shadow:none!important}
    +'@media (prefers-reduced-motion:reduce){.drawer.xro .gapp .ic{animation:none}}';
   document.head.appendChild(css);
 
-  let on=false,D=null,pend=null,scr=0,vy=0;
+  let on=false,D=null,pend=null,scr=0,vy=0,edgeT=0;
   const kk=()=>(dr.getBoundingClientRect().width/dr.offsetWidth)||1;
-  const btn=document.createElement('button');btn.className='mini xrbtn';btn.textContent='Reorder';btn.setAttribute('aria-pressed','false');dr.appendChild(btn);
+  const btn=document.createElement('button');btn.className='mini xrbtn';btn.textContent='Reorder';btn.setAttribute('aria-pressed','false');(window.XTB||dr).appendChild(btn);
+  const lay=()=>{const c=dr.classList;return c.contains('fl-list')?'list':c.contains('fl-smart')?'smart':c.contains('fl-pages')?'pages':c.contains('fl-grid')?'grid':c.contains('fl-arc')?'crescent':''};
+  const mvb=(t,l,f)=>{const b=document.createElement('button');b.className='mini xmv';b.textContent=t;b.setAttribute('aria-label',l);b.onclick=f;(window.XTB||dr).insertBefore(b,btn);return b};
+  const HINT={grid:'Hold an app, then drag it',list:'Hold an app, then drag it',smart:'Hold an app, then drag it',pages:'Hold an app, drag it. Edge = next page',crescent:'Move centre app'};
 
   /* why reordering is not possible right now ('' = fine) */
   function why(){
-    if(!(dr.classList.contains('fl-grid')||dr.classList.contains('fl-list')))return 'Reorder works in the Grid and List drawer styles';
+    if(dr.classList.contains('aw')||!lay())return 'Reorder is not available here';
     if($('q').value.trim())return 'Clear the search to reorder';
     const pb=$('dcats').querySelector('[aria-pressed=true]'),nm=pb&&pb.firstChild?pb.firstChild.textContent:'All';
     if(NOT.includes(nm))return 'Open All, or an app group, to reorder';
@@ -6327,21 +6348,36 @@ html.dmv .drawer .gapp span{text-shadow:none!important}
     if(v===on)return;
     if(v){
       const r=why();if(r){toast(r);return}
+      try{window.XSEL&&XSEL.off()}catch(_){}
+      window.XREON=true;
       if(window.XSORT!=='custom'){      /* switch to a custom order that starts exactly as the drawer looks now */
         sv(KEY,sortApps(apps).map(a=>a.p));window.XSORT='custom';sv('mdc-xsort','custom');
         try{window.XPAINT&&XPAINT()}catch(_){}
         refreshApps();
-      }
-      toast('Hold an app, then drag it');
-    }else cancel();
+      }else if(lay()==='smart')renderGrid();     /* Smart: show plain groups while reordering (no repeated Favourites/Recent rows) */
+      if(window.XHINT)XHINT.textContent=HINT[lay()]||'';
+    }else{cancel();window.XREON=false;if(window.XHINT)XHINT.textContent='';if(lay()==='smart'&&dr.classList.contains('open'))try{renderGrid()}catch(_){}}
     on=v;btn.classList.toggle('xon',on);btn.setAttribute('aria-pressed',String(on));btn.textContent=on?'Done':'Reorder';dr.classList.toggle('xro',on);
   }
+  window.XRE={off:()=>set(false),on:()=>on};
+  /* Crescent has no grid to drag in: the app in the centre moves one place up or down the wheel */
+  function moveCr(dir){
+    const Y=window.__YD0;if(!Y||!Y.st)return;const st=Y.st,i=st.foc,j=i+dir,N=st.list.length;
+    if(i<0||st.list[i]&&st.list[i].ct)return;
+    if(j<0||j>=N||st.list[j].ct){try{vib(14)}catch(_){}return}
+    const l=st.list.slice();[l[i],l[j]]=[l[j],l[i]];
+    const vis=l.map(a=>a.p),V=new Set(vis),full=sortApps(apps).map(a=>a.p);let k=0;
+    sv(KEY,full.map(p=>V.has(p)?vis[k++]:p));_sg=null;
+    renderGrid();try{Y.glide(j,true)}catch(_){}try{vib(10)}catch(_){}
+  }
+  mvb('\u25B2 Up','Move up',()=>moveCr(-1));mvb('\u25BC Down','Move down',()=>moveCr(1));
   btn.onclick=()=>set(!on);
 
   const cells=()=>[...g.querySelectorAll('.gapp')];
   function cancel(){
     clearTimeout(pend);pend=null;cancelAnimationFrame(scr);scr=0;
-    if(D){if(D.el)D.el.classList.remove('xdrag');if(D.gh)D.gh.remove();D=null}
+    clearTimeout(edgeT);edgeT=0;
+    if(D){if(D.el)D.el.classList.remove('xdrag');if(D.xt)D.xt.classList.remove('xtgt');if(D.gh)D.gh.remove();D=null}
   }
 
   /* pick up after a short hold; moving first means "scroll", so cancel */
@@ -6374,7 +6410,11 @@ html.dmv .drawer .gapp span{text-shadow:none!important}
   function over(x,y){
     if(!D)return;
     const hit=document.elementFromPoint(x,y),t=hit&&hit.closest&&hit.closest('.gapp');
+    if(D.xt){D.xt.classList.remove('xtgt');D.xt=null}
+    if(t&&t!==D.el&&t.parentNode!==D.el.parentNode&&t._p){D.xt=t;t.classList.add('xtgt');return}     /* Pages: a cell on another page = move there when dropped */
     if(!t||t===D.el||t.parentNode!==D.el.parentNode)return;
+    if(D.sh&&D.sh.el===t&&performance.now()-D.sh.t<260)return;     /* the app we just swapped with is still sliding past the finger: do not swap straight back */
+    D.sh={el:t,t:performance.now()};
     const sib=cells().filter(c=>c.parentNode===D.el.parentNode),before=new Map(sib.map(c=>[c,c.getBoundingClientRect()]));
     const after=(D.el.compareDocumentPosition(t)&Node.DOCUMENT_POSITION_FOLLOWING)!==0;
     if(after)t.after(D.el);else t.before(D.el);
@@ -6393,6 +6433,11 @@ html.dmv .drawer .gapp span{text-shadow:none!important}
     if(pend&&p&&e.pointerId===p.id&&Math.hypot(e.clientX-p.x,e.clientY-p.y)>9){clearTimeout(pend);pend=null}   /* it is a scroll */
     if(!D||e.pointerId!==D.id)return;
     D.x=e.clientX;D.y=e.clientY;place(D.x,D.y);over(D.x,D.y);
+    if(lay()==='pages'){                       /* hold at the left/right edge to flip the page */
+      const pgs=g.querySelector('.fl-pgs'),b=dr.getBoundingClientRect(),near=D.x<b.left+36?-1:D.x>b.right-36?1:0;
+      if(near&&pgs){if(!edgeT)edgeT=setTimeout(()=>{edgeT=0;if(D)pgs.scrollBy({left:near*pgs.clientWidth,behavior:'smooth'})},450)}
+      else if(edgeT){clearTimeout(edgeT);edgeT=0}
+    }
     const r=g.getBoundingClientRect(),z=Math.min(80,r.height*.16);
     vy=D.y<r.top+z?-Math.ceil((r.top+z-D.y)/6):D.y>r.bottom-z?Math.ceil((D.y-(r.bottom-z))/6):0;
     if(vy&&!scr)scr=requestAnimationFrame(auto);
@@ -6407,10 +6452,22 @@ html.dmv .drawer .gapp span{text-shadow:none!important}
   function drop(){
     clearTimeout(pend);pend=null;cancelAnimationFrame(scr);scr=0;vy=0;
     if(!D)return;
-    const el=D.el;el.classList.remove('xdrag');D.gh.remove();D=null;
-    /* the visible apps' new order goes into the full list, in the slots they already occupy */
-    const vis=cells().map(c=>c._p).filter(Boolean),V=new Set(vis);
-    const full=sortApps(apps).map(a=>a.p);let i=0;
+    const el=D.el,xt=D.xt,dx=D.x;el.classList.remove('xdrag');D.gh.remove();D=null;clearTimeout(edgeT);edgeT=0;
+    const full=sortApps(apps).map(a=>a.p);
+    if(xt){                                    /* dropped on an app of another page */
+      xt.classList.remove('xtgt');
+      const r=xt.getBoundingClientRect(),p=el._p,t=xt._p;
+      if(p&&t&&p!==t){
+        const o=full.filter(x=>x!==p),ti=o.indexOf(t);o.splice(ti+(dx>r.left+r.width/2?1:0),0,p);
+        sv(KEY,o);_sg=null;
+        const pgs=g.querySelector('.fl-pgs'),pi=pgs?Math.round(pgs.scrollLeft/Math.max(1,pgs.clientWidth)):0;
+        renderGrid();const np=g.querySelector('.fl-pgs');if(np)np.scrollLeft=pi*np.clientWidth;
+      }
+      return;
+    }
+    /* only the apps in the same block (the whole grid/list, one Smart group, one page) trade places, in the slots they already occupy */
+    const vis=[...el.parentNode.querySelectorAll('.gapp')].map(c=>c._p).filter(Boolean),V=new Set(vis);
+    let i=0;
     const out=full.map(p=>V.has(p)?vis[i++]:p);
     if(out.join('\n')!==full.join('\n')){sv(KEY,out);_sg=null}
   }
@@ -6418,7 +6475,9 @@ html.dmv .drawer .gapp span{text-shadow:none!important}
   document.addEventListener('pointercancel',drop,true);
 
   /* leaving the drawer, or switching to something that cannot reorder, ends the mode */
-  new MutationObserver(()=>{if(on&&(!dr.classList.contains('open')||!(dr.classList.contains('fl-grid')||dr.classList.contains('fl-list'))))set(false)}).observe(dr,{attributes:true,attributeFilter:['class']});
+  new MutationObserver(()=>{if(on&&(!dr.classList.contains('open')||dr.classList.contains('aw')||!lay()))set(false)}).observe(dr,{attributes:true,attributeFilter:['class']});
+  /* switching between the flat styles / Crescent while reordering ends the mode (the hint and buttons differ) */
+  let lastL=lay();new MutationObserver(()=>{const l=lay();if(l!==lastL){lastL=l;if(on)set(false)}}).observe(dr,{attributes:true,attributeFilter:['class']});
 }catch(e){try{ERR(e,'v51')}catch(_){console.warn('v51',e)}}})();
 
 </script>
@@ -6664,10 +6723,10 @@ root.innerHTML='<svg id="awArt" aria-hidden="true"></svg><div id="awScan"></div>
 +'<button class="awb" id="awTab" aria-label="Close apps"><svg viewBox="0 0 20 34"><path d="M2 2l16 15L2 32z"/></svg></button>'
 +'<div id="awRail" role="group" aria-label="A to Z"></div><div id="awBub"></div>'
 +'<div id="awSearch"><input id="awQ" placeholder="Search apps &amp; contacts" autocomplete="off" enterkeyhint="search" aria-label="Search apps and contacts"></div><div id="awEmpty">No apps found</div>'
-+'<div id="awTools" role="toolbar" aria-label="Drawer tools"><button type="button" id="awSort" aria-haspopup="true" aria-expanded="false">Sort</button><button type="button" id="awRe" aria-pressed="false">Reorder</button><button type="button" id="awSl" aria-pressed="false">Select</button></div>'
++'<span id="awHint" aria-hidden="true"></span><div id="awTools" role="toolbar" aria-label="Drawer tools"><button type="button" id="awSort" aria-haspopup="true" aria-expanded="false">Sort</button><button type="button" id="awRe" aria-pressed="false">Reorder</button><button type="button" id="awSl" aria-pressed="false">Select</button></div>'
 +'<div id="awSortMenu" role="menu" aria-label="Sort apps" hidden></div>'
 +'<div id="awMv" role="group" aria-label="Reorder the selected app" hidden><button type="button" id="awMvU" aria-label="Move up">&#9650; Up</button><button type="button" id="awMvD" aria-label="Move down">&#9660; Down</button><button type="button" id="awMvX">Done</button></div>'
-+'<div id="awSb" role="toolbar" aria-label="Selected apps" hidden><b id="awSbN" aria-live="polite">0 selected</b><button type="button" id="awSbAll">All</button><button type="button" id="awSbHome">Home</button><button type="button" id="awSbHide">Hide</button><button type="button" id="awSbDel">Uninstall</button><button type="button" id="awSbX">Done</button></div>';
++'<div id="awSb" role="toolbar" aria-label="Selected apps" hidden><b id="awSbN" aria-live="polite">0 selected</b><button type="button" id="awSbAll">All</button><button type="button" id="awSbHome">Home</button><button type="button" id="awSbHide">Hide</button><button type="button" id="awSbDel" aria-label="Uninstall" title="Uninstall"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button><button type="button" id="awSbX">Done</button></div>';
 dr.appendChild(root);
 const wave=$('awWave'),art=$('awArt'),fi=$('awFi'),nm=$('awNm'),rail=$('awRail'),bub=$('awBub'),sbar=$('awSearch'),qi=$('awQ');
 let list=[],pos=0,vel=0,mode='',tgt=0,raf=0,last=0,foc=-1,W=360,H=780,drag=null,moved=false,lets=[],stagger=false;const els=new Map(),RMo=matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -6899,11 +6958,11 @@ function selMark(host,a){const ic=host&&host.querySelector('.ic');if(!ic)return;
  if(on){if(!k){k=document.createElement('i');k.className='awck';k.setAttribute('aria-hidden','true');k.textContent='✓';ic.appendChild(k)}}else if(k)k.remove();
  ic.classList.toggle('awsl',on);host.classList.toggle('awsel',on);if(host!==fi&&selOn)host.setAttribute('aria-pressed',String(on));else host.removeAttribute('aria-pressed')}
 function selPaint(){els.forEach((e,i)=>selMark(e,list[i]));const a=cur();if(a)selMark(fi,a);
- $('awSbN').textContent=SELS.size+' selected';root.classList.toggle('sel',selOn);slBtn.setAttribute('aria-pressed',String(selOn));slBtn.textContent=selOn?'Cancel':'Select';
+ $('awSbN').textContent=SELS.size?SELS.size+' selected':'Select';root.classList.toggle('sel',selOn);slBtn.setAttribute('aria-pressed',String(selOn));slBtn.textContent=selOn?'Cancel':'Select';
  [...selBar.querySelectorAll('button:not(#awSbX):not(#awSbAll)')].forEach(b=>b.disabled=!SELS.size)}
 function toggleSel(a){if(!a||a.ct)return;if(SELS.has(a.p))SELS.delete(a.p);else SELS.add(a.p);try{vib(6)}catch(_){}selPaint()}
 function selMode(on){if(on===selOn)return;if(on&&DC==='Contacts'){toast('Select works with apps');return}
- if(on){reMode(false);menuOff()}selOn=on;SELS.clear();selBar.hidden=!on;selPaint();if(on)toast('Tap apps to select them')}
+ if(on){reMode(false);menuOff()}selOn=on;SELS.clear();selBar.hidden=!on;selPaint()}
 slBtn.onclick=()=>selMode(!selOn);
 const picked=()=>apps.filter(a=>SELS.has(a.p));
 $('awSbX').onclick=()=>selMode(false);
@@ -6927,8 +6986,8 @@ function reWhy(){if(DC==='Contacts')return 'Reorder works with apps';if($('q').v
 function reMode(on){if(on===reOn)return;
  if(on){const w=reWhy();if(w){toast(w);return}menuOff();
   if(window.XSORT!=='custom'){sv('mdc-xord',sortApps(apps).map(a=>a.p));window.XSORT='custom';sv('mdc-xsort','custom');try{window.XPAINT&&XPAINT()}catch(_){}}   /* the custom order starts exactly as the drawer looks now */
-  toast('Drag the big icon up or down, or use the arrows')}
- reOn=on;root.classList.toggle('ro',on);reBtn.setAttribute('aria-pressed',String(on));reBtn.textContent=on?'Done':'Reorder';placeMv()}
+  }
+ reOn=on;root.classList.toggle('rohint',on);root.classList.toggle('ro',on);reBtn.setAttribute('aria-pressed',String(on));reBtn.textContent=on?'Done':'Reorder';placeMv()}
 function modeOff(){try{if(selOn){selOn=false;SELS.clear();selBar.hidden=true;selPaint()}if(reOn)reMode(false);}catch(e){}}
 reBtn.onclick=()=>reMode(!reOn);$('awMvX').onclick=()=>reMode(false);
 function moveApp(dir){const i=mode==='snap'?Math.round(tgt):foc,j=i+dir,N=list.length;
@@ -7799,6 +7858,40 @@ place();setTimeout(place,600);new MutationObserver(place).observe(sh,{attributes
 /* no rectangle round the typed text: the glass pill already shows focus */
 .command-input:focus,.command-input:focus-visible,.cmd-bar input:focus-visible,#awQ:focus,#awQ:focus-visible,#aw #awQ:focus-visible,#q:focus,#q:focus-visible,.ydr-search .in:focus-visible,.ssrch input:focus-visible,#ssearch:focus-visible{outline:none!important;box-shadow:none!important}
 .command :focus-visible.command-input{outline:none!important}
+</style>
+<style id="v165-drawer-tools">
+/* v1.65: Reorder and Select for every drawer layout, and no wasted space.
+   Grid / List / Smart / Pages / Crescent: one slim strip in the empty band above the search box (the Select bar replaces it, one row).
+   Arc Wave: the same idea, one row, no toasts over the wave. */
+.xtools{position:absolute;top:8px;left:14px;right:14px;z-index:7;height:30px;display:flex;align-items:center;justify-content:flex-end;gap:6px}
+.xtools .xhint{flex:1;min-width:0;padding-left:4px;font:600 11px var(--f);color:rgba(255,255,255,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xtools .mini{position:static;flex:none;height:28px;min-width:0;padding:0 12px;border-radius:14px;font-size:11px;line-height:1}
+.xtools .xmv{display:none}
+.drawer.xro.fl-arc:not(.aw) .xtools .xmv{display:inline-flex;align-items:center}
+.drawer.xro .xtools .xselbtn{display:none}
+.drawer.xselon .xtools{visibility:hidden}
+.xbar{top:6px;bottom:auto;left:8px;right:8px;height:34px;padding:0 5px;gap:3px;border-radius:17px;flex-wrap:nowrap;overflow:hidden;z-index:46;background:rgba(20,22,30,.97)}
+.xbar b{flex:1 1 auto;min-width:0;padding-left:7px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xbar .mini{flex:none;height:26px;min-width:0;padding:0 7px;border-radius:13px;font-size:10.5px;line-height:1}
+.xbar .xdel{color:#ff8a80;padding:0 9px;display:inline-flex;align-items:center}
+.xbar .mini:disabled{opacity:.4}
+.drawer.xselon .gapp:not(.xsel) .ic{opacity:.62}
+.gapp.xtgt .ic{box-shadow:0 0 0 3px var(--c1,#6cf),0 0 14px var(--c1,#6cf)}
+/* Arc Wave */
+#awTools{top:8px;right:12px;gap:5px}
+#awMv{top:8px;right:12px;gap:5px}
+#awTools button,#awMv button,#awSb button,#awSortMenu button{height:28px;padding:0 10px;font-size:11.5px;border-radius:14px}
+#awSb{top:8px;left:10px;right:10px;flex-wrap:nowrap;gap:4px;padding:3px 5px;border-radius:17px;overflow:hidden}
+#awSb b{flex:1 1 auto;min-width:0;padding-left:8px;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#awSb button{flex:none;height:26px;padding:0 8px;font-size:11px;border-width:1px;display:inline-flex;align-items:center}
+#awSbDel{padding:0 9px!important}
+#awSortMenu{top:42px;right:12px}
+#awSearch.on~#awTools,#awSearch.on~#awMv,#awSearch.on~#awSb{top:62px}
+#awSearch.on~#awSortMenu{top:96px}
+#awHint{position:absolute;top:8px;left:14px;z-index:5;height:28px;line-height:28px;display:none;font:600 11px var(--f);color:rgba(255,255,255,.62);pointer-events:none;max-width:40%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#aw.rohint #awHint{display:block}
+#aw.rohint #awHint::before{content:"Drag the big icon"}
+#awSearch.on~#awHint{top:62px}
 </style>
 <style id="v156-drawer-hub-css">
 /* v1.56: one App drawer section with tabs: Layout, Arc, Order, Apps, Search */
