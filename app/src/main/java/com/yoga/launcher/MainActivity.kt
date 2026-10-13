@@ -32,6 +32,8 @@ import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.window.OnBackInvokedCallback
+import android.window.OnBackInvokedDispatcher
 import org.json.JSONObject
 
 /** The Home screen. Opens index.html in a WebView and wires it to YogaBridge. */
@@ -51,6 +53,9 @@ class MainActivity : Activity() {
     private var geoOrigin: String? = null
     private var geoCb: GeolocationPermissions.Callback? = null
     private val handler = Handler(Looper.getMainLooper())
+    // Android 13+ with enableOnBackInvokedCallback="true" (see the manifest) no longer calls onBackPressed() for a plain Activity,
+    // so Back would have left the launcher without ever reaching the page. This callback sends it to the page on every version.
+    private var backCb: Any? = null
     private val refreshApps = Runnable { if (loaded) bridge.pushApps() }
 
     // Yoga lock screen: tell the page when the screen turns off, and whether the launcher was in front
@@ -238,6 +243,11 @@ class MainActivity : Activity() {
                 bridge.pushApps { bridge.restore() }   // app scan runs off the UI thread; saved settings follow the app list, as before
             }
         }
+        if (Build.VERSION.SDK_INT >= 33) {
+            val cb = OnBackInvokedCallback { web.evaluateJavascript("window.onBack&&window.onBack()", null) }
+            backCb = cb
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, cb)
+        }
         web.loadUrl("file:///android_asset/index.html")
 
         val off = IntentFilter(Intent.ACTION_SCREEN_OFF)
@@ -341,8 +351,14 @@ class MainActivity : Activity() {
         try { unregisterReceiver(screenReceiver) } catch (_: Exception) {}
         try { unregisterReceiver(pkgReceiver) } catch (_: Exception) {}
         try { unregisterReceiver(battReceiver) } catch (_: Exception) {}
+        if (Build.VERSION.SDK_INT >= 33) (backCb as? OnBackInvokedCallback)?.let { try { onBackInvokedDispatcher.unregisterOnBackInvokedCallback(it) } catch (_: Exception) {} }
+        try { unregisterReceiver(psReceiver) } catch (_: Exception) {}
+        try { contentResolver.unregisterContentObserver(animObserver) } catch (_: Exception) {}
+        fileCb?.onReceiveValue(null); fileCb = null          // a file chooser left open would block every later one
+        geoCb = null
         web.removeJavascriptInterface("Android")
         try { bridge.release() } catch (_: Exception) {}
+        (web.parent as? ViewGroup)?.removeView(web)          // detach before destroy(), as WebView requires
         web.destroy()
         super.onDestroy()
     }

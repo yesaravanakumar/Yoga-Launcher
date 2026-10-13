@@ -516,13 +516,16 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
         } catch (_: java.util.concurrent.RejectedExecutionException) { js("window.__sug&&window.__sug($id,[])") }
     }
 
-    @JavascriptInterface fun suggest(q: String): String = try {
-        val c = URL("https://suggestqueries.google.com/complete/search?client=firefox&q=" +
-            URLEncoder.encode(q, "UTF-8")).openConnection() as HttpURLConnection
-        c.connectTimeout = 1500; c.readTimeout = 1500
-        val arr = JSONArray(c.inputStream.bufferedReader().readText()).getJSONArray(1)
-        c.disconnect(); arr.toString()
-    } catch (e: Exception) { "[]" }
+    @JavascriptInterface fun suggest(q: String): String {
+        var c: HttpURLConnection? = null
+        return try {
+            c = URL("https://suggestqueries.google.com/complete/search?client=firefox&q=" +
+                URLEncoder.encode(q, "UTF-8")).openConnection() as HttpURLConnection
+            c.connectTimeout = 1500; c.readTimeout = 1500
+            JSONArray(c.inputStream.bufferedReader().use { it.readText() }).getJSONArray(1).toString()
+        } catch (e: Exception) { "[]" }
+        finally { try { c?.disconnect() } catch (_: Exception) {} }   // used to leak the socket whenever the request failed
+    }
 
     // ---------- contacts & badges ----------
     /** Voice search through Android's own speech dialog (WebView has no SpeechRecognition). Result arrives in MainActivity.onActivityResult. */
@@ -570,11 +573,14 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
     @JavascriptInterface fun getContactPhoto(uri: String): String {
         if (!hasContactsPerm() || !uri.startsWith("content://com.android.contacts/")) return ""
         return try {
-            val src = act.contentResolver.openInputStream(android.net.Uri.parse(uri))?.use { android.graphics.BitmapFactory.decodeStream(it) } ?: return ""
+            val opt = android.graphics.BitmapFactory.Options().apply { inSampleSize = 1 }
+            val src = act.contentResolver.openInputStream(android.net.Uri.parse(uri))?.use { android.graphics.BitmapFactory.decodeStream(it, null, opt) } ?: return ""
             val side = 128
             val bmp = Bitmap.createScaledBitmap(src, side, side, true)
             val bo = ByteArrayOutputStream()
             bmp.compress(Bitmap.CompressFormat.JPEG, 82, bo)
+            if (bmp !== src) bmp.recycle()
+            src.recycle()                                   // these bitmaps were left for the GC: a long contact list piled them up
             "data:image/jpeg;base64," + Base64.encodeToString(bo.toByteArray(), Base64.NO_WRAP)
         } catch (_: Exception) { "" }
     }
@@ -714,6 +720,8 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
             val small = Bitmap.createScaledBitmap(sq, 96, 96, true)
             val out = ByteArrayOutputStream()
             small.compress(Bitmap.CompressFormat.JPEG, 80, out)
+            if (small !== sq) small.recycle()
+            if (sq !== bmp) sq.recycle()                    // the metadata's own bitmap (bmp) is not ours to recycle
             artData = "data:image/jpeg;base64," + Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
         } catch (_: Exception) {}
         return artData
@@ -789,6 +797,7 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
     fun release() {
         try { (act.getSystemService(Context.CAMERA_SERVICE) as CameraManager).unregisterTorchCallback(torchCb) } catch (_: Exception) {}
         iconJob?.interrupt()
+        packJob?.interrupt()
         try { appScan.shutdownNow() } catch (_: Exception) {}
         try { sugPool.shutdownNow() } catch (_: Exception) {}
     }

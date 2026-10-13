@@ -1512,10 +1512,12 @@ PM.stealth=Object.assign({},PM.mini,{ptilt:false,hap:false,logo:false,dt:false,w
 const MODE_IDS=['std','mini','perf','stealth'];
 Object.assign(SD,PM.std,{mode:'std',mini:false,miniBak:null,abs:true});
 const S=Object.assign({},SD,(()=>{try{const o=JSON.parse(localStorage.getItem('mdc-set'));return o&&typeof o==='object'&&!Array.isArray(o)?o:{}}catch(e){return {}}})());
-try{if(!localStorage.getItem('mdc-pcs19')){S.pcs=false;const o=JSON.parse(localStorage.getItem('mdc-set')||'{}');o.pcs=false;localStorage.setItem('mdc-set',JSON.stringify(o));localStorage.setItem('mdc-pcs19','1')}}catch(e){ERR(e,"c1")}
-try{if(!localStorage.getItem('mdc-mini19')){const had=Object.keys(JSON.parse(localStorage.getItem('mdc-set')||'{}')).some(k=>k!=='pcs');if(had){S.miniBak={};MINI_KEYS.forEach(k=>S.miniBak[k]=S[k])}if(had)Object.assign(S,MINI_ON,{ptilt:false,mini:true,mode:'mini'});localStorage.setItem('mdc-set',JSON.stringify(S));localStorage.setItem('mdc-mini19','1')}}catch(e){ERR(e,"c2")}
+/* v1.62.2: one tolerant reader for the saved settings (corrupt text or a bare null used to throw here on every start and the bad value was never repaired) */
+const MDCRAW=()=>{try{const o=JSON.parse(localStorage.getItem('mdc-set')||'{}');return o&&typeof o==='object'&&!Array.isArray(o)?o:{}}catch(e){return {}}};
+try{if(!localStorage.getItem('mdc-pcs19')){S.pcs=false;const o=MDCRAW();o.pcs=false;localStorage.setItem('mdc-set',JSON.stringify(o));localStorage.setItem('mdc-pcs19','1')}}catch(e){ERR(e,"c1")}
+try{if(!localStorage.getItem('mdc-mini19')){const had=Object.keys(MDCRAW()).some(k=>k!=='pcs');if(had){S.miniBak={};MINI_KEYS.forEach(k=>S.miniBak[k]=S[k])}if(had)Object.assign(S,MINI_ON,{ptilt:false,mini:true,mode:'mini'});localStorage.setItem('mdc-set',JSON.stringify(S));localStorage.setItem('mdc-mini19','1')}}catch(e){ERR(e,"c2")}
 try{if(!localStorage.getItem('mdc-royal3')){S.mst='lotus';S.mpal='gold';S.mop=45;S.mgl=0;S.mand=S.mode==='stealth'?S.mand:true;S.mspin=S.mode==='perf'||S.mode==='stealth'?false:true;S.mbr=false;localStorage.setItem('mdc-royal3','1');localStorage.setItem('mdc-set',JSON.stringify(S))}}catch(e){ERR(e,"c2r")}
-try{const raw=JSON.parse(localStorage.getItem('mdc-set')||'{}');if(!MODE_IDS.includes(raw.mode)){S.mode=S.mini?'mini':'std';localStorage.setItem('mdc-set',JSON.stringify(S))}}catch(e){ERR(e,"c3")}
+try{const raw=MDCRAW();if(!MODE_IDS.includes(raw.mode)){S.mode=S.mini?'mini':'std';localStorage.setItem('mdc-set',JSON.stringify(S))}}catch(e){ERR(e,"c3")}
 let vibT=0;const vib=ms=>{if(!S.hap)return;if(window.Android&&typeof Android.haptic==='function'){const n=performance.now();if(n-vibT<60)return;vibT=n;try{const m=Array.isArray(ms)?ms[0]:ms;Android.haptic(m<8?0:m<14?1:2)}catch(e){}return}if(!navigator.vibrate)return;const n=performance.now();if(!Array.isArray(ms)&&n-vibT<60)return;vibT=n;try{navigator.vibrate(ms)}catch(e){ERR(e,"c4")}};
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const mk=(n,a,p)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);(p||svg).appendChild(e);return e};
@@ -4555,7 +4557,7 @@ try{ENG.init()}catch(e){console.error(e)}
 /* ===== v23: gestures & system integration ===== */
 (function(){
   const css=document.createElement('style');
-  css.textContent='.xrp{position:absolute;inset:0;z-index:90;display:flex;flex-direction:column;gap:8px;padding:48px 16px 16px;background:rgba(6,7,11,.97)}.xrp .xl{flex:1;overflow:auto;display:flex;flex-direction:column;gap:6px}.xrp .xr{display:flex;align-items:center;gap:12px;padding:8px;border-radius:16px;background:rgba(255,255,255,.06);color:#fff;border:0;text-align:left;font-size:15px}.xrp .xr .ic{width:40px;height:40px;border-radius:30%;flex:none}.xban{position:absolute;left:12px;right:12px;top:12px;z-index:120;display:flex;gap:6px;align-items:center;padding:10px 12px;border-radius:18px;background:rgba(20,22,30,.97);border:1px solid rgba(255,255,255,.2);font-size:13px;color:#fff}.xban span{flex:1}.xperm{display:flex;align-items:center;gap:8px;margin:8px 0}.xperm span{flex:1}.xperm i{font-style:normal;font-size:12px;opacity:.8}';
+  css.textContent='.xrp{position:absolute;inset:0;z-index:90;display:flex;flex-direction:column;gap:8px;padding:48px 16px 16px;background:rgba(6,7,11,.97)}.xrp .xl{flex:1;overflow:auto;display:flex;flex-direction:column;gap:6px}.xrp .xr{display:flex;align-items:center;gap:12px;padding:8px;border-radius:16px;background:rgba(255,255,255,.06);color:#fff;border:0;text-align:left;font-size:15px}.xrp .xr .ic{width:40px;height:40px;border-radius:30%;flex:none}.xban{position:absolute;left:12px;right:12px;top:12px;z-index:120;display:flex;gap:6px;align-items:center;padding:10px 12px;border-radius:18px;background:rgba(20,22,30,.97);border:1px solid rgba(255,255,255,.2);font-size:13px;color:#fff}.xban{flex-wrap:wrap}.xban span{flex:1 1 150px;min-width:0}.xperm{display:flex;align-items:center;gap:8px;margin:8px 0}.xperm span{flex:1}.xperm i{font-style:normal;font-size:12px;opacity:.8}';
   document.head.appendChild(css);
   const B=()=>window.Android;
   const sys=n=>{const b=B();if(!b||!b.sysAction){toast('That action needs the Android app');return}
@@ -6714,11 +6716,14 @@ function setFocus(f){foc=f;const a=list[f];if(!a)return;fi.replaceChildren(icon(
  
  starPaint(a);
  const L=letter(a);[...rail.children].forEach(c=>c.classList.toggle('on',c.dataset.l===L));if(CFG.hapx!==false)try{vib(5)}catch(_){}}
+/* v1.62.2: the curve point belongs to the ICON centre, not the card centre (the name sits under the icon, so centring the whole card put every icon 13px above the line, which showed as sideways drift that grew away from the focus) */
+let ICY=23;
+function icyMeasure(e){const i=e.querySelector('.ic');if(!i)return;const v=i.offsetTop+i.offsetHeight/2;if(v>0&&Math.abs(v-ICY)>.4)ICY=v}
 function paint(){const N=list.length;if(!N)return;const lo=Math.floor(pos)-5,hi=Math.ceil(pos)+6;
  els.forEach((e,i)=>{if(i<lo||i>hi){e.remove();els.delete(i)}});
- for(let i=Math.max(0,lo);i<=Math.min(N-1,hi);i++){let e=els.get(i);if(!e){e=mk(list[i]);e.style.setProperty('--d',Math.max(0,Math.abs(i-pos)));els.set(i,e);wave.appendChild(e)}
+ for(let i=Math.max(0,lo);i<=Math.min(N-1,hi);i++){let e=els.get(i);if(!e){e=mk(list[i]);e.style.setProperty('--d',Math.max(0,Math.abs(i-pos)));els.set(i,e);wave.appendChild(e);icyMeasure(e)}
   const r=i-pos,[x,y]=slot(r),a=Math.abs(r),op=clamp((a-.3)/.7,0,1)*clamp(Math.min(r+3.45,4.8-r)/1.2,0,1);
-  e.style.transform='translate3d('+x+'px,'+y+'px,0) translate(-50%,-50%)';e.style.opacity=op;e.style.pointerEvents=op<.35?'none':''}
+  e.style.transform='translate3d('+x+'px,'+y+'px,0) translate(-50%,-'+ICY+'px)';e.style.opacity=op;e.style.pointerEvents=op<.35?'none':''}
  const f=clamp(Math.round(pos),0,N-1);if(f!==foc)setFocus(f)}
 function loop(t){const dt=Math.min(.034,(t-last)/1000)||.016;last=t;const N=list.length;
  if(mode==='fling'){pos+=vel*dt;vel*=Math.pow(CFG.glide||.05,dt);if(pos<0||pos>N-1){pos=clamp(pos,0,N-1);vel=0}if(Math.abs(vel)<1.4){mode='snap';tgt=clamp(Math.round(pos),0,N-1)}}
@@ -7046,11 +7051,21 @@ html.nbdoff #aw .awbd,html.shin #aw .awbd,html.shin #aw .awnw{display:none}
  if(!dr||!root||!fi||!nm)return;const rm=matchMedia('(prefers-reduced-motion:reduce)').matches,open=()=>dr.classList.contains('open');
  /* depth of field: icons far from the selected one soften slightly */
  const re=/translate3d\(([-\d.]+)px,\s*([-\d.]+)px/;let r2=0;
- function dof(){if(!open()){r2=0;return}const w=document.getElementById('awWave'),fy=parseFloat(fi.style.top)||0,H=w.clientHeight||700,off=root.classList.contains('nodof')||root.classList.contains('min');
-  for(const e of w.children){const m=re.exec(e.style.transform||'');if(!m)continue;const k=Math.min(1,Math.abs(parseFloat(m[2])-fy)/(H*.4)),f=off?'0.0':(k*k*1.8).toFixed(1);if(e._b!==f){e._b=f;e.style.filter=f>0.2?'blur('+f+'px)':''}}
+ /* PERF: this used to run every frame for as long as the drawer was open (regex on every icon, 60x a second, even when nothing moved).
+    Now it only runs while the wave moves: a cheap signature of the wave is compared each frame and the loop stops after ~45 still frames.
+    It starts again on touch / wheel / key input, when the selected icon changes, when icons are added and when the drawer opens. */
+ let idleN=0,lastSig='';const wv=document.getElementById('awWave');
+ function dof(){r2=0;if(!open())return;const w=wv,fy=parseFloat(fi.style.top)||0,H=w.clientHeight||700,off=root.classList.contains('nodof')||root.classList.contains('min');
+  const ch=w.children,n=ch.length,sig=n?(fy+'|'+n+'|'+ch[0].style.transform+'|'+ch[n>>1].style.transform+'|'+ch[n-1].style.transform):'';
+  if(sig===lastSig){if(++idleN>45)return}else{idleN=0;lastSig=sig;
+   for(let i=0;i<n;i++){const e=ch[i],m=re.exec(e.style.transform||'');if(!m)continue;const k=Math.min(1,Math.abs(parseFloat(m[2])-fy)/(H*.4)),f=off?'0.0':(k*k*1.8).toFixed(1);if(e._b!==f){e._b=f;e.style.filter=f>0.2?'blur('+f+'px)':''}}}
   r2=requestAnimationFrame(dof)}
- new MutationObserver(()=>{if(open()&&!r2&&!rm)r2=requestAnimationFrame(dof)}).observe(dr,{attributes:true,attributeFilter:['class']});
- if(open()&&!rm)r2=requestAnimationFrame(dof);
+ const kickDof=()=>{idleN=0;if(open()&&!r2&&!rm)r2=requestAnimationFrame(dof)};
+ new MutationObserver(kickDof).observe(dr,{attributes:true,attributeFilter:['class']});
+ new MutationObserver(kickDof).observe(fi,{attributes:true,attributeFilter:['style']});
+ new MutationObserver(kickDof).observe(wv,{childList:true});
+ ['pointerdown','pointermove','touchmove','wheel','keydown'].forEach(ev=>dr.addEventListener(ev,kickDof,{passive:true,capture:true}));
+ kickDof();
 }catch(e){try{ERR(e,'v63')}catch(_){}}})();
 </script>
 <style id="v64-dial">
@@ -7608,7 +7623,7 @@ safe('v75names',()=>{const SEL='button,[role=button],input:not([type=hidden]),se
   const q=new Set();let t=0;
   const flush=()=>{t=0;q.forEach(n=>{if(!n.isConnected)return;if(n.matches&&n.matches(SEL))fix(n);n.querySelectorAll&&n.querySelectorAll(SEL).forEach(fix)});q.clear()};
   new MutationObserver(ms=>{if(document.hidden)return;ms.forEach(m=>{if(m.target.closest&&m.target.closest('#aw'))return;m.addedNodes.forEach(n=>{if(n.nodeType===1)q.add(n)})});if(q.size&&!t)t=setTimeout(flush,250)}).observe(phone,{childList:true,subtree:true});
-  q.add(phone);flush()});
+  q.add(phone);(window.requestIdleCallback?requestIdleCallback(flush,{timeout:3000}):setTimeout(flush,1200))});   /* PERF: not during start-up */
 
 /* ---------- 8. System bar icons follow the Light / Dark theme (edge-to-edge draws the page behind the bars) ---------- */
 safe('v75bars',()=>{let last=null;const push=()=>{const l=de.classList.contains('light');if(l===last)return;last=l;if(has('setBarsLight'))safe('v75bars2',()=>A().setBarsLight(l))};
@@ -7928,7 +7943,7 @@ html.ck-b #hour{animation:ckBreath 4.2s ease-in-out infinite}
   if(on&&!arcSvg){arcSvg=document.createElementNS('http://www.w3.org/2000/svg','svg');arcSvg.id='ckArc';arcSvg.setAttribute('viewBox','0 0 320 640');arcSvg.setAttribute('aria-hidden','true');
    arcSvg.innerHTML='<circle class="t"/><circle class="a"/>';$('dial').appendChild(arcSvg);arcPlace()}
   else if(!on&&arcSvg){if(arcA)arcA.cancel();arcA=null;arcSvg.remove();arcSvg=null}};
- setInterval(arcSync,4000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)arcSync()});
+ setInterval(()=>{if(!document.hidden)arcSync()},4000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)arcSync()});
  if(typeof relayout==='function'){const rl=window.relayout;window.relayout=function(){const r=rl.apply(this,arguments);try{arcPlace()}catch(e){}return r}}
  /* ---- minute-change animations (minutes cell only; seconds keep the original roll) ---- */
  const KF={
@@ -8126,6 +8141,7 @@ void main(){
  const grids={H:[6,4],M:[8,8],S:[8,8]};
  function sh(t,s){const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw new Error('capsule shader: '+gl.getShaderInfoLog(o));return o}
  function initGL(){
+  bKey='';lKey='';   /* new GL context: every texture has to be uploaded again */
   prog=gl.createProgram();gl.attachShader(prog,sh(gl.VERTEX_SHADER,VERT));gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,FRAG));gl.linkProgram(prog);
   if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw new Error('capsule link: '+gl.getProgramInfoLog(prog));
   gl.useProgram(prog);
@@ -8163,10 +8179,12 @@ void main(){
   if(S.hcl==='full')return DFULL[d.getDay()];
   if(S.hcl==='date')return d.getDate()+' '+MON[d.getMonth()];
   return DAYS[d.getDay()]}
+ let bKey='',lKey='';   /* PERF: the textures are only rebuilt when their inputs changed (at start-up they were built 3-4 times over) */
  function buildLabel(){
+  const d=new Date(),txt=labelText(d.getHours(),d),k=[txt,S.hcf,S.hcz,S.h24,d.getHours()<12,A,S.hcd].join('|');
+  if(k===lKey)return;lKey=k;
   const W=2048,H=Math.round(W/A),c=document.createElement('canvas');c.width=W;c.height=H;
   const x=c.getContext('2d');x.fillStyle='#000';x.fillRect(0,0,W,H);
-  const d=new Date(),txt=labelText(d.getHours(),d);
   if(txt){
    const l=LF[S.hcf]||LF.cond,fs=.068*W*l[1]*(S.hcz/100),t=l[3]?txt.toUpperCase():txt;
    x.font='600 '+fs+'px '+l[0];x.fillStyle='#fff';x.textAlign='center';x.textBaseline='alphabetic';
@@ -8179,6 +8197,7 @@ void main(){
   upload(3,c)}
  function buildAll(){
   nsx=haveCond()?1:.74;hourN=S.h24?24:12;
+  const bk=nsx+'|'+hourN+'|'+S.h24;if(bk===bKey){buildLabel();dirty=true;return}bKey=bk;
   atlas(0,hourN,grids.H[0],352,317,.867,S.h24?pad:i=>String(i===0?12:i));
   atlas(1,60,grids.M[0],352,317,.867,pad);
   atlas(2,60,grids.S[0],224,256,.578,pad);

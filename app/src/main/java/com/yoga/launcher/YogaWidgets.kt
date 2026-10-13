@@ -22,6 +22,7 @@ class YogaWidgets(
     private val host = AppWidgetHost(act, 1024)
     private val mgr = AppWidgetManager.getInstance(act)
     private val views = HashMap<Int, AppWidgetHostView>()
+    private val lastRect = HashMap<Int, IntArray>()   // last x,y,w,h sent per widget: the page calls place() very often, identical calls are skipped
     private var pending = -1               // widget id being picked or configured right now
 
     private fun js(code: String) = web.post { web.evaluateJavascript(code, null) }
@@ -77,9 +78,13 @@ class YogaWidgets(
         act.runOnUiThread {
             try {
                 val id = idStr.toIntOrNull() ?: return@runOnUiThread
+                val prev = lastRect[id]
+                val shown = views[id]?.visibility == View.VISIBLE
+                if (shown && prev != null && prev[0] == x && prev[1] == y && prev[2] == w && prev[3] == h) return@runOnUiThread   // nothing moved: no layout, no resize call into the widget
                 val info = mgr.getAppWidgetInfo(id)
                 if (info == null) {
                     views.remove(id)?.let { root.removeView(it) }
+                    lastRect.remove(id)
                     host.deleteAppWidgetId(id)
                     js("window.onWidgetRemoved&&onWidgetRemoved($id)")
                     return@runOnUiThread
@@ -90,20 +95,22 @@ class YogaWidgets(
                 lp.leftMargin = (x * d).toInt() + web.left
                 lp.topMargin = (y * d).toInt() + web.top
                 v.layoutParams = lp
-                v.updateAppWidgetSize(null, w, h, w, h)
+                if (prev == null || prev[2] != w || prev[3] != h) v.updateAppWidgetSize(null, w, h, w, h)   // only a real size change needs the widget to redraw
+                lastRect[id] = intArrayOf(x, y, w, h)
                 v.visibility = View.VISIBLE
             } catch (_: Exception) {}
         }
     }
 
     fun hide(idStr: String) {
-        act.runOnUiThread { views[idStr.toIntOrNull() ?: return@runOnUiThread]?.visibility = View.GONE }
+        act.runOnUiThread { views[idStr.toIntOrNull() ?: return@runOnUiThread]?.visibility = View.GONE }   // lastRect stays: place() sees it is hidden and shows it again
     }
 
     fun remove(idStr: String) {
         act.runOnUiThread {
             val id = idStr.toIntOrNull() ?: return@runOnUiThread
             views.remove(id)?.let { root.removeView(it) }
+            lastRect.remove(id)
             try { host.deleteAppWidgetId(id) } catch (_: Exception) {}
         }
     }
