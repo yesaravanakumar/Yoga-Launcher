@@ -5137,7 +5137,7 @@ try{ENG.init()}catch(e){console.error(e)}
     pane.classList.remove('on');btn.setAttribute('aria-pressed',false);
     $('arcSave').onclick=()=>{const l=mine();if(l.length>=12){toast('Delete one of your themes first');return}
       const n=($('arcName').value.trim()||('My theme '+(l.length+1))).slice(0,20);l.push({id:'u'+Date.now(),n:n,s:snap()});sv('mdc-arct',l);S.arctn=n;saveS();$('arcName').value='';draw();toast('Saved \u201c'+n+'\u201d')};
-    $('arcUse').onclick=()=>{try{(window.drawerLayout?drawerLayout.set('crescent'):drawerStyle.set('arc'))}catch(e){ERR(e,'v50u')}pvDraw()};
+    $('arcUse').onclick=()=>{try{(window.drawerLayout?drawerLayout.set('arc'):drawerStyle.set('arc'))}catch(e){ERR(e,'v50u')}pvDraw()};
     $('arcReset').onclick=()=>{AK.forEach(k=>S[k]=SD[k]);S.arctn='';saveS();applySettings();toast('Arc look reset')};
     draw();uiSync();
   });
@@ -6782,9 +6782,9 @@ background:#030304 linear-gradient(rgba(var(--c1rgb),.05) 1px,transparent 1px) 0
 @keyframes awGlow{50%{filter:drop-shadow(0 0 11px rgba(var(--c1rgb),1))}}
 #awWave{position:absolute;inset:0}
 .awi{position:absolute;left:0;top:0;width:34%;display:flex;flex-direction:column;align-items:center;gap:7px;border:0;background:none;color:#fff;padding:0;cursor:pointer;will-change:transform,opacity}
-.awi .ic{width:46px;height:46px;border-radius:50%}
+.awi .ic{width:46px;height:46px;border-radius:27%}
 .awi span{max-width:100%;font:700 13.5px/1.1 "Roboto Condensed","Arial Narrow",var(--f),sans-serif;letter-spacing:-.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 3px #000}
-.awi.in{animation:awIn .55s cubic-bezier(.2,.9,.3,1) backwards;animation-delay:calc(var(--d)*45ms)}
+.awi.awin{animation:awIn .25s cubic-bezier(.2,.9,.3,1) backwards;animation-delay:calc(var(--d)*20ms)}
 @keyframes awIn{from{translate:70px 0;opacity:0}}
 .awb{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border:0;background:none;padding:0;display:grid;place-items:center;color:var(--c1);cursor:pointer;transition:transform .15s,color .2s}
 .awb svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 4px rgba(var(--c1rgb),.55))}
@@ -6792,9 +6792,9 @@ background:#030304 linear-gradient(rgba(var(--c1rgb),.05) 1px,transparent 1px) 0
 #awHome{width:62px;height:62px;margin:-31px 0 0 -31px;border-radius:50%;border:1.5px solid rgba(var(--c1rgb),.6);background:radial-gradient(circle,rgba(var(--c1rgb),.16),rgba(8,20,28,.85));box-shadow:0 0 18px rgba(var(--c1rgb),.3),inset 0 0 14px rgba(var(--c1rgb),.25)}
 #awHome svg{width:30px;height:30px;color:#fff}
 #awFi{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;pointer-events:auto;cursor:pointer}
-#awFi .ic{width:100%;height:100%;border-radius:22%;box-shadow:0 0 22px rgba(var(--c1rgb),.35),0 4px 14px #000}
-#awFi.pop,#awNm.pop{animation:awPop .4s cubic-bezier(.2,.9,.3,1.25)}
-@keyframes awPop{from{scale:.7;opacity:0}}
+#awFi .ic{width:100%;height:100%;border-radius:27%;box-shadow:0 0 22px rgba(var(--c1rgb),.35),0 4px 14px #000}
+#awFi.pop,#awNm.pop{animation:awPop .2s ease-out}
+@keyframes awPop{from{scale:.9;opacity:.5}60%{scale:1.08}}
 #awNm{position:absolute;font:500 25px/1.05 "Roboto Condensed","Arial Narrow",var(--f),sans-serif;letter-spacing:-.4px;color:rgba(255,255,255,.62);text-shadow:0 0 14px rgba(255,255,255,.28),0 2px 6px #000;transform:translate(-50%,-50%);white-space:nowrap;max-width:62%;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 #aw .awb,#aw .awb:focus,#aw .awb:focus-visible{outline:none}
 #awSr.on{color:#fff}#awSr.on svg{filter:drop-shadow(0 0 7px var(--c1))}
@@ -6812,7 +6812,7 @@ background:#030304 linear-gradient(rgba(var(--c1rgb),.05) 1px,transparent 1px) 0
 #awEmpty{position:absolute;left:12%;top:42%;width:60%;text-align:center;font:600 15px var(--f);color:#9aa;display:none}
 #awEmpty button{display:block;margin:12px auto 0;padding:9px 16px;border-radius:16px;border:1px solid var(--c1);background:rgba(var(--c1rgb),.12);color:#fff;font:700 13px var(--f)}
 #aw.empty #awEmpty{display:block}#aw.empty #awFocus{display:none}
-@media(prefers-reduced-motion:reduce),(update:slow){#aw .awo{animation:none}.awi.in,#awFi.pop,#awNm.pop{animation:none}}
+@media(prefers-reduced-motion:reduce),(update:slow){#aw .awo{animation:none}.awi.awin,#awFi.pop,#awNm.pop{animation:none}}
 /* ===== Jarvis HUD layer (all colours come from the theme) ===== */
 .jv-spin,.jv-spinr{transform-box:view-box}
 .jv-spin{animation:jvSpin 26s linear infinite}.jv-spinr{animation:jvSpin 15s linear infinite reverse}
@@ -6855,23 +6855,36 @@ root.innerHTML='<svg id="awArt" aria-hidden="true"></svg><div id="awScan"></div>
 +'<div id="awMv" role="group" aria-label="Reorder the selected app" hidden><button type="button" id="awMvU" aria-label="Move up">&#9650; Up</button><button type="button" id="awMvD" aria-label="Move down">&#9660; Down</button><button type="button" id="awMvX">Done</button></div>'
 +'<div id="awSb" role="toolbar" aria-label="Selected apps" hidden><b id="awSbN" aria-live="polite">0 selected</b><button type="button" id="awSbAll">All</button><button type="button" id="awSbHome">Home</button><button type="button" id="awSbHide">Hide</button><button type="button" id="awSbDel" aria-label="Uninstall" title="Uninstall"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button><button type="button" id="awSbX">Done</button></div>';
 dr.appendChild(root);
+{const row=document.createElement('div');row.id='awAct';row.setAttribute('role','group');row.setAttribute('aria-label','App actions');root.appendChild(row);['awStar','awHome','awEdit'].forEach(id=>{const b=document.getElementById(id);if(b)row.appendChild(b)})}
 const wave=$('awWave'),art=$('awArt'),fi=$('awFi'),nm=$('awNm'),rail=$('awRail'),bub=$('awBub'),sbar=$('awSearch'),qi=$('awQ');
 let list=[],pos=0,vel=0,mode='',tgt=0,raf=0,last=0,foc=-1,W=360,H=780,drag=null,moved=false,lets=[],stagger=false;const els=new Map(),RMo=matchMedia('(prefers-reduced-motion:reduce)').matches;
 let selOn=false,reOn=false;const SELS=new Set();
+const FXE=(t,a)=>{const h=window.AWFX;if(h&&h.on){try{h.on(t,a)}catch(e){}}};/* Reactive Matter: read-only events for the optional FX layers; the engine never waits for them */
 const isOpen=()=>dr.classList.contains('open'),cur=()=>list[foc],clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const geo=()=>{W=root.clientWidth||360;H=root.clientHeight||780};
 /* ONE curve for the whole drawer: trk(y) is the x of the flow line at height y. Apps, the focused app and the red line all use it, so nothing can drift off the line. */
-const CFG0={lineX:.80,lineC:1.9,step:.123,dialX:.40,dialR:.40,ltrR:.50,ltrX:0,ltrS:1,icS:1,nmS:1,names:true,rail:true,scan:true,anim:true,acc:'',minimal:false,shape:'auto',gloss:true,dof:true,float:true,lines:true,rings:true,wedge:true,bub:true,hapx:true,glide:.05,snapS:13,tapSel:false,openAnim:true,dim:0,btnS:1,focS:1,bCt:true,bEdit:true,bStar:true,bHome:true,bPlay:true,bInfo:true,bDel:true,bdot:true,bnew:true,tools:true};
+const CFG0={lineX:.80,lineC:1.9,step:.123,dialX:.40,dialR:.40,ltrR:.50,ltrX:0,ltrS:1,icS:1,nmS:1,names:true,rail:true,scan:false,anim:false,acc:'',minimal:false,shape:'auto',gloss:false,dof:false,float:false,lines:true,rings:false,wedge:false,bub:true,hapx:true,glide:.03,snapS:20,tapSel:false,openAnim:true,dim:0,btnS:1,focS:1,bCt:true,bEdit:true,bStar:true,bHome:true,bPlay:false,bInfo:true,bDel:false,bdot:true,bnew:true,tools:true,fxOn:true,fxLevel:'subtle',fxAuto:true,fx_ripple:true,fx_magnet:true};
 const CFG=Object.assign({},CFG0,(()=>{try{const o=JSON.parse(localStorage.getItem('aw-cfg'));return o&&typeof o==='object'?o:{}}catch(e){return {}}})());STEP=CFG.step;
-const FOC=.56;let PUSH=.065;
+/* v1.78: one-time settings migration (depth blur used to smear the app names) */
+if((CFG.cfgv|0)<80){Object.assign(CFG,{glide:.03,snapS:20,bPlay:false,bDel:false,dof:false,gloss:false,float:false,rings:false,wedge:false,scan:false,anim:false,cfgv:80});try{localStorage.setItem('aw-cfg',JSON.stringify(CFG))}catch(e){}}
+const FOC=.56;let PUSH=.13;
+/* v1.81: four curved designs share this one engine. slotD(r,i) says where the app at distance r (in apps) from the selected one sits: [x,y,scale,rotationDeg] */
+const DESIGNS=['arc','orbit','wave','fan'];let DES=(()=>{try{const v=localStorage.getItem('yoga-ddes');return DESIGNS.includes(v)?v:'arc'}catch(e){return 'arc'}})();
+let FP=[0,0],railL=0;
 const trk=y=>{const t=y/H-.56;return(CFG.lineX-CFG.lineC*t*t)*W};
 const dyr=r=>r*STEP+Math.sign(r)*PUSH*(1-Math.exp(-Math.abs(r)*1.6));
-const slot=r=>{const y=(FOC+dyr(r))*H;return[trk(y),y]};
+const KS=()=>STEP/.123,RAD=Math.PI/180;
+function slotD(r,i){const a=Math.abs(r),sc=1-.15*clamp(a/3,0,1);
+ if(DES==='orbit'){const th=r*30*KS()*RAD;return[-.06*W+.62*W*Math.cos(th),FOC*H+.62*W*Math.sin(th),sc,0]}
+ if(DES==='wave'){return[.5*W+((i&1)?1:-1)*.18*W*clamp(a,0,1),(FOC+dyr(r))*H,sc,0]}
+ if(DES==='fan'){const d=(232+r*15*KS()),th=d*RAD;return[W+.9*W*Math.cos(th),.94*H+.9*W*Math.sin(th),sc,(d+90)*clamp(a,0,1)]}
+ const y=(FOC+dyr(r))*H;return[trk(y),y,sc,0]}
+const edgeOp=r=>{const a=Math.abs(r);return DES==='orbit'?clamp((2.9-a)/.9,0,1):DES==='fan'?clamp((2.7-a)/.7,0,1):clamp(Math.min(r+3.45,4.8-r)/1.2,0,1)};
 const letter=a=>{const c=(norm(a.n).trim()[0]||'#').toUpperCase();return c>='A'&&c<='Z'?c:'#'};
 const R=()=>CFG.dialR*H,FX=()=>CFG.dialX*W,YD0=()=>.56*H,AX=dy=>FX()-(R()-Math.sqrt(R()*R()-dy*dy));
 /* A-Z letters ride an arc concentric with the dial, in the gap between the dial and the app line */
-const RL=()=>CFG.ltrR*H,LX=y=>CFG.ltrX+FX()-R()+Math.sqrt(Math.max(0,RL()*RL()-(y-YD0())*(y-YD0())));
-function arcRail(){const rt=parseFloat(rail.style.top)||0,xm=LX(YD0());[...rail.children].forEach(c=>{const y=rt+c.offsetTop+c.offsetHeight/2;c.style.translate=(LX(y)-xm).toFixed(1)+'px 0'})}
+const LX=()=>railL;
+function arcRail(){}
 const el=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e};
 const C1='var(--c1)',pol=(a,r,deg)=>{const t=(deg-90)*Math.PI/180;return[a[0]+r*Math.cos(t),a[1]+r*Math.sin(t)]};
 function arcD(c,r,d0,d1){const p0=pol(c,r,d0),p1=pol(c,r,d1);return'M'+p0[0].toFixed(1)+' '+p0[1].toFixed(1)+'A'+r+' '+r+' 0 '+((d1-d0)>180?1:0)+' 1 '+p1[0].toFixed(1)+' '+p1[1].toFixed(1)}
@@ -6898,11 +6911,26 @@ function hud(){
 function arcPts(rad,d1,d2,n){const xc=FX()-R(),yc=YD0(),o=[];for(let i=0;i<=n;i++){const dy=(d1+(d2-d1)*i/n)*H;o.push([xc+Math.sqrt(rad*rad-dy*dy),yc+dy])}return o}
 const P=a=>a.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
 function band(d1,d2){const bw=.034*H,o=arcPts(R()+bw,d1,d2,12),i=arcPts(R()-bw,d1,d2,12).reverse();return el('polygon',{points:P(o.concat(i)),fill:'rgba(var(--c1rgb),.10)',stroke:'rgba(var(--c1rgb),.55)','stroke-width':1.3,'stroke-linejoin':'round'})}
-function ctSync(){const on=DC==='Contacts',c=$('awCt');PUSH=on?.17:.065;if(on)modeOff();try{if(!on)ca.hidden=true}catch(_){}try{const so=sbar.classList.contains('on');$('awSr').classList.toggle('on',so);$('awSr').setAttribute('aria-pressed',String(so))}catch(_){}root.classList.toggle('ctm',on);c.classList.toggle('on',on);c.setAttribute('aria-pressed',on);c.setAttribute('aria-label',on?'Back to apps':'Contacts');$('awPlay').setAttribute('aria-label',on?'Call':'Open in Play Store');$('awInfo').setAttribute('aria-label',on?'Message':'App info');qi.placeholder=on?'Search contacts':'Search apps'}
-function placeNm(){const fx=trk(FOC*H);nm.style.fontSize=clamp(H*.03,17,25)*CFG.nmS*(DC==='Contacts'?.86:1)+'px';
- /* contacts: the name wraps inside the space to the right of the A-Z arc instead of running over it */
- if(DC==='Contacts'){const rr=LX(FOC*H+62)+22,av=Math.max(110,W-6-rr);nm.style.maxWidth=Math.min(av,.8*W)+'px';nm.style.whiteSpace='normal'}else{nm.style.maxWidth=(.8*W)+'px';nm.style.whiteSpace=''}
- const w=nm.offsetWidth||0;nm.style.left=clamp(fx,w/2+6,.975*W-w/2)+'px';nm.style.top=(FOC*H+62+(DC==='Contacts'?Math.max(0,(nm.offsetHeight||0)-28)/2:0))+'px';placeCa();placeMv()}
+function ctSync(){const on=DC==='Contacts',c=$('awCt');PUSH=on?.17:(DES==='arc'||DES==='wave'?.13:.065);if(on)modeOff();try{if(!on)ca.hidden=true}catch(_){}try{const so=sbar.classList.contains('on');$('awSr').classList.toggle('on',so);$('awSr').setAttribute('aria-pressed',String(so))}catch(_){}root.classList.toggle('ctm',on);c.classList.toggle('on',on);c.setAttribute('aria-pressed',on);c.setAttribute('aria-label',on?'Back to apps':'Contacts');$('awPlay').setAttribute('aria-label',on?'Call':'Open in Play Store');$('awInfo').setAttribute('aria-label',on?'Message':'App info');qi.placeholder=on?'Search contacts':'Search apps'}
+function placeNm(){const ct=DC==='Contacts',fx=FP[0],fy=FP[1],act=$('awAct');
+ const sz=clamp(H*.03,17,25)*CFG.nmS*(ct?.86:1);nm.style.fontSize=sz+'px';
+ const L=DES==='fan'?28:8,Rb=DES==='fan'?W-6:railL-6;let av=DES==='orbit'?Math.max(70,Rb-(fx+30)):Math.max(96,Math.min(Rb-L,.62*W));
+ if(ct)av=Math.max(av,110);
+ nm.style.whiteSpace=ct?'normal':'';nm.style.maxWidth='none';
+ /* the name shrinks (down to 13px) to the free space, then ends with an ellipsis, so it never touches the A-Z letters */
+ if(!ct){const nat=nm.scrollWidth||0;if(nat>av){nm.style.fontSize=Math.max(13,sz*av/nat).toFixed(1)+'px';for(let k=0;k<6&&nm.scrollWidth>av&&parseFloat(nm.style.fontSize)>13;k++)nm.style.fontSize=Math.max(13,parseFloat(nm.style.fontSize)-.7).toFixed(1)+'px'}}
+ nm.style.maxWidth=av+'px';
+ const w=nm.offsetWidth||0,h=nm.offsetHeight||0;let cx,cy;
+ if(DES==='orbit'){cx=fx+30+w/2;cy=fy}
+ else if(DES==='fan'){cx=Math.max(L+w/2,Math.min(Rb-w/2,fx));cy=fy-42-h/2}
+ else{cx=Math.max(L+w/2,Math.min(Rb-w/2,fx));cy=fy+34+h/2}
+ nm.style.left=cx+'px';nm.style.top=cy+'px';
+ const aw=3*44+2*10;let ax,ay;
+ if(DES==='orbit'){ax=Math.min(fx+30,Rb-aw);ay=Math.max(cy+h/2+8,fy+30)}
+ else if(DES==='fan'){ax=34;ay=H-104}
+ else{ax=Math.max(8,Math.min(Rb-aw,fx-aw/2));ay=cy+h/2+10}
+ if(act){act.style.left=ax+'px';act.style.top=ay+'px'}
+ placeCa(ax,ay+44);placeMv()}
 /* contact quick actions: small Call, WhatsApp message and WhatsApp call buttons under the selected contact */
 const ca=document.createElement('div');ca.id='awCa';ca.hidden=true;ca.setAttribute('role','group');ca.setAttribute('aria-label','Contact actions');
 const CAI={call:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/>',
@@ -6920,27 +6948,23 @@ function caAct(k,a){if(!a||!a.ct)return;try{vib(8)}catch(_){}
   if(k==='msg'){if(A&&typeof A.waChat==='function')A.waChat(n);else ENG.open('https://wa.me/'+n.replace(/\D/g,''));return}
   if(A&&typeof A.waCall==='function')A.waCall(n);else toast('WhatsApp calls need the Android app')}
 ca.addEventListener('click',e=>{const b=e.target.closest('.cab');if(!b)return;e.stopPropagation();caAct(b.dataset.k,cur())});
-function placeCa(){const a=cur(),on=!!(a&&a.ct&&a.ph)&&isOpen();ca.hidden=!on;if(!on)return;
-  /* sits under the name, to the RIGHT of the A-Z arc so the letters stay clear; buttons shrink a little on narrow phones */
-  const yc=FOC*H+62+(nm.offsetHeight||28)+8,railR=LX(yc)+12+10,avail=Math.max(90,W-6-railR),bw=clamp(Math.floor((avail-27)/4),24,36);
-  ca.style.setProperty('--bw',bw+'px');const w=4*bw+3*3+14+3;
-  ca.style.left=Math.min(Math.max(railR,railR+(avail-w)/2),W-4-w)+'px';ca.style.top=yc+'px'}
+function placeCa(ax,ay){const a=cur(),on=!!(a&&a.ct&&a.ph)&&isOpen();ca.hidden=!on;if(!on)return;const bw=32,w=4*bw+3*3+14+3;ca.style.setProperty('--bw',bw+'px');ca.style.left=Math.max(4,Math.min(W-4-w,ax))+'px';ca.style.top=((ay||0)+8)+'px'}
 
-function layout(){geo();art.setAttribute('viewBox','0 0 '+W+' '+H);art.textContent='';
- const df=el('defs',{});df.innerHTML='<linearGradient id="awg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--c1)" stop-opacity="0"/><stop offset=".25" style="stop-color:var(--c1)"/><stop offset=".75" style="stop-color:var(--c1)"/><stop offset="1" style="stop-color:var(--c1)" stop-opacity="0"/></linearGradient>';art.appendChild(df);
- art.appendChild(band(-.285,-.062));art.appendChild(band(.062,.285));
- const oa=[];for(let i=0;i<=44;i++){const y=(.08+.91*i/44)*H;oa.push([trk(y),y])}const o=el('polyline',{points:P(oa),fill:'none',stroke:'url(#awg)','stroke-width':2,class:'awo'});art.appendChild(o);
- art.appendChild(el('polyline',{points:P(arcPts(R()-.075*H,-.085,.085,12)),fill:'none',stroke:'var(--c1)','stroke-width':2.4,'stroke-linecap':'round'}));
- const lt=.16*H,lb=.96*H;art.appendChild(el('polyline',{points:P(Array.from({length:31},(_,k)=>{const y=lt+(lb-lt)*k/30;return[LX(y)-17,y]})),fill:'none',stroke:'var(--c1)','stroke-width':1,'stroke-dasharray':'2 6','stroke-linecap':'round',opacity:.3}));
- art.appendChild(el('polyline',{points:P(Array.from({length:31},(_,k)=>{const y=lt+(lb-lt)*k/30;return[LX(y)+17,y]})),fill:'none',stroke:'var(--c1)','stroke-width':1.6,opacity:.7,class:'awo'}));
- const put=(e,dy,x)=>{e.style.left=(x==null?AX(dy*H):x)+'px';e.style.top=(YD0()+dy*H)+'px'};
- put($('awSr'),-.252);put($('awCt'),-.19);put($('awEdit'),-.128);put(fi,FOC-.56,trk(FOC*H));put($('awStar'),-.066);put($('awHome'),0);put($('awPlay'),.066);put($('awInfo'),.128);put($('awDel'),.19);
- {const gb=$('awCfgBtn');if(gb)put(gb,.252,AX(Math.min(.252*H,.96*R())))}
- placeNm();
- const tb=$('awTab');tb.style.left=.06*W+'px';tb.style.top=YD0()+'px';
- rail.style.width='24px';rail.style.left=(LX(YD0())-12)+'px';rail.style.top=(lt+.01*H)+'px';rail.style.height=(lb-lt-.02*H)+'px';arcRail();
- bub.style.left=.17*W+'px';bub.style.top=YD0()+'px';
- art.appendChild(hud());root.style.setProperty('--awH',H+'px');
+function layout(){geo();root.dataset.des=DES;art.setAttribute('viewBox','0 0 '+W+' '+H);art.textContent='';
+ const fy=FOC*H,f0=slotD(0,0);let fx=f0[0],fyy=f0[1];
+ if(DES==='fan'){const t=232*RAD;fx+=8*Math.cos(t);fyy+=8*Math.sin(t)}
+ FP=[fx,fyy];railL=DES==='fan'?4:W-22;
+ const line=pts=>art.appendChild(el('polyline',{points:P(pts),fill:'none',stroke:C1,'stroke-width':1.2,opacity:.55,'stroke-linecap':'round'}));
+ if(DES==='orbit'){const rg=(r,op)=>{const o=[];for(let i=0;i<=60;i++){const t=(-95+190*i/60)*RAD;o.push([-.06*W+r*Math.cos(t),fy+r*Math.sin(t)])}art.appendChild(el('polyline',{points:P(o),fill:'none',stroke:C1,'stroke-width':1.2,opacity:op,'stroke-linecap':'round'}))};rg(.62*W,.55);rg(.4*W,.18)}
+ else if(DES==='wave'){const o=[];for(let i=0;i<=60;i++){const y=(.06+.92*i/60)*H;o.push([.5*W+.18*W*Math.sin((y-fy)/H*6.2),y])}line(o)}
+ else if(DES==='fan'){const o=[];for(let i=0;i<=40;i++){const t=(190+i*95/40)*RAD;o.push([W+.9*W*Math.cos(t),.94*H+.9*W*Math.sin(t)])}line(o)}
+ else{const o=[];for(let i=0;i<=44;i++){const y=(.08+.91*i/44)*H;o.push([trk(y),y])}line(o)}
+ fi.style.left=fx+'px';fi.style.top=fyy+'px';
+ const pl=(e,x,y)=>{if(e){e.style.left=x+'px';e.style.top=y+'px'}};
+ pl($('awSr'),28,32);pl($('awCt'),76,32);pl($('awCfgBtn'),28,H-34);pl($('awTab'),DES==='fan'?.94*W:.06*W,DES==='fan'?.78*H:fy);
+ const lt=.16*H,lb=H-72;rail.style.width='18px';rail.style.left=railL+'px';rail.style.top=lt+'px';rail.style.height=(lb-lt)+'px';
+ bub.style.left=(DES==='fan'?.62:.17)*W+'px';bub.style.top=fy+'px';
+ placeNm();root.style.setProperty('--awH',H+'px');
 }
 /* v1.55: notification dots / counts and NEW badges on the arc. Same data as the Grid drawer: YG.badges (Android notification counts) and mdc-new (just-installed apps).
    Settings that already exist keep working: Notification badges (nbd), Counts (nbn), NEW badges (pmon), Hide smart card and NEW badges (shin). */
@@ -6963,28 +6987,31 @@ function bdDecor(host,a){const ic=host&&host.querySelector('.ic');if(!ic)return;
 function bdSr(a){const o=nm.querySelector('.awsr');if(o)o.remove();const x=bdTxt(a);if(x){const r=document.createElement('span');r.className='awsr';r.textContent=x;nm.appendChild(r)}}
 function bdRefresh(){bdSnap();els.forEach((e,i)=>bdDecor(e,list[i]));const a=cur();if(a){bdDecor(fi,a);bdSr(a)}}
 function bdStart(){clearInterval(bdT);bdT=setInterval(()=>{if(!isOpen()){clearInterval(bdT);return}if(document.hidden)return;bdPull();bdRefresh()},8000)}
-function mk(a){const b=document.createElement('button');b.className='awi'+(stagger?' in':'');b.type='button';b.appendChild(icon(a));const s=document.createElement('span');s.textContent=a.n;b.appendChild(s);
+function mk(a){const b=document.createElement('button');b.className='awi'+(stagger?' awin':'');if(stagger)b.addEventListener('animationend',e=>{if(e.target===b)b.classList.remove('awin')});b.type='button';b.appendChild(icon(a));const s=document.createElement('span');s.textContent=a.n;b.appendChild(s);
  hold(b,a);b.onclick=()=>{if(selOn){toggleSel(a);return}if(reOn){const i=list.indexOf(a);if(i>=0&&i!==foc)glide(i);return}const i=list.indexOf(a);if(CFG.tapSel&&i>=0&&i!==foc){glide(i);return}closeAll();launch(a)};bdDecor(b,a);selMark(b,a);return b}
 function setFocus(f){foc=f;const a=list[f];if(!a)return;fi.replaceChildren(icon(a));nm.textContent=a.n;bdDecor(fi,a);selMark(fi,a);bdSr(a);placeNm();
  [fi,nm].forEach(e=>{e.classList.remove('pop');void e.offsetWidth;if(!RMo)e.classList.add('pop')});
  
- starPaint(a);
+ starPaint(a);FXE('select',{i:f});
  const L=letter(a);[...rail.children].forEach(c=>c.classList.toggle('on',c.dataset.l===L));if(CFG.hapx!==false)try{vib(5)}catch(_){}}
 /* v1.62.2: the curve point belongs to the ICON centre, not the card centre (the name sits under the icon, so centring the whole card put every icon 13px above the line, which showed as sideways drift that grew away from the focus) */
 let ICY=23;
 function icyMeasure(e){const i=e.querySelector('.ic');if(!i)return;const v=i.offsetTop+i.offsetHeight/2;if(v>0&&Math.abs(v-ICY)>.4)ICY=v}
-function paint(){const N=list.length;if(!N)return;const lo=Math.floor(pos)-5,hi=Math.ceil(pos)+6;
+function paint(){const N=list.length;if(!N)return;const WL=DES==='arc'||DES==='wave'?5:3,lo=Math.floor(pos)-WL,hi=Math.ceil(pos)+WL+1;
  els.forEach((e,i)=>{if(i<lo||i>hi){e.remove();els.delete(i)}});
  for(let i=Math.max(0,lo);i<=Math.min(N-1,hi);i++){let e=els.get(i);if(!e){e=mk(list[i]);e.style.setProperty('--d',Math.max(0,Math.abs(i-pos)));els.set(i,e);wave.appendChild(e);icyMeasure(e)}
-  const r=i-pos,[x,y]=slot(r),a=Math.abs(r),op=clamp((a-.3)/.7,0,1)*clamp(Math.min(r+3.45,4.8-r)/1.2,0,1);
-  e.style.transform='translate3d('+x+'px,'+y+'px,0) translate(-50%,-'+ICY+'px)';e.style.opacity=op;e.style.pointerEvents=op<.35?'none':''}
+  const r=i-pos,a=Math.abs(r),[x,y,sc,rot]=slotD(r,i),op=clamp((a-.3)/.7,0,1)*edgeOp(r)*(1-.6*clamp(a/3,0,1));
+  if(e._o!==ICY){e._o=ICY;e.style.transformOrigin='50% '+ICY+'px'}
+  e.style.transform='translate3d('+x.toFixed(1)+'px,'+y.toFixed(1)+'px,0) translate(-50%,-'+ICY+'px) rotate('+rot.toFixed(1)+'deg) scale('+sc.toFixed(3)+')';e.style.opacity=op.toFixed(3);e.style.pointerEvents=op<.35?'none':''}
+ if(DES==='wave'){const d=pos-(paint.p==null?pos:paint.p);paint.p=pos;const bd=clamp(d*60,-6,6);art.style.transition='none';art.style.transform=bd?'translateX('+bd.toFixed(1)+'px)':''}
  const f=clamp(Math.round(pos),0,N-1);if(f!==foc)setFocus(f)}
 function loop(t){const dt=Math.min(.034,(t-last)/1000)||.016;last=t;const N=list.length;
  if(mode==='fling'){pos+=vel*dt;vel*=Math.pow(CFG.glide||.05,dt);if(pos<0||pos>N-1){pos=clamp(pos,0,N-1);vel=0}if(Math.abs(vel)<1.4){mode='snap';tgt=clamp(Math.round(pos),0,N-1)}}
  else if(mode==='snap'){pos+=(tgt-pos)*Math.min(1,dt*(RMo?60:(CFG.snapS||13)));if(Math.abs(tgt-pos)<.003){pos=tgt;mode=''}}
- paint();raf=mode?requestAnimationFrame(loop):0}
-const go=m=>{mode=m;if(!raf){last=performance.now();raf=requestAnimationFrame(loop)}};
-const glide=i=>{tgt=clamp(i,0,Math.max(0,list.length-1));go('snap')};
+ paint();if(mode)raf=requestAnimationFrame(loop);else{raf=0;busyOff()}}
+const go=m=>{mode=m;root.classList.add('busy');if(!raf){last=performance.now();raf=requestAnimationFrame(loop)}};
+const busyOff=()=>{if(!drag){root.classList.remove('busy');if(art.style.transform){art.style.transition='transform .35s ease-out';art.style.transform=''}paint.p=null}};
+const glide=i=>{tgt=clamp(i,0,Math.max(0,list.length-1));FXE('snap',{to:tgt});go('snap')};
 function railBuild(){lets=[];list.forEach((a,i)=>{const L=letter(a);if(!lets.length||lets[lets.length-1].c!==L){if(!lets.some(x=>x.c===L))lets.push({c:L,i})}});
  rail.textContent='';const d0=document.createElement('div');d0.textContent='\u2022';d0.dataset.l='';rail.appendChild(d0);lets.forEach(x=>{const d=document.createElement('div');d.textContent=x.c;d.dataset.l=x.c;rail.appendChild(d)});arcRail();const a=cur();if(a){const L=letter(a);[...rail.children].forEach(c=>c.classList.toggle('on',c.dataset.l===L))}}
 function build(){if(!isOpen())return;const q=$('q').value.trim(),keep=cur();list=ranked(matches().filter(inCat));
@@ -6998,17 +7025,19 @@ function build(){if(!isOpen())return;const q=$('q').value.trim(),keep=cur();list
  root.classList.toggle('empty',!list.length);
  if(!list.length){$('awEmpty').firstChild.textContent=ALLQ()?'No apps or contacts found':DC==='Contacts'?(q?'No contacts found':'No contacts'):(q?'No apps found':'No apps');const o=$('awEmpty').querySelector('button');if(o)o.remove();if(q&&DC!=='Contacts'){const b=document.createElement('button');b.type='button';b.textContent='Search the web';b.onclick=()=>webSearch(q);$('awEmpty').appendChild(b)}}
  paint()}
-function open(){modeOff();menuOff();$('q').value='';qi.value='';sbar.classList.remove('on');DC='All';ctSync();dr.classList.add('open');layout();stagger=!RMo&&CFG.openAnim!==false;foc=-1;bdPull();bdSnap();build();stagger=false;bdStart();try{vib(12)}catch(_){}}
-function stop(){modeOff();menuOff();mode='';clearInterval(bdT);cancelAnimationFrame(raf);raf=0;drag=null;sbar.classList.remove('on');bub.classList.remove('on')}
+function open(){modeOff();menuOff();$('q').value='';qi.value='';sbar.classList.remove('on');DC='All';ctSync();dr.classList.add('open');layout();FXE('open');stagger=!RMo&&CFG.openAnim!==false;foc=-1;bdPull();bdSnap();build();stagger=false;bdStart();try{vib(12)}catch(_){}}
+function stop(){FXE('close');modeOff();menuOff();mode='';clearInterval(bdT);cancelAnimationFrame(raf);raf=0;drag=null;sbar.classList.remove('on');bub.classList.remove('on')}
 /* v1.55: repaint the arc badges when the page is handed new notification counts */
 ['setBadges','onBadges'].forEach(k=>{const f=window[k];if(typeof f==='function')window[k]=function(){const r=f.apply(this,arguments);try{if(isOpen())bdRefresh()}catch(e){}return r}});
+window.AWDES={get:()=>DES,set:d=>{if(!DESIGNS.includes(d)||d===DES)return;DES=d;try{localStorage.setItem('yoga-ddes',d)}catch(e){}paint.p=null;if(isOpen()){els.forEach(e=>e.remove());els.clear();foc=-1;layout();paint()}else root.dataset.des=d}};
+window.AWENG={st:()=>({pos,vel,mode,foc,W,H,DES,N:list.length,drag:!!drag,open:isOpen()}),slot:(r,i)=>slotD(r,i),els,fi:()=>fi,nm:()=>nm,root:()=>root,icy:()=>ICY};
 YD.open=open;YD.stop=stop;YD.build=build;YD.relayout=()=>{if(isOpen()){layout();paint()}};YD.glide=glide;YD.cur=()=>cur();YD.fx=()=>{};YD.st={foc:-1,els:[]};
 new ResizeObserver(()=>{if(isOpen()){layout();paint()}}).observe(root);
 /* drag the wave */
-root.addEventListener('pointerdown',e=>{moved=false;if(e.target.closest('.awb,#awRail,#awSearch,#awFi,#awNm,#awCa,#awCfg,#awCfgBtn,#awTools,#awSortMenu,#awMv,#awSb'))return;drag={y:e.clientY,p:pos,t:e.timeStamp,ly:e.clientY,lt:e.timeStamp,v:0};mode='';});
-root.addEventListener('pointermove',e=>{if(window.DRG&&DRG.on){drag=null;return}if(!drag)return;const dy=e.clientY-drag.y;if(Math.abs(dy)>7)moved=true;if(!moved)return;const N=list.length;pos=clamp(drag.p-dy/(STEP*H),-.35,N-.65);
- const dt=e.timeStamp-drag.lt;if(dt>0){drag.v=.6*drag.v+.4*(-(e.clientY-drag.ly)/(STEP*H)/(dt/1000));drag.ly=e.clientY;drag.lt=e.timeStamp}paint()});
-const end=()=>{if(!drag)return;const d=drag;drag=null;if(!moved)return;vel=clamp(d.v,-26,26);if(Math.abs(vel)>3)go('fling');else glide(Math.round(pos))};
+root.addEventListener('pointerdown',e=>{moved=false;if(e.target.closest('.awb,#awRail,#awSearch,#awFi,#awNm,#awCa,#awCfg,#awCfgBtn,#awTools,#awSortMenu,#awMv,#awSb'))return;drag={x:e.clientX,y:e.clientY,p:pos,t:e.timeStamp,ly:e.clientY,lt:e.timeStamp,v:0};mode='';FXE('down',{x:e.clientX,y:e.clientY});});
+root.addEventListener('pointermove',e=>{if(window.DRG&&DRG.on){drag=null;return}if(!drag)return;const dy=e.clientY-drag.y;if(Math.abs(dy)>7)moved=true;if(!moved)return;root.classList.add('busy');const N=list.length;pos=clamp(drag.p-dy/(STEP*H),-.35,N-.65);
+ const dt=e.timeStamp-drag.lt;if(dt>0){drag.v=.6*drag.v+.4*(-(e.clientY-drag.ly)/(STEP*H)/(dt/1000));drag.ly=e.clientY;drag.lt=e.timeStamp}paint();FXE('drag',{v:drag.v})});
+const end=()=>{if(!drag)return;const d=drag;drag=null;if(!moved){busyOff();FXE('tap',{x:d.x,y:d.y});return}vel=clamp(d.v,-26,26);FXE('release',{v:vel,fling:Math.abs(vel)>3});if(Math.abs(vel)>3)go('fling');else glide(Math.round(pos))};
 root.addEventListener('pointerup',end);root.addEventListener('pointercancel',end);
 root.addEventListener('click',e=>{if(moved){e.stopPropagation();e.preventDefault();moved=false}},true);
 root.addEventListener('wheel',e=>{e.preventDefault();glide(Math.round(tgt||pos)+(e.deltaY>0?1:-1))},{passive:false});
@@ -7172,14 +7201,11 @@ const st=document.createElement('style');st.textContent=`
 #aw #awRail div{font-size:calc(14px*var(--awl,1))}
 #aw.norail #awRail,#aw.norail #awCfgRailGuides{display:none}`;
 document.head.appendChild(st);
-const SH=[
- ['Mode',[],[['minimal','Minimalistic mode (apps and A-Z only)']],[]],
- ['Apps',[['lineX','Line position',.5,.95,.01],['lineC','Line curve',0,3.5,.05],['step','App spacing',.07,.2,.002],['icS','Icon size',.6,1.5,.05],['focS','Selected icon size',.7,1.6,.05],['nmS','Name size',.6,1.5,.05],['glide','Scroll glide',.01,.3,.01],['snapS','Snap speed',6,24,1]],[['names','Show app names'],['tapSel','Tap selects before opening'],['openAnim','Open animation']],[['shape','Icon shape',[['auto','Mixed'],['ci','Circle'],['sq','Squircle'],['rs','Square']]]]],
- ['Dial',[['dialX','Dial position',.15,.65,.01],['dialR','Dial size',.25,.65,.01],['btnS','Button size',.7,1.4,.05]],[['scan','Scan line'],['anim','Animations'],['wedge','Dial strip'],['rings','Dial rings and marks'],['bCt','Contacts button'],['bEdit','Options button'],['bStar','Pin button'],['bHome','Add-to-home button'],['bPlay','Play Store button'],['bInfo','App info button'],['bDel','Uninstall button']],[]],
- ['Letters',[['ltrR','Letters curve',.3,.9,.01],['ltrX','Letters shift',-40,80,1],['ltrS','Letters size',.6,1.6,.05]],[['rail','Show A-Z'],['bub','Letter bubble']],[]],
- ['Look',[['dim','Background dim',0,.7,.02]],[['gloss','Glossy icons'],['dof','Depth blur'],['float','Floating selected icon'],['lines','Arc lines'],['hapx','Haptic ticks'],['tools','Sort, Reorder and Select buttons'],['bdot','Notification dots and counts'],['bnew','NEW badges']],[]]];
-const QK=['lineX','step','icS','dialX','dialR','btnS'],QS=[];SH.forEach(g=>g[1].forEach(r=>{if(QK.includes(r[0]))QS[QK.indexOf(r[0])]=r}));
-SH.unshift(['Quick',QS,[['names','Show app names'],['rail','Show A-Z']],[],1]);SH[SH.findIndex(g=>g[0]==='Look')].push(1);
+const SH=[['Quick',[['lineX','Line position (Thumb arc)',.5,.95,.01],['step','App spacing',.07,.2,.002],['icS','Icon size',.6,1.5,.05],['nmS','Name size',.6,1.5,.05]],[['names','Show app names'],['rail','Show A-Z'],['hapx','Haptic ticks'],['tools','Sort, Reorder and Select buttons'],['bdot','Notification dots and counts'],['bnew','NEW badges']],[],1]];
+const fxRow=bd=>{const F=window.AWFX;if(!F)return;bd.querySelectorAll('.r').forEach(x=>{const l=x.querySelector('label');if(l&&l.textContent==='Intensity')x.classList.add('fxlv')});const r=document.createElement('div');r.className='hint';r.id='awFxSt';
+ const paintSt=()=>{const s=F.status();r.textContent=s.user===0?'FX are off.':(s.rm?'Reduced motion is on: FX use static fallbacks.':s.cap<s.user?'Auto-protect eased FX to '+['Off','Subtle','Balanced','Experimental'][s.cap]+' because frames dropped.':'Running at '+['Off','Subtle','Balanced','Experimental'][s.eff]+'. Auto-protect watches frame rate during gestures.')+(s.mode?' ('+s.mode+' mode)':'')};paintSt();bd.appendChild(r);
+ if(CFG.fxOn!==false&&F.status().cap<F.status().user){const b=document.createElement('button');b.type='button';b.textContent='Re-test FX';b.style.cssText='margin:6px 0 2px;border:0;border-radius:10px;padding:7px 12px;font:700 12px var(--f);color:#fff;background:rgba(var(--c1rgb),.45)';b.onclick=()=>{F.retest();draw()};bd.appendChild(b)}};
+const SH2=['FX',[],[['fxOn','Reactive Matter FX'],['fxAuto','Auto-protect (ease FX if frames drop)'],['fx_ripple','Liquid touch ripple'],['fx_magnet','Magnetic selection'],['fx_holo','Holographic snap'],['fx_trace','Energy trace']],[['fxLevel','Intensity',[['off','Off'],['subtle','Subtle'],['balanced','Balanced'],['exp','Experimental']]]],0,fxRow];SH.push(SH2);
 const ACC=['','#ff6b6b','#ffb347','#f0c75e','#7df97f','#5ec8ff','#b58cff','#ff7ad9'];
 const btn=document.createElement('button');btn.id='awCfgBtn';btn.className='awb';btn.type='button';btn.setAttribute('aria-label','Arc settings');btn.setAttribute('aria-expanded','false');btn.title='Arc settings';
 btn.innerHTML='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
@@ -7197,7 +7223,7 @@ function apply(){
  root.style.setProperty('--awi',CFG.icS);root.style.setProperty('--awn',CFG.nmS);root.style.setProperty('--awl',CFG.ltrS);
  if(CFG.acc){root.style.setProperty('--c1',CFG.acc);const h=CFG.acc.replace('#','');root.style.setProperty('--c1rgb',[0,2,4].map(i=>parseInt(h.substr(i,2),16)).join(','))}
  else{root.style.removeProperty('--c1');root.style.removeProperty('--c1rgb')}
- try{layout();arcRail();paint()}catch(e){}try{bdRefresh()}catch(e){}}
+ try{layout();arcRail();paint()}catch(e){}try{bdRefresh()}catch(e){}try{window.AWFX&&AWFX.cfg()}catch(e){}}
 function draw(){
  tb.innerHTML='';SH.forEach((g,i)=>{const b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-selected',String(i===tab));b.textContent=g[0];b.className=i===tab?'on':'';b.onclick=()=>{tab=i;draw()};tb.appendChild(b)});
  const ta=tb.querySelector('.on');if(ta)tb.scrollLeft=Math.max(0,ta.offsetLeft-12);
@@ -7213,7 +7239,8 @@ function draw(){
  g[2].forEach(([k,l])=>{const r=document.createElement('div');r.className='r';r.innerHTML='<label>'+l+'</label><input type="checkbox"'+(CFG[k]?' checked':'')+'>';r.querySelector('input').onchange=e=>{CFG[k]=e.target.checked;save();apply()};bd.appendChild(r)});
  (g[3]||[]).forEach(([k,l,opts])=>{const r=document.createElement('div');r.className='r';r.innerHTML='<label>'+l+'</label><div class="sw"></div>';const w=r.querySelector('.sw');opts.forEach(([v,t])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.style.cssText='border:0;border-radius:10px;padding:6px 10px;font:700 12px var(--f);color:#fff;background:'+((CFG[k]||'auto')===v?'rgba(var(--c1rgb),.45)':'rgba(255,255,255,.1)');b.onclick=()=>{CFG[k]=v;save();apply();draw()};w.appendChild(b)});bd.appendChild(r)});
  if(g[4]){const r=document.createElement('div');r.className='r';r.innerHTML='<label>Accent</label><div class="sw"></div>';const sw=r.querySelector('.sw');
-  ACC.forEach(c=>{const i=document.createElement('i');i.style.background=c||'#7df9ff';i.title=c||'Default';if((CFG.acc||'')===c)i.className='on';i.onclick=()=>{CFG.acc=c;save();apply();draw()};sw.appendChild(i)});bd.appendChild(r)}}
+  ACC.forEach(c=>{const i=document.createElement('i');i.style.background=c||'#7df9ff';i.title=c||'Default';if((CFG.acc||'')===c)i.className='on';i.onclick=()=>{CFG.acc=c;save();apply();draw()};sw.appendChild(i)});bd.appendChild(r)}
+ if(typeof g[5]==='function'){try{g[5](bd)}catch(e){}}}
 const openP=()=>{draw();pn.classList.add('on')},closeP=()=>pn.classList.remove('on');
 btn.onclick=()=>{pn.classList.contains('on')?closeP():openP()};
 new MutationObserver(()=>{const on=pn.classList.contains('on');btn.classList.toggle('on',on);btn.setAttribute('aria-expanded',String(on));if(!on&&pn.classList.contains('scrub'))pn.classList.remove('scrub')}).observe(pn,{attributes:true,attributeFilter:['class']});
@@ -7226,6 +7253,239 @@ apply();
 })();
 </script>
 
+<style id="v182-fx">
+/* Reactive Matter (v1.82): host for the optional FX layers. Nothing here animates by itself. */
+#awFx{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden;contain:layout paint style}
+#awFx>*{position:absolute;pointer-events:none}
+/* FX tab in Arc settings: the four presets share one full-width row (2x2 on very narrow screens) */
+#awCfg .r.fxlv{display:block}#awCfg .r.fxlv label{display:block;margin-bottom:6px}
+#awCfg .r.fxlv .sw{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:100%}
+#awCfg .r.fxlv .sw button{min-width:0;padding:9px 2px!important;font-size:11px!important}
+@media(max-width:419px){#awCfg .r.fxlv .sw{grid-template-columns:repeat(2,1fr)}}
+</style>
+<script id="v182-reactive-matter">
+/* Reactive Matter: signature FX for the Arc drawer, built as optional layers on top of the shared engine.
+   The engine (pos, slotD, paint) only emits read-only events (open, close, select, down, drag, release, tap, snap) and exposes AWENG.
+   This core owns: the master switch + presets, reduced motion, one shared frame ticker that stops by itself, cleanup, and the frame-rate guard.
+   Layers register with AWFX.layer(id,{min,rm,on:{...},stop}). A layer that throws is switched off for the session. */
+(()=>{'use strict';
+const dr=document.getElementById('drawer'),root=document.getElementById('aw');
+if(!dr||!root||window.AWFX)return;
+const LVN=['off','subtle','balanced','exp'],LV={off:0,subtle:1,balanced:2,exp:3},KK=[0,.55,.8,1];
+const rmQ=matchMedia('(prefers-reduced-motion:reduce)');
+const layers=new Map(),tasks=new Set(),touched=new Map(),subs=new Set();
+let cap=3,eff=0,user=0,raf=0,lastT=0,skip=0,ring=[],bad=0,rm=rmQ.matches,host=null,notified=false,fps=0;
+const isOpen=()=>dr.classList.contains('open');
+const CFG=()=>{try{return window.AWCFG?AWCFG.get():{}}catch(e){return {}}};
+const SK='aw-fxcap';
+const loadCap=u=>{try{const o=JSON.parse(localStorage.getItem(SK));if(o&&o.lv===u&&o.cap>=0&&o.cap<=3)return o.cap}catch(e){}return 3};
+const saveCap=()=>{try{localStorage.setItem(SK,JSON.stringify({lv:user,cap}))}catch(e){}};
+/* Minimal mode turns FX off. Performance mode is set automatically on Android, so it does not cap the level the person chose; the frame guard does that job. */
+const modeCap=()=>document.documentElement.classList.contains('minimal')?0:3;
+let lastUser=-1;
+function cfg(){const c=CFG();user=c.fxOn===false?0:(LV[c.fxLevel]!=null?LV[c.fxLevel]:1);
+ if(user!==lastUser){cap=loadCap(user);lastUser=user;ring=[];bad=0}
+ const n=Math.min(user,cap,modeCap());if(n!==eff){eff=n;if(!eff)settle();else layers.forEach(L=>{if(!on(L))stopL(L)})}
+ subs.forEach(f=>{try{f(status())}catch(e){}})}
+function status(){const m=modeCap();return {user,eff,cap,rm,auto:CFG().fxAuto!==false,fps,mode:m===0?'Minimal':''}}
+const k=()=>KK[eff]||0;
+const on=L=>!L.dead&&eff>=L.def.min&&CFG()['fx_'+L.id]!==false&&(!rm||L.def.rm);
+function layer(id,def){if(layers.has(id))return;layers.set(id,{id,def:Object.assign({min:1,rm:false},def),act:false,dead:false})}
+function stopL(L){if(!L.act)return;L.act=false;try{L.def.stop&&L.def.stop()}catch(e){fail(L,e)}}
+function fail(L,e){L.dead=true;L.act=false;try{window.ERR&&ERR(e,'fx:'+L.id)}catch(_){}}
+function hostEl(){if(!host||!host.isConnected){host=document.createElement('div');host.id='awFx';host.setAttribute('aria-hidden','true');root.appendChild(host)}return host}
+/* icons or panels a layer styles inline are recorded here, so settle() can always put them back */
+function mark(el,prop){if(!el)return;let m=touched.get(el);if(!m){m=new Set();touched.set(el,m)}m.add(prop)}
+function reset(){touched.forEach((m,el)=>{m.forEach(p=>{try{el.style[p]=''}catch(e){}})});touched.clear()}
+function settle(){tasks.clear();if(raf){cancelAnimationFrame(raf);raf=0}layers.forEach(stopL);reset();if(host){host.textContent=''}}
+/* one shared frame loop: it exists only while some effect has work to do */
+function tick(fn){tasks.add(fn);if(!raf){lastT=performance.now();skip=3;raf=requestAnimationFrame(frame)}return()=>tasks.delete(fn)}
+function frame(t){raf=0;const dt=Math.min(100,t-lastT);lastT=t;
+ if(!isOpen()||document.hidden||!eff){settle();return}
+ if(skip>0)skip--;else sample(dt);
+ tasks.forEach(fn=>{let r;try{r=fn(dt,t)}catch(e){r=false;layers.forEach(L=>{if(L.act)fail(L,e)})}if(r===false)tasks.delete(fn)});
+ if(tasks.size)raf=requestAnimationFrame(frame);else{reset()}}
+/* frame-rate guard: 24 frames averaged; two slow windows in a row ease the level by one step (Experimental > Balanced > Subtle > Off) */
+function sample(dt){ring.push(dt);if(ring.length<24)return;const a=ring.reduce((x,y)=>x+y,0)/ring.length;ring=[];fps=Math.round(1000/a);
+ if(CFG().fxAuto===false){bad=0;return}
+ if(a>26){bad++;if(bad>=2){bad=0;ease()}}else bad=0}
+function ease(){const n=Math.max(0,Math.min(cap,eff)-1);if(n===cap&&cap===eff)return;cap=n;saveCap();cfg();
+ if(!notified){notified=true;try{window.toast&&toast(eff?'FX eased for smoother scrolling':'FX turned off to keep scrolling smooth')}catch(e){}}}
+function retest(){cap=3;ring=[];bad=0;notified=false;saveCap();cfg()}
+function dispatch(evt,a){
+ if(evt==='close'){settle();return}
+ if(!eff)return;
+ if(evt==='down'){layers.forEach(L=>{if(L.act&&L.def.keep!==true)stopL(L)});tasks.clear();reset()}
+ layers.forEach(L=>{const h=L.def.on&&L.def.on[evt];if(!h||!on(L))return;try{L.act=true;h(a,{k:k(),rm,eff,id:L.id})}catch(e){fail(L,e)}})}
+rmQ.addEventListener&&rmQ.addEventListener('change',()=>{rm=rmQ.matches;settle();cfg()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)settle()});
+window.AWFX={layer,on:dispatch,tick,host:hostEl,mark,settle,cfg,status,retest,k,rm:()=>rm,sub:f=>{subs.add(f);return()=>subs.delete(f)},_sample:sample,_layers:layers,_busy:()=>tasks.size+(raf?1:0)+touched.size};
+cfg();
+})();
+</script>
+<script id="v182-fx-ripple">
+/* Reactive Matter 1: liquid touch ripple. Press and hold on the wave: a thin ring spreads from the finger and the icons near it
+   are nudged by a travelling wave (individual `translate`, never the drawer's transform string). Starts after a short hold so
+   swipes and quick taps never flash it; a drag cancels it. The selected icon is never moved. Reduced motion: a still ring that fades. */
+(()=>{'use strict';const F=window.AWFX,E=window.AWENG;if(!F||!E)return;
+const DUR=520,HOLD=70;let timer=0,ring=null,un=null,moved=[];
+const clean=()=>{clearTimeout(timer);timer=0;if(un){un();un=null}if(ring){ring.remove();ring=null}moved.forEach(e=>{e.style.translate=''});moved=[]};
+function start(x,y,c){
+ const s=E.st();if(!s.open)return;const rr=E.root().getBoundingClientRect(),px=x-rr.left,py=y-rr.top,host=F.host();
+ ring=document.createElement('i');ring.style.cssText='left:'+px+'px;top:'+py+'px;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;border:1.5px solid rgba(var(--c1rgb),.7);box-shadow:0 0 10px rgba(var(--c1rgb),.35);opacity:0';
+ host.appendChild(ring);
+ const A=7*c.k,R=.55*Math.min(s.W,s.H),SIG=34;let t=0;
+ un=F.tick(dt=>{t+=dt;if(t>=DUR||(window.DRG&&DRG.on)){clean();return false}/* the app's own hold-to-drag took the touch: let go at once */
+  const env=Math.exp(-t/260),f=t*.55,life=1-t/DUR;
+  ring.style.opacity=(.6*env*life).toFixed(3);ring.style.transform=c.rm?'none':'scale('+(1+f/14).toFixed(2)+')';
+  if(c.rm)return true;
+  const st=E.st();moved=moved.filter(e=>e.isConnected);
+  E.els.forEach((e,i)=>{if(i===st.foc)return;const o=+e.style.opacity;if(!(o>.05))return;
+   const p=E.slot(i-st.pos,i),dx=p[0]-px,dy=p[1]-py,d=Math.hypot(dx,dy);if(d<1||d>R)return;
+   const q=(d-f)/SIG,v=A*env*(-q)*Math.exp(-q*q)*1.65*(1-d/R),m=Math.max(-A*1.2,Math.min(A*1.2,v));
+   e.style.translate=(dx/d*m).toFixed(2)+'px '+(dy/d*m).toFixed(2)+'px';F.mark(e,'translate');if(!moved.includes(e))moved.push(e)});
+  return true})}
+F.layer('ripple',{min:1,rm:true,
+ on:{down:(a,c)=>{clean();timer=setTimeout(()=>{timer=0;start(a.x,a.y,c)},HOLD)},drag:()=>clean(),release:()=>clean(),select:()=>clean()},
+ stop:clean});
+})();
+</script>
+<script id="v182-fx-magnet">
+/* Reactive Matter 2: magnetic selection. When the selected app changes, the icons next to it lean toward it for a moment and settle
+   back (individual `translate`, never the drawer's transform string, never the selected icon). Event-driven: it runs only for about
+   0.45 s after a selection change and is cancelled by the next touch, the close of the drawer, or turning the effect off. */
+(()=>{'use strict';const F=window.AWFX,E=window.AWENG;if(!F||!E)return;
+const DUR=460,MIN_GAP=140,OPEN_QUIET=650;let un=null,moved=[],last=0,openAt=0;
+const clean=()=>{if(un){un();un=null}moved.forEach(e=>{e.style.translate=''});moved=[]};
+function pull(c){
+ const s=E.st();if(!s.open||s.foc<0||(window.DRG&&DRG.on))return;
+ const now=performance.now();if(now-openAt<OPEN_QUIET)return;     /* the opening cascade is not a selection */
+ if(un&&now-last<MIN_GAP)return;                                    /* fast scrolling: keep the running pulse, never stack them */
+ last=now;clean();
+ const A=9*c.k,fc=E.slot(0,s.foc),RR=.38*s.H;let t=0;
+ un=F.tick(dt=>{t+=dt;if(t>=DUR){clean();return false}
+  const st=E.st();if(!st.open){clean();return false}
+  const env=Math.exp(-t/190),w=Math.cos(t*.016)*env*Math.min(1,t/40);           /* lean in, a small rebound outward, rest */
+  moved=moved.filter(e=>e.isConnected);
+  E.els.forEach((e,i)=>{if(i===st.foc)return;const o=+e.style.opacity;if(!(o>.05))return;
+   const p=E.slot(i-st.pos,i),dx=fc[0]-p[0],dy=fc[1]-p[1],d=Math.hypot(dx,dy);if(d<1||d>RR)return;
+   const q=d/RR,m=A*w*(1-q*q);e.style.translate=(dx/d*m).toFixed(2)+'px '+(dy/d*m).toFixed(2)+'px';F.mark(e,'translate');if(!moved.includes(e))moved.push(e)});
+  return true})}
+F.layer('magnet',{min:1,rm:false,
+ on:{open:()=>{openAt=performance.now()},select:(a,c)=>pull(c),drag:()=>{},release:()=>{}},
+ stop:clean});
+})();
+</script>
+<style id="v182-fx-holo-css">
+/* holographic snap frame: brackets use the same radius as the icon frame; colours come from --c1 / --c1rgb only */
+#awFx .hbox{display:block}
+#awFx .hbox>i{position:absolute;display:block;pointer-events:none}
+#awFx .hhair{inset:0;border:1px solid rgba(var(--c1rgb),.55);border-radius:var(--hr);opacity:0}
+#awFx .hc{width:var(--ha);height:var(--ha);opacity:0;border:0 solid;border-color:var(--c1)}
+#awFx .hc.tl{left:0;top:0;border-width:1.5px 0 0 1.5px;border-top-left-radius:var(--hr)}
+#awFx .hc.tr{right:0;top:0;border-width:1.5px 1.5px 0 0;border-top-right-radius:var(--hr)}
+#awFx .hc.bl{left:0;bottom:0;border-width:0 0 1.5px 1.5px;border-bottom-left-radius:var(--hr)}
+#awFx .hc.br{right:0;bottom:0;border-width:0 1.5px 1.5px 0;border-bottom-right-radius:var(--hr)}
+#awFx .hc.hg{box-shadow:0 0 9px rgba(var(--c1rgb),.4)}
+</style>
+<script id="v182-fx-holo">
+/* Reactive Matter 3: holographic snap. While the wave settles on an app, a thin --c1 frame assembles around the selected icon:
+   four corner brackets slide in from slightly outside, a hairline joins them (Balanced and Experimental), then the frame fades.
+   About 0.8 s in total, then it removes itself. It is armed by the engine's snap / fling-release events, waits for the wave to be
+   close to rest, and is cancelled by the next touch, a drag, the close of the drawer, or a selection of another app.
+   Overlay elements only: it never touches icons, pos, slot(), paint() or the drawer's transform string.
+   Reduced motion: the same frame appears and fades without any movement. */
+(()=>{'use strict';const F=window.AWFX,E=window.AWENG;if(!F||!E)return;
+const T_IN=260,T_HOLD=300,T_OUT=300,WAIT=1100,WAIT_FLING=2600,PAD=5;
+let un=null,box=null,cs=[],hair=null,shown=-1;
+const clean=()=>{if(un){un();un=null}if(box){box.remove();box=null}cs=[];hair=null;shown=-1};
+const DIR=[[-1,-1],[1,-1],[-1,1],[1,1]];
+function nameRect(){const n=E.nm();if(!n||!n.firstChild||!n.offsetWidth)return null;   /* layout box (the engine centres it on left/top): not affected by its pop animation */
+ const x=parseFloat(n.style.left),y=parseFloat(n.style.top);if(!(x>=0)||!(y>=0))return null;const w=n.offsetWidth,h=n.offsetHeight;return {l:x-w/2,r:x+w/2,t:y-h/2,b:y+h/2}}
+function build(c,st){
+ const fi=E.fi(),ic=fi&&fi.querySelector('.ic');if(!ic)return false;
+ const rs=parseFloat(getComputedStyle(E.root()).getPropertyValue('--awi'))||1,w=(ic.offsetWidth||64)*rs,h=(ic.offsetHeight||64)*rs;
+ const cx=parseFloat(fi.style.left)||fi.offsetLeft+fi.offsetWidth/2,cy=parseFloat(fi.style.top)||fi.offsetTop+fi.offsetHeight/2;   /* centre the engine laid the selected icon at (layout, not affected by its pop animation) */
+ /* the selected name must stay readable: only the side of the frame that faces the name (below it in Arc, Wave, beside it in Orbit, above it in Fan) is pulled in */
+ const nr=nameRect();let pl=PAD,pr=PAD,pt=PAD,pb=PAD;
+ if(nr){const nl=nr.l+2,nrr=nr.r-2,nt=nr.t+2,nb=nr.b-2,cl=(a,lo,hi)=>Math.max(lo,Math.min(hi,a));   /* the name's own padding may be grazed by 2px, the text never */
+  if(cx-w/2-PAD<nrr&&cx+w/2+PAD>nl&&cy-h/2-PAD<nb&&cy+h/2+PAD>nt){
+   if(Math.abs((nl+nrr)/2-cx)>=Math.abs((nt+nb)/2-cy)){if(nl>cx)pr=cl(nl-(cx+w/2),0,PAD);else pl=cl(cx-w/2-nrr,0,PAD)}
+   else{if(nt>cy)pb=cl(nt-(cy+h/2),0,PAD);else pt=cl(cy-h/2-nb,0,PAD)}}}
+ const W=w+pl+pr,H=h+pt+pb,r=Math.round(w*.27+PAD);
+ box=document.createElement('i');box.className='hbox';box.style.cssText='left:'+(cx-w/2-pl).toFixed(1)+'px;top:'+(cy-h/2-pt).toFixed(1)+'px;width:'+W.toFixed(1)+'px;height:'+H.toFixed(1)+'px;border-radius:'+r+'px;--hr:'+r+'px;--ha:'+Math.min(r,Math.round(Math.min(W,H)*.34))+'px';
+ if(c.k>=.8){hair=document.createElement('i');hair.className='hhair';box.appendChild(hair)}else hair=null;
+ cs=['tl','tr','bl','br'].map(n=>{const e=document.createElement('i');e.className='hc '+n+(c.k>=1?' hg':'');box.appendChild(e);return e});
+ F.host().appendChild(box);shown=st.foc;return true}
+function frame(t,c){
+ const e=1-Math.pow(1-Math.min(1,t/T_IN),3),life=t<T_IN+T_HOLD?1:Math.max(0,1-(t-T_IN-T_HOLD)/T_OUT),al=(.5+.4*c.k)*life;
+ const sp=c.rm?0:(9+9*c.k)*(1-e);
+ cs.forEach((el,i)=>{el.style.opacity=(al*Math.min(1,t/110)).toFixed(3);el.style.transform=sp?'translate('+(DIR[i][0]*sp).toFixed(1)+'px,'+(DIR[i][1]*sp).toFixed(1)+'px)':'none'});
+ if(hair)hair.style.opacity=(life*Math.max(0,Math.min(1,(t-T_IN*.55)/T_IN))).toFixed(3)}
+function arm(to,c){
+ clean();let w=0,t=0,ph=0,tgt=to,lim=to==null?WAIT_FLING:WAIT;
+ un=F.tick(dt=>{const st=E.st();if(!st.open||st.drag){clean();return false}
+  if(ph===0){w+=dt;
+   if(tgt==null){if(st.mode==='fling'){if(w>lim){clean();return false}return true}tgt=Math.round(st.pos)}
+   if(Math.abs(st.pos-tgt)<.4||!st.mode){if(st.N<1||!build(c,st)){clean();return false}ph=1;frame(0,c);return true}
+   if(w>lim){clean();return false}return true}
+  t+=dt;if(t>=T_IN+T_HOLD+T_OUT){clean();return false}
+  frame(t,c);return true})}
+F.layer('holo',{min:1,rm:true,
+ on:{snap:(a,c)=>arm(a.to,c),release:(a,c)=>{if(a&&a.fling)arm(null,c)},drag:clean,open:clean,
+  select:a=>{if(box&&a&&a.i!==shown)clean()}},   /* another app became selected while the frame is showing */
+ stop:clean});
+})();
+</script>
+<style id="v182-fx-trace-css">
+/* energy trace: a short row of soft dots; colours come from --c1 / --c1rgb only */
+#awFx .etr{left:0;top:0;width:0;height:0;display:block}
+#awFx .etr>i{position:absolute;left:0;top:0;display:block;width:var(--es,6px);height:var(--es,6px);margin:calc(var(--es,6px)/-2) 0 0 calc(var(--es,6px)/-2);border-radius:50%;background:rgba(var(--c1rgb),.92);opacity:0;pointer-events:none}
+#awFx .etr.eg>i{box-shadow:0 0 7px rgba(var(--c1rgb),.55)}
+</style>
+<script id="v182-fx-trace">
+/* Reactive Matter 4: energy trace. During a fast swipe or fling, a short accent trail follows the selected slot: a few soft dots laid
+   along the wave path behind it, longer and brighter the faster the gesture is. It starts only when the swipe is fast, fades by itself
+   when the speed drops, and is removed at once by the next touch, the close of the drawer, a selection of FX Off or the switch.
+   Overlay elements only (opacity + one transform string per dot): it never touches icons, pos, slot(), paint() or the drawer's transform.
+   Dots that would land on the selected icon, the selected name or the A-Z strip are hidden. Not run under reduced motion. */
+(()=>{'use strict';const F=window.AWFX,E=window.AWENG;if(!F||!E)return;
+const START=4.2,V0=3,V1=10,MAXT=3200,STALE=90,PADN=7,PADR=8;
+let un=null,box=null,dots=[],lastV=0,lastT=0;
+const clean=()=>{if(un){un();un=null}if(box){box.remove();box=null}dots=[]};
+const rel=(el,rr)=>{if(!el)return null;const b=el.getBoundingClientRect();return b.width?{l:b.left-rr.left,r:b.right-rr.left,t:b.top-rr.top,b:b.bottom-rr.top}:null};
+const inside=(x,y,q,p)=>q&&x>q.l-p&&x<q.r+p&&y>q.t-p&&y<q.b+p;
+function start(c){
+ if(un)return;const s=E.st();if(!s.open||(window.DRG&&DRG.on))return;
+ const N=c.k>=1?8:c.k>=.8?6:4;
+ box=document.createElement('i');box.className='etr'+(c.k>=1?' eg':'');
+ for(let j=0;j<N;j++){const d=document.createElement('i');d.style.setProperty('--es',(7.5-j*(4.5/N)).toFixed(1)+'px');box.appendChild(d);dots.push(d)}
+ F.host().appendChild(box);
+ const root=E.root(),rail=root.querySelector('#awRail'),fi=E.fi(),ic=fi&&fi.querySelector('.ic');
+ const rs=parseFloat(getComputedStyle(root).getPropertyValue('--awi'))||1,half=Math.max(ic?ic.offsetWidth:64,ic?ic.offsetHeight:64)*rs/2+5;
+ let rr=root.getBoundingClientRect(),rq=rel(rail,rr),nq=null,age=0,fr=0,lv=0,idle=0,dir=1;
+ const nameQ=()=>{const n=E.nm();if(!n||!n.firstChild||!n.offsetWidth)return null;const x=parseFloat(n.style.left),y=parseFloat(n.style.top);if(!(x>=0)||!(y>=0))return null;const w=n.offsetWidth,h=n.offsetHeight;return {l:x-w/2,r:x+w/2,t:y-h/2,b:y+h/2}};
+ un=F.tick(dt=>{
+  age+=dt;const st=E.st();if(!st.open||age>MAXT||!box){clean();return false}
+  let sp=0,sg=dir;
+  if(st.drag){if(performance.now()-lastT<STALE){sp=Math.abs(lastV);sg=lastV<0?-1:1}}
+  else if(st.mode==='fling'){sp=Math.abs(st.vel);sg=st.vel<0?-1:1}
+  if(sp>1.5)dir=sg;
+  const tg=Math.max(0,Math.min(1,(sp-V0)/(V1-V0)));lv+=(tg-lv)*Math.min(1,dt/70);
+  if(tg===0&&lv<.04){idle+=dt;if(idle>60){clean();return false}}else idle=0;
+  if(!(fr++%8)){rr=root.getBoundingClientRect();nq=nameQ();rq=rel(rail,rr)}
+  const fc=E.slot(0,st.foc<0?0:st.foc),gap=.1+.09*lv,peak=(.3+.5*c.k)*lv,L=dots.length;
+  for(let j=0;j<L;j++){const d=dots[j],p=E.slot(dir*(.12+(j+1)*gap),st.foc<0?0:st.foc),x=p[0],y=p[1];
+   const hid=Math.hypot(x-fc[0],y-fc[1])<half||inside(x,y,nq,PADN)||inside(x,y,rq,PADR)||x<0||y<0||x>st.W||y>st.H;
+   d.style.opacity=hid?'0':(peak*(1-j/(L+1))).toFixed(3);
+   d.style.transform='translate3d('+x.toFixed(1)+'px,'+y.toFixed(1)+'px,0)'}
+  return true})}
+F.layer('trace',{min:1,rm:false,
+ on:{drag:(a,c)=>{lastV=a&&+a.v||0;lastT=performance.now();if(Math.abs(lastV)>=START)start(c)},
+  release:(a,c)=>{if(a&&a.fling){lastV=+a.v||0;lastT=performance.now();start(c)}},open:clean},
+ stop:clean});
+})();
+</script>
 <script>/*preview: demo apps*/(function(){var a=[{"n": "Calculator", "p": "com.demo.calculator"}, {"n": "Calendar", "p": "com.demo.calendar"}, {"n": "Camera", "p": "com.demo.camera"}, {"n": "Chrome", "p": "com.demo.chrome"}, {"n": "Clock", "p": "com.demo.clock"}, {"n": "Contacts", "p": "com.demo.contacts"}, {"n": "Drive", "p": "com.demo.drive"}, {"n": "Files", "p": "com.demo.files"}, {"n": "Gallery", "p": "com.demo.gallery"}, {"n": "Gmail", "p": "com.demo.gmail"}, {"n": "Maps", "p": "com.demo.maps"}, {"n": "Messages", "p": "com.demo.messages"}, {"n": "Music", "p": "com.demo.music"}, {"n": "Notes", "p": "com.demo.notes"}, {"n": "Phone", "p": "com.demo.phone"}, {"n": "Photos", "p": "com.demo.photos"}, {"n": "Play", "p": "com.demo.play"}, {"n": "Store", "p": "com.demo.store"}, {"n": "Settings", "p": "com.demo.settings"}, {"n": "Spotify", "p": "com.demo.spotify"}, {"n": "Weather", "p": "com.demo.weather"}, {"n": "WhatsApp", "p": "com.demo.whatsapp"}, {"n": "YouTube", "p": "com.demo.youtube"}, {"n": "Zoom", "p": "com.demo.zoom"}, {"n": "Authenticator", "p": "com.demo.authenticator"}, {"n": "Banking", "p": "com.demo.banking"}];function go(){if(window.Android)return;try{window.setApps(a)}catch(e){}}
 if(document.readyState==='complete')setTimeout(go,300);else addEventListener('load',function(){setTimeout(go,300)})})();</script>
 <style id="v61-aw-polish">
@@ -7425,14 +7685,14 @@ html.nbdoff #aw .awbd,html.shin #aw .awbd,html.shin #aw .awnw{display:none}
  const $=id=>document.getElementById(id),dr=$('drawer'),O=window.__YD0,box=$('drawerOpts');
  if(!dr||!O||!window.YD||!box)return;
  const A=Object.assign({},YD),K='yoga-dlay';
- let LAY='arc';try{const v=localStorage.getItem(K);LAY=v==='grid'||v==='crescent'?v:'arc'}catch(e){}
- const OPT=[['arc','Arc Wave'],['crescent','Crescent'],['grid','Grid'],['list','List'],['smart','Smart'],['pages','Pages']];
+ let LAY='arc';try{const v=localStorage.getItem(K);LAY=v==='grid'?v:'arc'}catch(e){}
+ const OPT=[['arc','Thumb arc'],['orbit','Orbit dial'],['wave','Wave ribbon'],['fan','Fan stack'],['grid','Grid'],['list','List'],['smart','Smart'],['pages','Pages']];
  const wrap=document.createElement('div');wrap.id='dLay';
  wrap.innerHTML='<div class="sl">Drawer layout</div><div class="seg" id="dLaySeg" role="group" aria-label="Drawer layout">'+OPT.map(([v,t])=>'<button type="button" data-v="'+v+'">'+t+'</button>').join('')+'</div>'
-  +'<div class="sl" id="dLayNote" style="opacity:.7">Arc Wave: apps flow along a curve with a dial. Crescent: the original curved wheel. Grid, List, Smart and Pages scroll the normal way.</div>';
+  +'<div class="sl" id="dLayNote" style="opacity:.7">Arc: apps flow along a curve (it replaces the old Crescent). Grid, List, Smart and Pages scroll the normal way.</div>';
  box.prepend(wrap);
  const arcRow=(()=>{const c=$('awMinSet');return c?c.closest('div'):null})();
- const cur=()=>LAY==='arc'?'arc':LAY==='crescent'?'crescent':(window.drawerStyle?drawerStyle.get():'grid');
+ const cur=()=>LAY==='arc'?(window.AWDES?AWDES.get():'arc'):LAY==='crescent'?'crescent':(window.drawerStyle?drawerStyle.get():'grid');
  function sync(){
   const c=cur();
   [...$('dLaySeg').children].forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===c)));
@@ -7440,6 +7700,7 @@ html.nbdoff #aw .awbd,html.shin #aw .awbd,html.shin #aw .awnw{display:none}
  }
  /* l: 'arc' | 'crescent' | 'grid' | 'list' | 'smart' | 'pages' */
  function use(l){
+  if(l==='orbit'||l==='wave'||l==='fan'||l==='arc'){try{AWDES.set(l)}catch(e){}l='arc'}
   const flat=l!=='arc',want=l==='crescent'?'arc':(l==='arc'?null:l);
   const lay=l==='arc'?'arc':l==='crescent'?'crescent':'grid';
   const was=dr.classList.contains('open');
@@ -8019,6 +8280,70 @@ place();setTimeout(place,600);new MutationObserver(place).observe(sh,{attributes
 #aw.rohint #awHint{display:block}
 #aw.rohint #awHint::before{content:"Drag the big icon"}
 #awSearch.on~#awHint{top:62px}
+</style>
+<style id="v178-drawer-pro">
+/* v1.78 Arc Wave drawer: professional finish. Rules use "#aw#aw" (double id) so they win over the older layers above without !important.
+   Keep this block last among the drawer styles. All colours come from the theme (--c1, --c1rgb). */
+/* app labels: plain dark pill, no live blur on a dozen moving elements */
+#aw#aw .awi span{background:rgba(8,10,12,.62);-webkit-backdrop-filter:none;backdrop-filter:none;padding:2px 9px;border-radius:10px;text-shadow:none}
+#aw#aw .awi{contain:layout style}
+/* decorative loops rest while the list is moving, so scrolling stays smooth */
+#aw.busy .jv-spin,#aw.busy .jv-spinr,#aw.busy .jv-pulse,#aw.busy .awo,#aw.busy #awScan{animation-play-state:paused!important}
+/* selected name: kept clear of the A-Z letters (placement is in the script) */
+#aw#aw #awNm{text-overflow:ellipsis}
+/* top tools: one tidy capsule instead of three loose pills */
+#aw#aw #awTools,#aw#aw #awMv{top:10px;right:12px;gap:0;padding:3px;border-radius:21px;border:1px solid rgba(var(--c1rgb),.34);background:rgba(10,12,14,.74);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 6px 18px rgba(0,0,0,.4)}
+#aw#aw #awTools button,#aw#aw #awMv button{height:36px;min-width:48px;padding:0 13px;border:0;border-radius:18px;background:none;-webkit-backdrop-filter:none;backdrop-filter:none;font:700 12px var(--f);letter-spacing:.2px;color:rgba(255,255,255,.9)}
+#aw#aw #awTools button+button,#aw#aw #awMv button+button{box-shadow:-1px 0 0 rgba(255,255,255,.09)}
+#aw#aw #awTools button:active,#aw#aw #awMv button:active{background:rgba(255,255,255,.12);transform:none}
+#aw#aw #awTools button[aria-pressed=true],#aw#aw #awTools button[aria-expanded=true]{background:rgba(var(--c1rgb),.28);box-shadow:none;color:#fff}
+#aw#aw #awMvX{color:var(--c1);font-weight:800}
+#aw#aw #awSearch.on~#awTools,#aw#aw #awSearch.on~#awMv{top:66px}
+/* sort menu sits right under the capsule */
+#aw#aw #awSortMenu{top:56px;right:12px;padding:6px;border-radius:18px;border:1px solid rgba(var(--c1rgb),.4);background:rgba(10,12,14,.94)}
+#aw#aw #awSearch.on~#awSortMenu{top:112px}
+#aw#aw #awSortMenu button{height:40px;border:0;background:none;font:600 13px var(--f)}
+/* select bar: one row, nothing cut off */
+#aw#aw #awSb{top:8px;left:10px;right:10px;height:44px;padding:3px 4px 3px 14px;gap:2px;flex-wrap:nowrap;align-items:center;border-radius:22px;border:1px solid rgba(var(--c1rgb),.42);background:rgba(10,12,14,.9)}
+#aw#aw #awSearch.on~#awSb{top:66px}
+#aw#aw #awSb b{flex:1 1 auto;min-width:0;padding:0;font:700 12.5px var(--f);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#aw#aw #awSb button{flex:none;height:36px;min-width:38px;padding:0 9px;border:0;border-radius:18px;background:none;-webkit-backdrop-filter:none;backdrop-filter:none;font:700 11.5px var(--f);color:rgba(255,255,255,.92);display:inline-flex;align-items:center;justify-content:center}
+#aw#aw #awSb button:disabled{opacity:.38}
+#aw#aw #awSbX{background:rgba(var(--c1rgb),.3);color:#fff}
+#aw#aw #awSbDel{color:#ff8a80}
+/* reorder hint: a caption under the capsule instead of text squeezed behind the buttons */
+#aw#aw.rohint #awHint{display:block;top:58px;left:auto;right:16px;max-width:none;height:auto;line-height:1.2;font:600 11px var(--f);color:rgba(255,255,255,.7);text-shadow:0 1px 3px #000}
+#aw#aw.rohint #awHint::before{content:"Drag the big icon, or use the arrows"}
+#aw#aw #awSearch.on~#awHint{top:114px}
+/* search field and its tools never touch the corner marks */
+#aw#aw #awSearch{top:10px;height:44px;border-radius:22px}
+</style>
+<style id="v179-drawers-simple">
+/* v1.79 simple + smooth: one calm look for every drawer layout */
+/* search box: the global input style (cyber theme) must not paint a second box inside the pill */
+html.cyber .ydr-search .in,html .ydr-search .in{background:none!important;border:0!important;box-shadow:none!important;border-radius:0}
+/* Select / Reorder: quiet capsule buttons, same language as the arc */
+.xtools .mini,.xtools .mini.xon{background:rgba(10,12,14,.72);color:rgba(255,255,255,.9);border:1px solid rgba(var(--c1rgb),.34);box-shadow:none;font-weight:700}
+.xtools .mini.xon,.xtools .mini[aria-pressed=true]{background:rgba(var(--c1rgb),.28);color:#fff}
+.drawer .xtools .mini,.drawer .xtools .mini.xon,.drawer .xtools .xselbtn,.drawer .xtools .xrobtn{background:rgba(10,12,14,.72)!important;color:rgba(255,255,255,.92)!important;border:1px solid rgba(var(--c1rgb),.34)!important;box-shadow:none!important;background-image:none!important}
+.drawer .xtools .mini[aria-pressed=true],.drawer .xtools .mini.xon{background:rgba(var(--c1rgb),.3)!important}
+/* crescent: long names shrink instead of breaking mid-word */
+.drawer .ydr-name{overflow-wrap:normal;word-break:normal;font-size:clamp(14px,5.4vw,19px)}
+/* v1.81 shared pieces of the four curved designs */
+#aw#aw #awPlay,#aw#aw #awInfo,#aw#aw #awDel{display:none!important}
+#aw#aw #awAct{position:absolute;z-index:4;display:flex;gap:10px}
+#aw#aw #awAct .awb{position:static;margin:0;width:44px;height:44px;border-radius:50%;border:1px solid rgba(var(--c1rgb),.4)!important;background:rgba(var(--c1rgb),.14);box-shadow:none;overflow:visible}
+#aw#aw #awAct .awb::after{display:none}
+#aw#aw #awAct .awb svg{width:22px;height:22px}
+#aw[data-des=orbit] .awi span,#aw[data-des=fan] .awi span{display:none}
+#aw[data-des=fan] #awTab{transform:scaleX(-1)}
+#aw#aw #awSearch{left:108px;right:12px}
+#aw#aw #awRail{width:18px}
+#aw#aw #awRail div{font-size:12px}
+/* arc: calmer apps, no extra glow */
+#aw#aw .awi .ic{box-shadow:0 3px 8px rgba(0,0,0,.45)}
+#aw#aw #awFi .ic{box-shadow:0 0 0 1.5px rgba(var(--c1rgb),.6),0 8px 18px rgba(0,0,0,.55)}
+#aw#aw #awArt{opacity:.7}
 </style>
 <style id="v156-drawer-hub-css">
 /* v1.56: one App drawer section with tabs: Layout, Arc, Order, Apps, Search */
