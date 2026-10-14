@@ -11,7 +11,7 @@ val canSign = !ksFile.isNullOrBlank() && file(ksFile).exists() && !ksPass.isNull
 android {
     namespace = "com.yoga.launcher"
     compileSdk = 36
-    defaultConfig { applicationId = "com.yoga.launcher"; minSdk = 26; targetSdk = 36; versionCode = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toIntOrNull() ?: 1; versionName = "1.68" }
+    defaultConfig { applicationId = "com.yoga.launcher"; minSdk = 26; targetSdk = 36; versionCode = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toIntOrNull() ?: 1; versionName = "1.85" }
     signingConfigs {
         if (canSign) create("release") {
             storeFile = file(ksFile!!)

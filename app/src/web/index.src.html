@@ -796,6 +796,8 @@ html.shin .gapp.bd .ic::after,html.shin #dock .app.bd .ic::after,html.shin .gapp
 .phone.dragging #hpg button{pointer-events:none}
 #hpg .hpd::before{content:"";width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.4);transition:transform .2s,background .2s}
 #hpg .hpd.on::before{background:var(--c1);transform:scale(1.35)}
+#hpg .hpdr::before{content:"";width:8px;height:8px;border-radius:2px;background:rgba(255,255,255,.55)}
+#hpg .hpdr{margin-right:2px}
 #hpg .hpd.dslot::before{background:var(--c1);transform:scale(2.1)}
 #hpg .hpa,#hpg .hpr{font:700 15px/1 var(--f);opacity:.55}
 .hcell{position:absolute;border:1.5px dashed rgba(255,255,255,.2);border-radius:16px;transition:background .12s,border-color .12s}
@@ -1542,7 +1544,7 @@ const NS='http://www.w3.org/2000/svg', $=id=>document.getElementById(id), p2=v=>
 const D=['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
 const M=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 const svg=$('svg'), phone=document.querySelector('.phone');
-const SD={hfree:false,hcol:'4',hrow:'auto',hadd:'pick',hlb:100,hlab:true,hlock:false,wu:(/^en-US/i.test(navigator.language||'')?'f':'c'),wloc:'auto',wcity:'',wlat:null,wlon:null,cdx:0,cdy:0,ddx:0,ddy:0,csc:100,dsc:100,dwx:true,logo:true,lsplash:true,apv:true,tod:false,ptilt:false,pinv:false,ptn:60,hsb:true,drail:true,dflow:true,dloop:false,dfb:100,dside:'l',disz:100,dcv:100,dln:true,dgl:true,dlt:true,dlb:true,dfy:'m',dsp:'n',dtl:true,duc:true,dhp:true,dsq:true,dmass:true,dpred:true,dbeat:true,dorg:true,drot:true,dflood:true,dlite:true,dpar:true,dgrav:true,dliq:true,dtap:false,dfx:'full',h24:false,cs:false,pcs:false,dt:true,fx:true,hap:true,dock:true,dmin:true,dsec:true,dnum:true,dsz:100,dop:100,mand:true,mspin:false,mop:45,dring:true,dtrail:true,dmag:true,dtk:'n',dfs:'n',dsm:'tick',dn:'4',dz:'m',dks:'glass',dab:true,amb:true,fvib:true,fshow:true,hic:true,da:'cascade',bl:10,mst:'lotus',mpal:'gold',mc1:'#ffd36e',mc2:'#ff6f61',mc3:'#8e44ad',mcm:'radial',mbg:'core',mdt:'m',mdr:'cw',ng:true,nga:true,gon:true,gsu:'apps',gsd:'search',gsl:'widgets',gsr:'apps',gdt:'search',gdist:60,wp:'none',wdim:0,wbl:0,wgcl:true,wgwe:true,wgbt:true,wgca:true,wgta:true,wgfo:true,wgre:true,ipk:'default',ish:'sq',isz:100,aspd:100,gcol:'4',grow:'5',dcat:true,pmon:true,ngp:'facet',nge:70,ngh:18,ngsp:3,ngz:28,mgs:65,mlt:100,msa:100,mhu:0,mgl:0,mw:7,mfl:8,msz:100,mspd:2,mrl0:3,mrl1:-2,mrl2:2,mrl3:-1,mrl4:1,mrl5:-1,mbr:true,perf:'auto'};
+const SD={hfree:false,hcol:'4',hrow:'auto',hadd:'pick',hpo:'std',hlb:100,hlab:true,hlock:false,wu:(/^en-US/i.test(navigator.language||'')?'f':'c'),wloc:'auto',wcity:'',wlat:null,wlon:null,cdx:0,cdy:0,ddx:0,ddy:0,csc:100,dsc:100,dwx:true,logo:true,lsplash:true,apv:true,tod:false,ptilt:false,pinv:false,ptn:60,hsb:true,drail:true,dflow:true,dloop:false,dfb:100,dside:'l',disz:100,dcv:100,dln:true,dgl:true,dlt:true,dlb:true,dfy:'m',dsp:'n',dtl:true,duc:true,dhp:true,dsq:true,dmass:true,dpred:true,dbeat:true,dorg:true,drot:true,dflood:true,dlite:true,dpar:true,dgrav:true,dliq:true,dtap:false,dfx:'full',h24:false,cs:false,pcs:false,dt:true,fx:true,hap:true,dock:true,dmin:true,dsec:true,dnum:true,dsz:100,dop:100,mand:true,mspin:false,mop:45,dring:true,dtrail:true,dmag:true,dtk:'n',dfs:'n',dsm:'tick',dn:'4',dz:'m',dks:'glass',dab:true,amb:true,fvib:true,fshow:true,hic:true,da:'cascade',bl:10,mst:'lotus',mpal:'gold',mc1:'#ffd36e',mc2:'#ff6f61',mc3:'#8e44ad',mcm:'radial',mbg:'core',mdt:'m',mdr:'cw',ng:true,nga:true,gon:true,gsu:'apps',gsd:'search',gsl:'widgets',gsr:'apps',gdt:'search',gdist:60,wp:'none',wdim:0,wbl:0,wgcl:true,wgwe:true,wgbt:true,wgca:true,wgta:true,wgfo:true,wgre:true,ipk:'default',ish:'sq',isz:100,aspd:100,gcol:'4',grow:'5',dcat:true,pmon:true,ngp:'facet',nge:70,ngh:18,ngsp:3,ngz:28,mgs:65,mlt:100,msa:100,mhu:0,mgl:0,mw:7,mfl:8,msz:100,mspd:2,mrl0:3,mrl1:-2,mrl2:2,mrl3:-1,mrl4:1,mrl5:-1,mbr:true,perf:'auto'};
 const MINI_KEYS=['mand','mspin','mbr','amb','fx','ptilt','ng','nga','ngp','dtrail','dmag','dring','lsplash','bl','perf','da','pmon','tod','cs','pcs','wp','dsm','dsec','dt','hap','logo','wgwe','wgbt','wgca','wgta','wgre','amoled','sdim','shnm','sgry','shin'];
 const MINI_ON={mand:true,mspin:true,mbr:false,amb:false,fx:false,ptilt:false,ng:false,nga:false,ngp:'none',dtrail:false,dmag:false,dring:false,lsplash:false,bl:0,perf:'on',da:'off',pmon:false,tod:false,cs:false,pcs:false,wp:'none'};
 const MINI_OFF={mand:true,mspin:false,mbr:false,amb:true,fx:true,ptilt:false,ng:true,nga:true,ngp:'facet',dtrail:true,dmag:true,dring:true,lsplash:true,bl:10,perf:'auto',da:'cascade',pmon:true,tod:false,cs:false,pcs:false,wp:'none'};
@@ -2646,7 +2648,8 @@ const YD=window.YD=(()=>{
   }
   const up=e=>{
     const D=st.drag;if(!D||(e&&e.pointerId!==D.id))return;st.drag=null;
-    if(D.h){if(Math.abs(D.dx||0)>56)cycleCat(D.dx<0?1:-1);st.suppress=true;setTimeout(()=>st.suppress=false,60);return}
+    if(D.h){if(Math.abs(D.dx||0)>56){const _bs=[...$('dcats').querySelectorAll('button')],_i=_bs.findIndex(b=>b.getAttribute('aria-pressed')==='true');
+      if((D.dx<0)!==(S.hpo==='rev')&&(_bs.length<2||_i>=_bs.length-1||_i<0)){try{vib(8);closeDrawer()}catch(_){}}else cycleCat(D.dx<0?1:-1)}st.suppress=true;setTimeout(()=>st.suppress=false,60);return}
     if(!D.moved)return;
     st.suppress=true;setTimeout(()=>st.suppress=false,60);
     if(performance.now()-D.lt>90)D.v=0;
@@ -2923,12 +2926,13 @@ const SEGS=[['wu','Temperature unit',[['c','\u00b0C'],['f','\u00b0F']],'wxSegs']
 ['mcm','Colour flow',[['radial','Radial'],['angular','Angular'],['blend','Blend'],['solid','Solid']],'m2'],
 ['mbg','Brightness grading',[['flat','Flat'],['core','Core glow'],['edge','Edge glow'],['ripple','Ripple']],'m2'],
 ['mdr','Spin direction',[['cw','Clockwise'],['ccw','Anti-clockwise']],'m3'],
-['gcol','Home page grid columns',[['3','3'],['4','4'],['5','5']],'m6'],['grow','Home page grid rows',[['4','4'],['5','5'],['6','6']],'m6'],['hcol','Home screen columns',[['3','3'],['4','4'],['5','5'],['6','6']],'hsegs'],['hrow','Home screen rows',[['auto','Auto'],['4','4'],['5','5'],['6','6'],['7','7']],'hsegs'],['hadd','When I add an app',[['pick','I choose the cell'],['auto','First free cell']],'hsegs'],['ish','Icon shape',[['sq','Squircle'],['ci','Circle'],['rs','Square'],['lf','Leaf']],'m7'],
+['gcol','Home page grid columns',[['3','3'],['4','4'],['5','5']],'m6'],['grow','Home page grid rows',[['4','4'],['5','5'],['6','6']],'m6'],['hcol','Home screen columns',[['3','3'],['4','4'],['5','5'],['6','6']],'hsegs'],['hrow','Home screen rows',[['auto','Auto'],['4','4'],['5','5'],['6','6'],['7','7']],'hsegs'],['hadd','When I add an app',[['pick','I choose the cell'],['auto','First free cell']],'hsegs'],['hpo','Home page order',[['std','App drawer, 1, 2, 3'],['rev','3, 2, 1, App drawer']],'hsegs'],['ish','Icon shape',[['sq','Squircle'],['ci','Circle'],['rs','Square'],['lf','Leaf']],'m7'],
 ['ngp','Glass pattern',[['facet','Facets'],['lines','Fluted'],['prism','Prism'],['frost','Frosted'],['none','None']],'m4'],
 ['perf','Performance mode',[['auto','Auto'],['on','Smooth'],['off','Full effects']],'mperf']];
 const saveS=()=>{try{localStorage.setItem('mdc-set',JSON.stringify(S))}catch(e){ERR(e,"c23")}if(window.Android&&typeof Android.saveSettings==='function')Android.saveSettings(JSON.stringify(S))};
 const BOOL=['hfree','hic','hlab','hlock','logo','lsplash','apv','tod','ptilt','pinv','hsb','drail','dflow','dloop','mand','mspin','dring','dtrail','dmag','dmin','dsec','dnum','h24','cs','pcs','dt','fx','hap','dock','dab','amb','fvib','fshow','mbr','ng','nga','dln','dgl','dlt','dlb','dtl','duc','dhp','dsq','dmass','dpred','dbeat','dorg','drot','dflood','dlite','dpar','dgrav','dliq','dtap','gon','wgcl','wgwe','wgbt','wgca','wgta','wgfo','wgre','dcat','pmon','mini','amoled','shnm','sgry','shin','abs','dwx'];
 function normS(){
+  if(S.hpo!=='rev')S.hpo='std';
   if(S.dst==='glass'||S.dst==='clear'){S.dks=S.dst;S.dst='cls'}
   BOOL.forEach(k=>{S[k]=S[k]===true||S[k]==='true'||S[k]===1});
   SEGS.forEach(([k,,opts])=>{S[k]=String(S[k]);if(!opts.some(o=>o[0]===S[k]))S[k]=SD[k]});
@@ -3191,7 +3195,7 @@ const ARUN={contacts:()=>{openApps();DC='Contacts';renderGrid()},layout:()=>{win
   phone.addEventListener('pointerup',e=>{
     if(!st||inField()){st=null;return}
     const k=(phone.getBoundingClientRect().width/phone.offsetWidth)||1,dx=(e.clientX-st.x)/k,dy=(e.clientY-st.y)/k,dt=performance.now()-st.t,d=Math.max(Math.abs(dx),Math.abs(dy));st=null;
-    if(dt<700&&d>=S.gdist){const key=Math.abs(dy)>=Math.abs(dx)?(dy<0?'gsu':'gsd'):(dx<0?'gsl':'gsr');if(Math.abs(dy)>=Math.abs(dx)*1.1||Math.abs(dx)>=Math.abs(dy)*1.1){lastTap=0;ARUN[S[key]]();return}}
+    if(dt<700&&d>=S.gdist){const key=Math.abs(dy)>=Math.abs(dx)?(dy<0?'gsu':'gsd'):((dx<0)!==(S.hpo==='rev')?'gsl':'gsr');if(Math.abs(dy)>=Math.abs(dx)*1.1||Math.abs(dx)>=Math.abs(dy)*1.1){lastTap=0;ARUN[S[key]]();return}}
     if(d<12&&dt<260){const n=performance.now();if(n-lastTap<320&&Math.hypot(e.clientX-lx,e.clientY-ly)<40){lastTap=0;vib(8);ARUN[S.gdt]()}else{lastTap=n;lx=e.clientX;ly=e.clientY}}
   });
   phone.addEventListener('pointercancel',()=>{st=null});
@@ -4156,7 +4160,8 @@ try{ENG.init()}catch(e){console.error(e)}
   let PICK=null;
   let hpos=ls('mdc-hpos',{});if(!hpos||typeof hpos!=='object'||Array.isArray(hpos))hpos={};
   /* v1.57: home pages. Each placed icon carries a page number (pg, 0 = first). The clock and date stay put; only the icons change. */
-  const MAXPG=5;let HPN=Math.max(1,Math.min(MAXPG,+ls('mdc-hpn',1)||1)),HPG=Math.max(0,+ls('mdc-hpg',0)||0);
+  window.HPREV=()=>S.hpo==='rev';   /* v1.87: Settings > Home page order. std = App drawer | Page 1 | Page 2 | Page 3 (swipe right for the drawer). rev = Page 3 | Page 2 | Page 1 | App drawer (swipe left for the drawer) */
+  const MAXPG=5;let HPN=Math.max(1,Math.min(MAXPG,+ls('mdc-hpn',3)||3)),HPG=0;   /* v1.86: three home pages by default, and the launcher always starts on Page 1 */
   const pgOf=p=>(hpos[p]&&+hpos[p].pg)||0;
   Object.keys(hpos).forEach(p=>{HPN=Math.max(HPN,Math.min(MAXPG,pgOf(p)+1))});if(HPG>=HPN)HPG=0;
   /* v1.63: the grid follows Settings: columns 3-6 share the 320px width, rows are Auto (68px cells) or a fixed count that stretches the cells */
@@ -4189,19 +4194,22 @@ try{ENG.init()}catch(e){console.error(e)}
   }
   function dots(){
     const g=$('hpg');if(!g)return;g.hidden=!S.hic;if(!S.hic){g.textContent='';g.dataset.k='';return}
-    const emp=HPN>1&&!S.hlock&&!Object.keys(hpos).some(p=>pgOf(p)===HPG&&appOf(p)),key=HPN+'|'+(HPN<MAXPG)+'|'+emp;
-    if(g.dataset.k===key&&g.firstChild){g.querySelectorAll('.hpd').forEach((b,i)=>{b.classList.toggle('on',i===HPG);if(i===HPG)b.setAttribute('aria-current','true');else b.removeAttribute('aria-current')});return}
+    const emp=HPN>1&&!S.hlock&&!Object.keys(hpos).some(p=>pgOf(p)===HPG&&appOf(p)),key=HPN+'|'+(HPN<MAXPG)+'|'+emp+'|'+(S.hpo==='rev');
+    g.style.flexDirection=S.hpo==='rev'?'row-reverse':'';
+    if(g.dataset.k===key&&g.firstChild){g.querySelectorAll('.hpd:not(.hpdr)').forEach((b,i)=>{b.classList.toggle('on',i===HPG);if(i===HPG)b.setAttribute('aria-current','true');else b.removeAttribute('aria-current')});return}
     g.dataset.k=key;g.textContent='';
     const mk=(cls,label,fn,txt)=>{const b=document.createElement('button');b.type='button';b.className=cls;b.setAttribute('aria-label',label);if(txt)b.textContent=txt;b.onclick=fn;g.appendChild(b);return b};
+    mk('hpdr','App drawer (swipe right)',()=>{try{openApps()}catch(_){}},'');
     for(let i=0;i<HPN;i++){const b=mk('hpd'+(i===HPG?' on':''),'Home page '+(i+1)+' of '+HPN,()=>setPage(i));if(i===HPG)b.setAttribute('aria-current','true')}
     if(HPN<MAXPG)mk('hpa','Add a home page',()=>{HPN++;sv('mdc-hpn',HPN);setPage(HPN-1);toast('Page '+HPN+' added')},'+');
     if(HPN>1&&!S.hlock&&!Object.keys(hpos).some(p=>pgOf(p)===HPG&&appOf(p)))mk('hpr','Remove this empty page',delPage,'\u2212');
   }
   function setPage(i){
     i=Math.max(0,Math.min(HPN-1,i));if(i===HPG){dots();return}
-    const dir=i>HPG?1:-1;HPG=i;sv('mdc-hpg',HPG);render();try{window.dispatchEvent(new Event('yogahpage'))}catch(_){}try{vib(8)}catch(_){}
+    const dir=(i>HPG?1:-1)*(S.hpo==='rev'?-1:1);HPG=i;sv('mdc-hpg',HPG);render();try{window.dispatchEvent(new Event('yogahpage'))}catch(_){}try{vib(8)}catch(_){}
     if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&S.mode!=='perf'&&S.mode!=='stealth')try{hic.animate([{opacity:.2,transform:'translateX('+(dir*36)+'px)'},{opacity:1,transform:'none'}],{duration:160,easing:'ease-out'})}catch(_){}
   }
+  try{ASET.post.push(()=>{try{dots()}catch(_){}})}catch(_){}
   window.HOMEPG={go:i=>setPage(i),get i(){return HPG},get n(){return HPN}};
   function delPage(){
     if(HPN<2)return;if(S.hlock){toast('Home layout is locked');return}
@@ -5872,7 +5880,7 @@ ASET.post.push(()=>{try{wakeFrame()}catch(e){ERR(e,"c86")}});
    ['Mandala & ambience','mandala','mand mspin mop mst mpal mc1 mc2 mc3 mcm mbg mdt mdr mgs mlt msa mhu mgl mw mfl msz mspd mbr amb tod'],
    ['Wallpaper & glass','image','wp wdim wbl wfit wx wy wz bl'],
    ['App drawer & Crescent arc','drawer','dfb dside disz dcv dln dgl dlt dlb dfy dsp dtl duc dhp dsq dmass dpred dbeat dorg drot dflood dlite dpar dgrav dliq dtap dfx da drail dflow dloop dcat axo axa axb arctn aspd'],
-   ['Icons, grid & packages','apps','ipk ish isz gcol grow hcol hrow hadd hlb hlab shnm sgry shin pmon'],
+   ['Icons, grid & packages','apps','ipk ish isz gcol grow hcol hrow hadd hpo hlb hlab shnm sgry shin pmon'],
    ['Dock','dock','dock dz dks dab ng nga ngp nge ngh ngsp ngz'],
    ['Gestures','swipe','gon gsu gsd gsl gsr gdt gdist glp gpi gpo g2u g2d giu gid'],
    ['Widgets & at a glance','widgets','wgcl wgwe wgbt wgca wgta wgfo wgre gl gmed gal gev gcm fshow'],
@@ -7205,7 +7213,7 @@ const SH=[['Quick',[['lineX','Line position (Thumb arc)',.5,.95,.01],['step','Ap
 const fxRow=bd=>{const F=window.AWFX;if(!F)return;bd.querySelectorAll('.r').forEach(x=>{const l=x.querySelector('label');if(l&&l.textContent==='Intensity')x.classList.add('fxlv')});const r=document.createElement('div');r.className='hint';r.id='awFxSt';
  const paintSt=()=>{const s=F.status();r.textContent=s.user===0?'FX are off.':(s.rm?'Reduced motion is on: FX use static fallbacks.':s.cap<s.user?'Auto-protect eased FX to '+['Off','Subtle','Balanced','Experimental'][s.cap]+' because frames dropped.':'Running at '+['Off','Subtle','Balanced','Experimental'][s.eff]+'. Auto-protect watches frame rate during gestures.')+(s.mode?' ('+s.mode+' mode)':'')};paintSt();bd.appendChild(r);
  if(CFG.fxOn!==false&&F.status().cap<F.status().user){const b=document.createElement('button');b.type='button';b.textContent='Re-test FX';b.style.cssText='margin:6px 0 2px;border:0;border-radius:10px;padding:7px 12px;font:700 12px var(--f);color:#fff;background:rgba(var(--c1rgb),.45)';b.onclick=()=>{F.retest();draw()};bd.appendChild(b)}};
-const SH2=['FX',[],[['fxOn','Reactive Matter FX'],['fxAuto','Auto-protect (ease FX if frames drop)'],['fx_ripple','Liquid touch ripple'],['fx_magnet','Magnetic selection'],['fx_holo','Holographic snap'],['fx_trace','Energy trace']],[['fxLevel','Intensity',[['off','Off'],['subtle','Subtle'],['balanced','Balanced'],['exp','Experimental']]]],0,fxRow];SH.push(SH2);
+const SH2=['FX',[],[['fxOn','Reactive Matter FX'],['fxAuto','Auto-protect (ease FX if frames drop)'],['fx_ripple','Liquid touch ripple'],['fx_magnet','Magnetic selection'],['fx_holo','Holographic snap'],['fx_trace','Energy trace'],['fx_prism','Prism edges']],[['fxLevel','Intensity',[['off','Off'],['subtle','Subtle'],['balanced','Balanced'],['exp','Experimental']]]],0,fxRow];SH.push(SH2);
 const ACC=['','#ff6b6b','#ffb347','#f0c75e','#7df97f','#5ec8ff','#b58cff','#ff7ad9'];
 const btn=document.createElement('button');btn.id='awCfgBtn';btn.className='awb';btn.type='button';btn.setAttribute('aria-label','Arc settings');btn.setAttribute('aria-expanded','false');btn.title='Arc settings';
 btn.innerHTML='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
@@ -7358,7 +7366,7 @@ F.layer('ripple',{min:1,rm:true,
 const DUR=460,MIN_GAP=140,OPEN_QUIET=650;let un=null,moved=[],last=0,openAt=0;
 const clean=()=>{if(un){un();un=null}moved.forEach(e=>{e.style.translate=''});moved=[]};
 function pull(c){
- const s=E.st();if(!s.open||s.foc<0||(window.DRG&&DRG.on))return;
+ const s=E.st();if(!s.open||s.foc<0||s.drag||s.mode==='fling'||(window.DRG&&DRG.on))return;   /* v1.83: never nudge icons off the line while the wave is being dragged or flung */
  const now=performance.now();if(now-openAt<OPEN_QUIET)return;     /* the opening cascade is not a selection */
  if(un&&now-last<MIN_GAP)return;                                    /* fast scrolling: keep the running pulse, never stack them */
  last=now;clean();
@@ -7483,6 +7491,68 @@ function start(c){
 F.layer('trace',{min:1,rm:false,
  on:{drag:(a,c)=>{lastV=a&&+a.v||0;lastT=performance.now();if(Math.abs(lastV)>=START)start(c)},
   release:(a,c)=>{if(a&&a.fling){lastV=+a.v||0;lastT=performance.now();start(c)}},open:clean},
+ stop:clean});
+})();
+</script>
+<style id="v182-fx-prism-css">
+/* prism edges: a thin crescent of light on the selected icon's rim (inset shadow, no mask, so it can never turn into a fill).
+   Colours come from --c1 / --c1rgb only; the pale fringe is --c1 mixed toward white where color-mix exists. */
+#awFx .pe{display:block;box-sizing:border-box;opacity:0}
+#awFx .pe>b{position:absolute;inset:0;display:block;border-radius:inherit;pointer-events:none}
+#awFx .pe .pm{box-shadow:inset var(--mx,0px) var(--my,0px) 1.2px rgba(var(--c1rgb),.95)}
+#awFx .pe .pf{opacity:0;box-shadow:inset var(--fx,0px) var(--fy,0px) 1px rgba(var(--c1rgb),.55)}
+@supports(color:color-mix(in srgb,red,blue)){#awFx .pe .pf{box-shadow:inset var(--fx,0px) var(--fy,0px) 1px color-mix(in srgb,var(--c1) 40%,white)}}
+/* the glow lives on its own child: on the container itself it darkened the icon face in Chromium */
+#awFx .pe .po{box-shadow:0 0 8px rgba(var(--c1rgb),.3)}
+</style>
+<script id="v182-fx-prism">
+/* Reactive Matter 5: prism edges. When the wave settles on an app, a thin reflection of --c1 travels once around the selected icon's
+   rim (a crescent that rotates about 160 to 200 degrees) with a paler fringe on the opposite side at Balanced and up, plus a faint
+   outer glow at Experimental. About 0.8 s, then it removes itself. It is armed by the engine's snap / fling-release events, waits for
+   the wave to be close to rest (so nothing shimmers mid-swipe), and is removed at once by the next touch, a drag, the close of the
+   drawer, a selection of another app, FX Off or the per-effect switch. It follows the icon's live rect (shell scale, pop and float
+   included) for those 0.8 s only. Overlay elements only: it never touches icons, pos, slot(), paint() or any transform string of
+   the drawer. Reduced motion: the same rim light fades in and out without travelling. */
+(()=>{'use strict';const F=window.AWFX,E=window.AWENG;if(!F||!E)return;
+const DUR=800,T_IN=140,T_OUT=300,WAIT=1100,WAIT_FLING=2600,A0=-2.356;
+let un=null,box=null,pm=null,pf=null,shown=-1,rr=.27,bw=64,L=[0,0,0,0];
+const clean=()=>{if(un){un();un=null}if(box){box.remove();box=null}pm=pf=null;shown=-1};
+/* the icon's rect in the overlay's own coordinates (the shell's scale and the float animation are included) */
+function geo(){const fi=E.fi(),ic=fi&&fi.querySelector('.ic');if(!ic)return null;
+ const h=F.host(),hr=h.getBoundingClientRect(),r=ic.getBoundingClientRect();if(!(r.width>4&&r.height>4&&hr.width>0))return null;
+ const q=h.offsetWidth/hr.width||1;return {ic,x:(r.left-hr.left)*q,y:(r.top-hr.top)*q,w:r.width*q,h:r.height*q}}
+function rad(ic,w,h){const v=getComputedStyle(ic).borderTopLeftRadius||'0';
+ if(v.indexOf('%')>0)return parseFloat(v)/100*Math.min(w,h);return(parseFloat(v)||0)*(w/(ic.offsetWidth||w))}
+/* the selected icon is still doing its short pop when the wave comes to rest, so the box follows its live rect, size and radius included */
+function place(g){bw=g.w;if(Math.abs(g.x-L[0])+Math.abs(g.y-L[1])+Math.abs(g.w-L[2])+Math.abs(g.h-L[3])<.3)return;L=[g.x,g.y,g.w,g.h];
+ const st=box.style;st.left=g.x.toFixed(1)+'px';st.top=g.y.toFixed(1)+'px';st.width=g.w.toFixed(1)+'px';st.height=g.h.toFixed(1)+'px';st.borderRadius=(rr*Math.min(g.w,g.h)).toFixed(1)+'px'}
+function build(c,st){
+ const g=geo();if(!g)return false;
+ rr=rad(g.ic,g.w,g.h)/Math.min(g.w,g.h);L=[0,0,0,0];
+ box=document.createElement('b');box.className='pe';place(g);
+ if(c.k>=1){const o=document.createElement('b');o.className='po';box.appendChild(o)}
+ pm=document.createElement('b');pm.className='pm';box.appendChild(pm);
+ if(c.k>=.8){pf=document.createElement('b');pf.className='pf';box.appendChild(pf)}else pf=null;
+ F.host().appendChild(box);shown=st.foc;return true}
+function frame(t,c){
+ const g=geo();if(g)place(g);
+ const p=Math.min(1,t/DUR),e=c.rm?.35:1-Math.pow(1-p,2.2),sw=1.9+1.6*c.k,a=A0+sw*e,s=Math.max(.8,Math.min(1.4,bw/64)),T=(1.4+1.1*c.k)*s;
+ const life=Math.min(1,t/T_IN)*(t<DUR-T_OUT?1:Math.max(0,(DUR-t)/T_OUT));
+ box.style.opacity=(life*(.7+.3*c.k)).toFixed(3);
+ pm.style.setProperty('--mx',(-T*Math.cos(a)).toFixed(2)+'px');pm.style.setProperty('--my',(-T*Math.sin(a)).toFixed(2)+'px');
+ if(pf){const b=a+3.1,U=T*.6;pf.style.setProperty('--fx',(-U*Math.cos(b)).toFixed(2)+'px');pf.style.setProperty('--fy',(-U*Math.sin(b)).toFixed(2)+'px');pf.style.opacity=(.5+.3*c.k).toFixed(2)}}
+function arm(to,c){
+ clean();let w=0,t=0,ph=0,tgt=to,lim=to==null?WAIT_FLING:WAIT;
+ un=F.tick(dt=>{const st=E.st();if(!st.open||st.drag){clean();return false}
+  if(ph===0){w+=dt;
+   if(tgt==null){if(st.mode==='fling'){if(w>lim){clean();return false}return true}tgt=Math.round(st.pos)}
+   if(Math.abs(st.pos-tgt)<.4||!st.mode){if(st.N<1||!build(c,st)){clean();return false}ph=1;frame(0,c);return true}
+   if(w>lim){clean();return false}return true}
+  t+=dt;if(t>=DUR){clean();return false}
+  frame(t,c);return true})}
+F.layer('prism',{min:1,rm:true,
+ on:{snap:(a,c)=>arm(a.to,c),release:(a,c)=>{if(a&&a.fling)arm(null,c)},drag:clean,open:clean,
+  select:a=>{if(box&&a&&a.i!==shown)clean()}},
  stop:clean});
 })();
 </script>
@@ -7648,10 +7718,12 @@ html.nbdoff #aw .awbd,html.shin #aw .awbd,html.shin #aw .awnw{display:none}
  const skip=t=>t&&t.closest&&t.closest('input,select,textarea,.dock,.sheet,.smart-card,.pg,.drawer,.command,.amenu,.hsearch');
  const sc=()=>(phone.getBoundingClientRect().width/phone.offsetWidth)||1;
  const fire=()=>{const n=performance.now();if(n-lastFire<500)return;lastFire=n;st=null;try{(typeof ARUN!=='undefined'&&ARUN[S.gsr]||ARUN.apps)()}catch(e){try{ERR(e,'v66')}catch(_){}}};
- const down=(x,y,t)=>{st=(!S.gon||busy()||skip(t))?null:{x,y,t:performance.now()}};
- const move=(x,y)=>{if(!st)return;const k=sc(),dx=(x-st.x)/k,dy=(y-st.y)/k;
+ const rv=()=>S.hpo==='rev'?-1:1;
+ const onPg1=()=>{const H=window.HOMEPG;return !H||H.n<2||!S.hic||H.i===0};   /* v1.86: only Page 1 hands a right swipe to the drawer; later pages swipe back one page first */
+ const down=(x,y,t)=>{st=(!S.gon||busy()||skip(t)||!onPg1())?null:{x,y,t:performance.now()}};
+ const move=(x,y)=>{if(!st)return;if(!onPg1()){st=null;return}const k=sc(),dx=(x-st.x)/k*rv(),dy=(y-st.y)/k;
   if(performance.now()-st.t>900){st=null;return}
-  if(dx>=Math.max(48,(S.gdist||60)*.8)&&Math.abs(dy)<=dx*1.4)fire()};
+  if(dx>=Math.max(48,(S.gdist||60)*.8)&&dx>Math.abs(dy)*1.4)fire()};
  phone.addEventListener('pointerdown',e=>down(e.clientX,e.clientY,e.target),true);
  phone.addEventListener('pointermove',e=>move(e.clientX,e.clientY),true);
  phone.addEventListener('touchstart',e=>{const t=e.touches[0];if(t)down(t.clientX,t.clientY,e.target)},{capture:true,passive:true});
@@ -8069,6 +8141,7 @@ safe('v75back',()=>{const prevBack=window.onBack,prevHome=window.onHome;
     safe('v75h2',()=>{const ae=document.activeElement;if(ae&&ae!==document.body&&ae.blur)ae.blur()});
     safe('v75h3',()=>{if(typeof prevHome==='function')prevHome()});
     safe('v75h4',()=>{const sb=document.querySelector('#sheet .sh-body');if(sb)sb.scrollTop=0});
+    safe('v186pg',()=>{if(window.HOMEPG&&HOMEPG.i>0)HOMEPG.go(0)});
     wakeFrame();return acted}});
 
 /* ---------- 4. Default home app: status, system role request, manual fallback ---------- */
@@ -8495,6 +8568,14 @@ html.cyber :focus-visible{outline:2px solid var(--c1);outline-offset:2px}
 /* fluid motion */
 html.cyber .dock,html.cyber .sheet,html.cyber .am-card,html.cyber .drawer,html.cyber .command-box{transition-timing-function:var(--motion)}
 html.cyber button,html.cyber .app,html.cyber .gapp{transition:transform .35s var(--motion),background-color .25s var(--motion),border-color .25s var(--motion),box-shadow .35s var(--motion),opacity .3s var(--motion)}
+/* v1.83 arc line-follow fix: the arc icons are <button>s, so the rule above gave them a .35s transform/opacity ease. The engine writes the exact curve
+   position every frame, so that ease made every icon trail behind the flow line and swim off it while scrolling. Position and opacity are now applied
+   instantly; only the icon face keeps its own press feedback, and not while the wave is moving. */
+html.cyber #aw .awi,#aw#aw .awi{transition:none!important}
+#aw.busy .awi:active .ic{transform:none!important;transition:none!important}
+/* v1.85: smaller home settings icon (button 50 -> 38px, gear 32 -> 22px). Same centre point and same top-right corner, so nothing else moves. */
+html #gear.orb-btn{width:38px!important;height:38px!important;top:26px;right:20px}
+html #gear #logo{--lw:22px!important}
 html.cyber button:active,html.cyber .app:active{transform:scale(.96)}
 @media (prefers-reduced-motion:reduce){html.cyber *{transition-duration:.01ms!important;animation-duration:.01ms!important}}
 </style>
@@ -8667,7 +8748,7 @@ html.cyber:not(.ck-p-matte):not(.ck-p-outline):not(.ck-p-neon) .pill::before{dis
  const cvs=document.createElement('canvas');
  let gl=null;try{gl=cvs.getContext('webgl2',{antialias:false,alpha:true,premultipliedAlpha:true})}catch(e){}
  const OK=!!gl;
- const D={hck:'capsule',hcs:true,hcd:true,hca:80,hcl:'day',hcf:'cond',hcz:100,hcc:'silver',hcc1:'#ccd0d8',hcc2:'#08090c',hclc:'match',hclc1:'#ffffff',hcmm:'roll',hcsm:'roll',hcsp:100,hcb:70};
+ const D={hck:'dial',hcs:true,hcd:true,hca:80,hcl:'day',hcf:'cond',hcz:100,hcc:'silver',hcc1:'#ccd0d8',hcc2:'#08090c',hclc:'match',hclc1:'#ffffff',hcmm:'roll',hcsm:'roll',hcsp:100,hcb:70};
  /* capsule colours: panel (the window behind the digits) and digit colour, per section (hours, minutes, seconds) */
  const HX=/^#[0-9a-f]{6}$/i,h3=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255),SIL=[.80,.81,.83];
  const tint=(c,a)=>SIL.map((v,i)=>v*(1-a)+c[i]*a);
@@ -9055,7 +9136,7 @@ void main(){
   if(!st)return;const k=sc(),dx=(x-st.x)/k,dy=(y-st.y)/k,H=window.HOMEPG;
   if(performance.now()-st.t>900){st=null;return}
   if(Math.abs(dx)>=38&&Math.abs(dx)>Math.abs(dy)*1.4){
-   const to=dx<0?H.i+1:H.i-1;
+   const to=(dx*(S.hpo==='rev'?-1:1))<0?H.i+1:H.i-1;
    if(to<0||to>=H.n){st=null;return}          /* at an edge: let the normal swipe actions run */
    st=null;eat=true;hit=performance.now();H.go(to);e.stopPropagation()}};
  addEventListener('pointerdown',e=>{if(e.isPrimary!==false)down(e.clientX,e.clientY,e.target,e.pointerId)},true);

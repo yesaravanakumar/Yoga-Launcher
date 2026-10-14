@@ -46,7 +46,7 @@ function boot(rmStart=false){const state={rm:rmStart,ls:[]};const errs=[];const 
  /* settings tab */
  C.open();await sleep(50);const tabs=[...w.document.querySelectorAll('#awCfg .tb button')].map(b=>b.textContent);ok(tabs.includes('FX'),'Arc settings has an FX tab');
  const fxb=[...w.document.querySelectorAll('#awCfg .tb button')].find(b=>b.textContent==='FX');fxb.click();await sleep(30);
- const labs=[...w.document.querySelectorAll('#awCfg .bd label')].map(l=>l.textContent);ok(labs.includes('Reactive Matter FX')&&labs.includes('Intensity'),'FX tab shows the master switch and Intensity');
+ const labs=[...w.document.querySelectorAll('#awCfg .bd label')].map(l=>l.textContent);ok(labs.includes('Reactive Matter FX')&&labs.includes('Intensity'),'FX tab shows the master switch and Intensity'); ok(labs.includes('Prism edges'),'FX tab lists the Prism edges switch');
  const btns=[...w.document.querySelectorAll('#awCfg .bd .sw button')].map(b=>b.textContent);ok(['Off','Subtle','Balanced','Experimental'].every(x=>btns.includes(x)),'Off / Subtle / Balanced / Experimental presets are offered');
  [...w.document.querySelectorAll('#awCfg .bd .sw button')].find(b=>b.textContent==='Off').click();ok(C.get().fxLevel==='off'&&F.status().eff===0,'tapping Off turns FX off and saves it');
  ok(!!w.document.getElementById('awFxSt'),'FX tab shows a status line');
