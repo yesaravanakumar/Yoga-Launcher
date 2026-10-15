@@ -768,6 +768,7 @@ html.shin .gapp.bd .ic::after,html.shin #dock .app.bd .ic::after,html.shin .gapp
 .phone.lay .date{outline:1.5px dashed rgba(var(--c1rgb),.3);outline-offset:6px;border-radius:4px;z-index:94}.phone.lay.seld .date{outline-color:transparent}
 .phone.lay.seld .date::before{content:"DATE & WEATHER";left:0;top:100%;margin-top:12px;white-space:nowrap}
 .phone.lay #hour,.phone.lay .pill,.phone.lay .date{pointer-events:none}
+.phone:not(.lay) #read{pointer-events:auto;cursor:pointer}
 .phone.lay #dock,.phone.lay #hsearch,.phone.lay #smartCard,.phone.lay #gear{opacity:.35}
 .sg{position:absolute;width:240px;height:240px;border-radius:50%;pointer-events:none;z-index:3;opacity:0;will-change:transform,opacity;
   background:radial-gradient(closest-side,rgba(var(--c1rgb),0) 50%,rgba(var(--c1rgb),.14) 66%,rgba(var(--c1rgb),.5) 85%,rgba(var(--c2rgb),.2) 95%,rgba(var(--c2rgb),0) 100%)}
@@ -790,6 +791,9 @@ html.shin .gapp.bd .ic::after,html.shin #dock .app.bd .ic::after,html.shin .gapp
 /* v1.57: home pages (dots under the icons) */
 #hpg{position:absolute;left:0;right:0;bottom:98px;z-index:9;display:flex;justify-content:center;align-items:center;pointer-events:none}
 #hpg[hidden]{display:none}
+/* v1.87.5: the home search bar sits at the same bottom offset as the page dots, so the dots drew on top of it. While the search bar is in its default spot, lift the dots into the gap between it and the icon grid (search bar top is 144px up, dots take 146-160px, the icon grid then ends 164px up instead of 150px). */
+.phone.hsd #hpg{bottom:146px}
+.phone.hsd #hpg button{height:14px}
 .phone.cov:not(.dragging) #hpg,.phone.lay #hpg{display:none}
 .phone.dragging #hpg{z-index:125}
 #hpg button{pointer-events:auto;border:0;background:none;padding:0;width:28px;height:28px;display:grid;place-items:center;cursor:pointer;color:var(--fg);-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -798,6 +802,7 @@ html.shin .gapp.bd .ic::after,html.shin #dock .app.bd .ic::after,html.shin .gapp
 #hpg .hpd.on::before{background:var(--c1);transform:scale(1.35)}
 #hpg .hpdr::before{content:"";width:8px;height:8px;border-radius:2px;background:rgba(255,255,255,.55)}
 #hpg .hpdr{margin-right:2px}
+#hpg{display:none!important}
 #hpg .hpd.dslot::before{background:var(--c1);transform:scale(2.1)}
 #hpg .hpa,#hpg .hpr{font:700 15px/1 var(--f);opacity:.55}
 .hcell{position:absolute;border:1.5px dashed rgba(255,255,255,.2);border-radius:16px;transition:background .12s,border-color .12s}
@@ -1464,10 +1469,8 @@ html:not(.light) .hsearch,html:not(.light) .cmd-bar,html:not(.light) .cmd-close,
     <div class="ydr-letter" id="yLetter" aria-hidden="true"></div>
     <div class="ydr-top" id="yTop">
       <div class="ydr-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 5 5"></path></svg><input class="in" id="q" placeholder="Search apps" autocomplete="off" enterkeyhint="search"><button type="button" class="ydr-clr" id="yClr" aria-label="Clear search">&#10005;</button></div>
-      <button type="button" class="mini ghost dstl" id="dstl" aria-label="Change drawer style" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"></rect><rect x="13" y="3" width="8" height="8" rx="2"></rect><rect x="3" y="13" width="8" height="8" rx="2"></rect><rect x="13" y="13" width="8" height="8" rx="2"></rect></svg></button>
       <button class="mini ghost" id="dclose" aria-label="Close apps">&#10005;</button>
     </div>
-    <div class="dstl-pop" id="dstlPop" role="menu" aria-label="Drawer style" hidden></div>
     <div class="cats" id="dcats"></div>
     <div class="grid" id="grid"></div>
     <div class="ydr-info" id="yInfo" aria-live="polite"><div class="ydr-name" id="yName"></div><div class="ydr-meta" id="yMeta"></div><div class="ydr-cnt" id="yCnt"></div><div class="ydr-acts" id="yActs"><button type="button" class="go" id="yGo" aria-label="Open app">&#9654;</button><button type="button" id="yPin" aria-label="Pin to favourites">&#9734;</button><button type="button" id="yMore" aria-label="App options">&#8943;</button></div></div>
@@ -2005,8 +2008,10 @@ const sortApps=l=>{
   return sortApps0(l)};
 const sortApps0=l=>l.slice().sort((x,y)=>{const m=window.XSORT;if(m==='used'){const u=ls('mdc-use',{}),d=(u[y.p]||0)-(u[x.p]||0);if(d)return d}else if(m==='new'){const d=(y.t||0)-(x.t||0);if(d)return d}const gx=grp(x),gy=grp(y);return gx===gy?x.n.localeCompare(y.n,undefined,{numeric:true}):GRK(gx)!==GRK(gy)?GRK(gx)-GRK(gy):gx<gy?-1:1});
 const vf=()=>favs.filter(p=>apps.some(a=>a.p===p));
-const shown=()=>vf().slice(0,+S.dn);
+const ARCON=()=>!!(window.HomeArc&&HomeArc.active&&HomeArc.active());
+const shown=()=>ARCON()?vf():vf().slice(0,+S.dn);
 function togglePin(a){
+  if(ARCON()){const on=vf().includes(a.p);favs=on?vf().filter(p=>p!==a.p):vf().concat(a.p);toast(a.n+(on?' removed from home arc':' added to home arc'));sv('mdc-favs',favs);sv('mdc-fseeded',true);renderDock();renderChips();document.querySelectorAll('.gapp').forEach(b=>b.classList.toggle('pin',shown().includes(b._p)));return true}
   const sh=shown();
   if(sh.includes(a.p)){favs=vf().filter(p=>p!==a.p);toast(a.n+' removed from dock')}
   else if(sh.length<+S.dn){favs=sh.concat(a.p);toast(a.n+' pinned to dock')}
@@ -2014,8 +2019,8 @@ function togglePin(a){
   sv('mdc-favs',favs);sv('mdc-fseeded',true);renderDock();renderChips();document.querySelectorAll('.gapp').forEach(b=>b.classList.toggle('pin',shown().includes(b._p)));return true;
 }
 function toggleFav(a){
-  if(vf().includes(a.p)){favs=vf().filter(p=>p!==a.p);toast('\u2605 '+a.n+' removed from favourites')}
-  else{favs=vf().concat(a.p);toast('\u2605 '+a.n+' added to favourites'+(shown().includes(a.p)?'':' (dock is full)'))}
+  if(vf().includes(a.p)){favs=vf().filter(p=>p!==a.p);toast('\u2605 '+a.n+' removed from home arc')}
+  else{favs=vf().concat(a.p);toast('\u2605 '+a.n+' added to '+(ARCON()?'home arc':'favourites'+(shown().includes(a.p)?'':' (dock is full)')))}
   sv('mdc-favs',favs);sv('mdc-fseeded',true);renderDock();renderChips();
   document.querySelectorAll('.gapp').forEach(b=>{const on=vf().includes(b._p);b.classList.toggle('pin',on);const ic=b.querySelector('.ic');if(!ic)return;const st=ic.querySelector('.fstar');if(on&&!st)ic.appendChild(fstar());else if(!on&&st)st.remove()});
   try{if(window.YD&&$('drawer').classList.contains('open')){YD.st.foc=-1;YD.relayout()}}catch(_){ERR(_,"c12")}
@@ -2094,7 +2099,7 @@ function appShortcuts(a){
   if(window.Android)return [];   /* real shortcuts only: the sample list below can't be launched */
   const k=Object.keys(SCUT).find(k=>norm(a.n).includes(k));return k?SCUT[k].map((l,i)=>({id:k+i,l})):[];
 }
-function openMenu(a){menuApp=a;vib(10);$('amTitle').textContent=a.n;$('amPin').textContent=vf().includes(a.p)?'\u2605  Remove from favourites':'\u2606  Add to favourites';
+function openMenu(a){menuApp=a;vib(10);$('amTitle').textContent=a.n;$('amPin').textContent=vf().includes(a.p)?'\u2605  Remove from home arc':'\u2606  Add to home arc';
   $('amHome').textContent=home.includes(a.p)?'Remove from home screen':'Add to home screen';
   menu.querySelectorAll('.sc').forEach(x=>x.remove());
   appShortcuts(a).forEach(s=>{const b=document.createElement('button');b.className='sc';b.textContent='\u2197  '+(s.l||s.label);b.onclick=()=>{closeMenu();try{if(window.Android&&typeof Android.launchShortcut==='function')Android.launchShortcut(a.p,s.id);else toast((s.l||s.label)+' \u2022 Android bridge not connected')}catch(e){toast('Shortcut failed')}};menu.querySelector('.am-card').insertBefore(b,$('amHome'))});
@@ -2146,6 +2151,7 @@ function applyHS(){
   const h=$('hsearch');if(!h)return;
   const docked=!!ls('mdc-hsdock',false)&&!!S.dock,pos=ls('mdc-hspos',null);
   h.classList.toggle('docked',docked);
+  {const was=phone.classList.contains('hsd'),now=!docked&&!(pos&&typeof pos.l==='number')&&!!S.hsb&&!!S.dock;phone.classList.toggle('hsd',now);if(was!==now)try{window.dispatchEvent(new Event('yogahs'))}catch(_){}}
   const st=h.style;
   if(pos&&!docked&&typeof pos.l==='number'){const w=phone.offsetWidth-36;st.left=pos.l+'px';st.top=pos.t+'px';st.right='auto';st.bottom='auto';st.width=w+'px'}
   else{st.left=st.top=st.right=st.bottom=st.width=''}}
@@ -2670,9 +2676,9 @@ const YD=window.YD=(()=>{
 
   /* ---------- drawer styles ----------
      Crescent is the curved wheel. The other four are flat layouts that scroll the normal way. The choice is remembered. */
-  const DSTYLES=[['grid','Grid','Classic icons with an A-Z rail'],['list','List','One app per row, grouped by letter'],['smart','Smart','Favourites, suggested and recent first'],['pages','Pages','Swipe left and right between pages'],['arc','Crescent','The curved wheel']];
-  let DSTL=ls('mdc-dstl','grid');if(!DSTYLES.some(x=>x[0]===DSTL))DSTL='grid';
-  const flowOn=()=>DSTL!=='arc';
+  const DSTYLES=[['grid','Grid','Classic icons with an A-Z rail']];
+  let DSTL='grid';
+  const flowOn=()=>true;
   const fl={key:null};
   function applyMode(){dr.classList.toggle('flow',flowOn());DSTYLES.forEach(x=>dr.classList.toggle('fl-'+x[0],DSTL===x[0]));if(!flowOn())dr.classList.remove('hasrail')}
   const letterOf=a=>{const c=(norm(a.n).trim()[0]||'#').toUpperCase();return c>='A'&&c<='Z'?c:'#'};
@@ -2682,7 +2688,7 @@ const YD=window.YD=(()=>{
   function railGo(e){
     const r=rail.getBoundingClientRect(),L=rail._ls;if(!L.length||!r.height)return;
     const i=clamp(Math.floor((e.clientY-r.top)/r.height*L.length),0,L.length-1),c=L[i],el=rail._an[c];
-    if(!el)return;stage.scrollTop=Math.max(0,el.offsetTop-6);
+    if(!el)return;stage.scrollTop=Math.max(0,el.offsetTop-Math.round(stage.clientHeight*.38));
     bub.textContent=c;bub.classList.add('on');clearTimeout(bubT);
     if(c!==lastL){lastL=c;try{vib(5)}catch(_){}}
   }
@@ -2765,22 +2771,9 @@ const YD=window.YD=(()=>{
     stage.scrollTop=(fl.key===key)?oldScroll:0;fl.key=key;
   }
 
-  /* style button in the drawer header */
-  const sBtn=$('dstl'),sPop=$('dstlPop');
-  function setStyle(id){
-    const nm=(DSTYLES.find(x=>x[0]===id)||[])[1];if(!nm||id===DSTL)return;
-    DSTL=id;sv('mdc-dstl',id);try{vib(10)}catch(_){}
-    st.sp=1;st.foc=-1;st.lq=null;fl.key=null;renderGrid();toast('Drawer style: '+nm);
-  }
+  /* Grid is the only drawer layout; drawerStyle stays as a read-only shim for older code */
+  function setStyle(){}
   window.drawerStyle={get:()=>DSTL,set:setStyle};
-  function popBuild(){
-    sPop.textContent='';
-    DSTYLES.filter(x=>x[0]!=='arc').forEach(([id,nm,ds])=>{const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',String(DSTL===id));
-      const t=document.createElement('b');t.textContent=nm;const s=document.createElement('small');s.textContent=ds;b.appendChild(t);b.appendChild(s);
-      b.onclick=()=>{sPop.hidden=true;sBtn.setAttribute('aria-expanded','false');setStyle(id)};sPop.appendChild(b)});
-  }
-  sBtn.onclick=e=>{e.stopPropagation();if(sPop.hidden){popBuild();sPop.hidden=false}else sPop.hidden=true;sBtn.setAttribute('aria-expanded',String(!sPop.hidden))};
-  dr.addEventListener('pointerdown',e=>{if(!sPop.hidden&&!e.target.closest('#dstlPop,#dstl')){sPop.hidden=true;sBtn.setAttribute('aria-expanded','false')}},true);
 
   /* ---------- building the list ---------- */
   function build(keepP){
@@ -2824,14 +2817,14 @@ const YD=window.YD=(()=>{
     dr.classList.add('open');
     st.opening=true;try{renderGrid()}finally{st.opening=false}
     vib(12);
-    if(flowOn()){$('dstlPop').hidden=true;return}
+    if(flowOn()){return}
     const am=S.da||'cascade';
     ++st.eTok;
     if(RM||am==='off'){st.sp=1;place();return}
     sweep(0,am==='fade'?240:((S.dfx||'full')!=='off'?540:400));
   }
   function halt(closing){
-    if(flowOn()){++st.eTok;stopAnim();st.drag=null;$('dstlPop').hidden=true;return}
+    if(flowOn()){++st.eTok;stopAnim();st.drag=null;return}
     const tok=++st.eTok;stopAnim();st.drag=null;st.rv=0;st.rTok=(st.rTok||0)+1;
     if(closing&&!RM&&(S.da||'cascade')!=='off'&&n()){
       const t0=performance.now(),from=st.sp,dur=(S.dfx||'full')==='off'?230:280;
@@ -2875,6 +2868,7 @@ window.setApps=l=>{if(!Array.isArray(l))return;apps=l.filter(a=>a&&a.n!=null&&a.
 window.onBack=()=>{const o=['drawer','sheet','command','amenu','pgW','pgF'].some(id=>{const el=$(id);return el&&el.classList.contains('open')});if($('drawer').classList.contains('open')&&RET)closeDrawer();else closeAll();$('command').classList.remove('open');return o};
 window.onHome=closeAll;
 $('hour').onclick=()=>$('drawer').classList.contains('open')?closeAll():openApps();
+$('read').onclick=()=>$('hour').click();
 
 /* ── Focus timer ── */
 let fMin=Math.round(+ls('mdc-fmin',25));if(!(fMin>=1&&fMin<=180))fMin=25;
@@ -3191,7 +3185,7 @@ const ARUN={contacts:()=>{openApps();DC='Contacts';renderGrid()},layout:()=>{win
 (function(){
   let st=null,lastTap=0,lx=0,ly=0;
   const busy=()=>['drawer','sheet','command','amenu','pgW','pgF','emode'].some(i=>$(i).classList.contains('open'))||$('pvbar').classList.contains('on')||phone.classList.contains('lay');
-  phone.addEventListener('pointerdown',e=>{st=(!S.gon||busy()||e.target.closest('button,input,select,textarea,a,#hour,.dock,.sheet,.smart-card,.pg,.drawer,.command,.amenu,.command'))?null:{x:e.clientX,y:e.clientY,t:performance.now()}});
+  phone.addEventListener('pointerdown',e=>{st=(!S.gon||busy()||e.target.closest('button,input,select,textarea,a,#hour,#read,#asArc,.dock,.sheet,.smart-card,.pg,.drawer,.command,.amenu,.command'))?null:{x:e.clientX,y:e.clientY,t:performance.now()}});
   phone.addEventListener('pointerup',e=>{
     if(!st||inField()){st=null;return}
     const k=(phone.getBoundingClientRect().width/phone.offsetWidth)||1,dx=(e.clientX-st.x)/k,dy=(e.clientY-st.y)/k,dt=performance.now()-st.t,d=Math.max(Math.abs(dx),Math.abs(dy));st=null;
@@ -3774,7 +3768,7 @@ try{ENG.init()}catch(e){console.error(e)}
     phone.classList.add('hp');
     try{
       for(const h of hits(x,y)){
-        if(h.closest('#hour,#gear,#hourLogo,#hsearch,#dock .app,#dock .dab'))return null;
+        if(h.closest('#hour,#read,#gear,#hourLogo,#hsearch,#dock .app,#dock .dab'))return null;
         if(h.closest('#wxl,#fl'))return 'Widgets';if(h.closest('#hpg'))return 'Widgets & pages';                                   /* weather line, page dots -> Widgets (weather, home apps & pages) */
         if(h.closest('#nt,#glance'))return 'At a glance & notifications';                /* next alarm / event / now-playing line */
         if(h.closest('#read,#gcap'))return 'Clock';if(h.closest('.date'))return 'Date bar';
@@ -3797,7 +3791,7 @@ try{ENG.init()}catch(e){console.error(e)}
     if(phone.classList.contains('lay'))return;
     if(e.pointerType==='mouse'&&e.button!==0)return;
     if(IDS.some(i=>$(i).classList.contains('open'))||phone.classList.contains('arr'))return;
-    if(e.target.closest('input,textarea,select,#hour,#gear,#hsearch,#dock .app,#dock .dab,.hic,.hw,.arbar'))return;
+    if(e.target.closest('input,textarea,select,#hour,#read,#gear,#hsearch,#dock .app,#dock .dab,.hic,.hw,.arbar'))return;
     sx=e.clientX;sy=e.clientY;
     t=setTimeout(()=>{t=0;if(phone.classList.contains('lay'))return;const sec=pick(sx,sy);if(!sec)return;if(sec==='Wallpaper'&&S.gon&&(S.glp||'none')!=='none')return;   /* an assigned long-press gesture owns empty home */
     vib(18);if(sec==='Wallpaper'&&window.EDITMODE){blk=Date.now()+1500;window.EDITMODE.open();return}   /* v1.66: empty space = one Edit home panel */
@@ -4156,18 +4150,18 @@ try{ENG.init()}catch(e){console.error(e)}
 
 /* ===== v21: place apps on the home screen (hold, drag, drop) ===== */
 (function(){
-  let HC=4,CW=80,CH=68;const TOP=150,BOT=150,hic=$('hicons'),hd=$('hdrop');
+  let HC=4,CW=80,CH=68;const TOP=150,hic=$('hicons'),hd=$('hdrop');
   let PICK=null;
   let hpos=ls('mdc-hpos',{});if(!hpos||typeof hpos!=='object'||Array.isArray(hpos))hpos={};
   /* v1.57: home pages. Each placed icon carries a page number (pg, 0 = first). The clock and date stay put; only the icons change. */
   window.HPREV=()=>S.hpo==='rev';   /* v1.87: Settings > Home page order. std = App drawer | Page 1 | Page 2 | Page 3 (swipe right for the drawer). rev = Page 3 | Page 2 | Page 1 | App drawer (swipe left for the drawer) */
-  const MAXPG=5;let HPN=Math.max(1,Math.min(MAXPG,+ls('mdc-hpn',3)||3)),HPG=0;   /* v1.86: three home pages by default, and the launcher always starts on Page 1 */
+  const MAXPG=5;let HPN=Math.max(3,Math.min(MAXPG,+ls('mdc-hpn',3)||3)),HPG=0;   /* v1.86: three home pages by default, and the launcher always starts on Page 1 */
   const pgOf=p=>(hpos[p]&&+hpos[p].pg)||0;
   Object.keys(hpos).forEach(p=>{HPN=Math.max(HPN,Math.min(MAXPG,pgOf(p)+1))});if(HPG>=HPN)HPG=0;
   /* v1.63: the grid follows Settings: columns 3-6 share the 320px width, rows are Auto (68px cells) or a fixed count that stretches the cells */
   const rows=()=>{
     HC=Math.max(3,Math.min(6,+S.hcol||4));CW=(phone.offsetWidth||320)/HC;
-    const av=PH-TOP-BOT,hr=S.hrow==='auto'?0:(+S.hrow||0);
+    const BOT=(document.getElementById('asArc')&&!document.documentElement.classList.contains('as-noarc'))?246:(phone.classList.contains('hsd')?164:150),av=PH-TOP-BOT,hr=S.hrow==='auto'?0:(+S.hrow||0);
     CH=hr?Math.max(52,Math.min(110,Math.floor(av/hr))):68;
     const n=Math.floor(av/CH);return hr?Math.max(2,Math.min(hr,n)):Math.max(3,n);
   };
@@ -4210,9 +4204,10 @@ try{ENG.init()}catch(e){console.error(e)}
     if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&S.mode!=='perf'&&S.mode!=='stealth')try{hic.animate([{opacity:.2,transform:'translateX('+(dir*36)+'px)'},{opacity:1,transform:'none'}],{duration:160,easing:'ease-out'})}catch(_){}
   }
   try{ASET.post.push(()=>{try{dots()}catch(_){}})}catch(_){}
+  window.addEventListener('yogahs',()=>{try{render()}catch(e){console.error(e)}});   /* v1.87.5: search bar moved, docked or hidden -> re-fit the icon grid */
   window.HOMEPG={go:i=>setPage(i),get i(){return HPG},get n(){return HPN}};
   function delPage(){
-    if(HPN<2)return;if(S.hlock){toast('Home layout is locked');return}
+    if(HPN<=3){toast('Home keeps 3 pages');return}if(S.hlock){toast('Home layout is locked');return}
     Object.keys(hpos).forEach(p=>{const g=pgOf(p);if(g===HPG)delete hpos[p];else if(g>HPG)hpos[p].pg=g-1});
     saveP();HPN--;sv('mdc-hpn',HPN);HPG=Math.min(HPG,HPN-1);sv('mdc-hpg',HPG);render();toast('Page removed');
   }
@@ -4283,7 +4278,7 @@ try{ENG.init()}catch(e){console.error(e)}
       c.style.cssText='left:'+(r.l+3)+'px;top:'+r.t+'px;width:'+(CW-6)+'px;height:'+(CH-6)+'px;margin-top:3px';
       c.onclick=()=>{const P=PICK;if(!P)return;endPick();place(P.a.p,o.c,o.r,HPG);vib(10);toast(P.a.n+' added to the home screen')};hd.appendChild(c)});
   }
-  $('hicClear').onclick=()=>{if(S.hlock){toast('Home layout is locked');return}const ks=Object.keys(hpos);hpos={};saveP();HPN=1;HPG=0;sv('mdc-hpn',1);sv('mdc-hpg',0);home=lst().filter(p=>!ks.includes(p));sv('mdc-home',home);render();try{renderHome()}catch(_){ERR(_,"c59")}toast('Home screen apps removed')};
+  $('hicClear').onclick=()=>{if(S.hlock){toast('Home layout is locked');return}const ks=Object.keys(hpos);hpos={};saveP();HPN=3;HPG=0;sv('mdc-hpn',3);sv('mdc-hpg',0);home=lst().filter(p=>!ks.includes(p));sv('mdc-home',home);render();try{renderHome()}catch(_){ERR(_,"c59")}toast('Home screen apps removed')};
   const _rf=refreshApps;refreshApps=function(){_rf.apply(this,arguments);render()};
   const _sa=window.setApps;window.setApps=function(){_sa.apply(this,arguments);render()};
   ASET.post.push(()=>{reflow();render()});
@@ -4294,14 +4289,15 @@ try{ENG.init()}catch(e){console.error(e)}
   DRG.go=(a,el,x,y,id)=>{if(DRG.on||window.SELON)return;
     if(S.hlock&&el&&el.closest&&el.closest('#hicons')){vib(8);setTimeout(()=>{openMenu(a);if(hpos[a.p])$('amHome').textContent='Home layout is locked'},0);return}DRG.arm(a,el,x,y,id);DRG.imm=true;DRG.moved=false;DRG.sx=x;DRG.sy=y;start({pointerId:id,clientX:x,clientY:y})};
   function start(e){
-    const A=DRG.armed;if(!DRG.imm){DRG.moved=true}DRG.on=true;DRG.id=e.pointerId;DRG.a=A.a;DRG.fh=!!A.el.closest('#hicons');DRG.t=null;
+    const A=DRG.armed;if(!DRG.imm){DRG.moved=true}DRG.on=true;DRG.id=e.pointerId;DRG.a=A.a;DRG.fh=!!A.el.closest('#hicons');DRG.fa=!!A.el.closest('#asArc');DRG.t=null;
     closeMenu();
     DRG.saved=[];
     phone.classList.add('dragging');
-    if(DRG.fh){DRG.src=A.el;A.el.classList.add('lift')}
+    if(DRG.fh||DRG.fa){DRG.src=A.el;A.el.classList.add('lift')}
     const gh=document.createElement('div');gh.className='dghost';gh.appendChild(icon(A.a));phone.appendChild(gh);DRG.ghost=gh;
-    hd.textContent='';hd.classList.toggle('fh',DRG.fh);hd.classList.toggle('free',!!S.hfree);
-    const note=document.createElement('div');note.className='hd-note';note.textContent=S.hfree?'Drop anywhere on the home screen \u00b7 on a dock slot to pin':DRG.fh?'Drop on a cell to move \u00b7 on a dock slot to pin':'Drop on a cell for home \u00b7 on a dock slot to pin';hd.appendChild(note);
+    hd.textContent='';hd.classList.toggle('fh',DRG.fh||DRG.fa);hd.classList.toggle('free',!!S.hfree);
+    const note=document.createElement('div');note.className='hd-note';note.textContent=S.hfree?'Drop anywhere on the home screen \u00b7 on a dock slot to pin':DRG.fh?'Drop on a cell to move \u00b7 on a dock slot to pin':'Drop on a cell for home \u00b7 on a dock slot to pin';if(window.HomeArc&&HomeArc.active&&HomeArc.active())note.textContent=DRG.fa?'Drop on the arc to reorder \u00b7 on a cell for home \u00b7 at the top to remove':(DRG.fh?'Drop on a cell to move \u00b7 on the arc to add':'Drop on a cell for home \u00b7 on the arc to add it');
+    hd.appendChild(note);
     const rm=document.createElement('div');rm.className='hd-rm';rm.textContent='DROP HERE TO REMOVE';hd.appendChild(rm);DRG.rm=rm;
     DRG.cells=freeCells(A.a.p).map(o=>{const c=document.createElement('div'),r=cellR(o.c,o.r);c.className='hcell';c.style.cssText='left:'+(r.l+3)+'px;top:'+(r.t+3)+'px;width:'+(CW-6)+'px;height:'+(CH-6)+'px';hd.appendChild(c);return {c:o.c,r:o.r,e:c,x:(r.l+r.r)/2,y:(r.t+r.b)/2}});
     vib(14);move(e);
@@ -4313,8 +4309,9 @@ try{ENG.init()}catch(e){console.error(e)}
     let t=null;
     const hg=$('hpg'),hr=hg&&hg.offsetWidth?rc(hg):null,onDots=!!hr&&p.y>=hr.t-8&&p.y<=hr.b+8&&!inDock;
     if(onDots){const ds=[...hg.querySelectorAll('.hpd')];let bi=-1,bd=1e9;ds.forEach((e,i)=>{const r=rc(e),d=Math.abs((r.l+r.r)/2-p.x);if(d<bd){bd=d;bi=i}});if(bi>=0)t={type:'pg',i:bi}}
-    if(t){}else if(inDock){const ds=[...$('dock').querySelectorAll('.app')];let bi=0,bd=1e9;ds.forEach((e,i)=>{const r=rc(e),d=Math.abs((r.l+r.r)/2-p.x);if(d<bd){bd=d;bi=i}});t={type:'dock',i:bi}}
-    else if(DRG.fh&&p.y<TOP-50)t={type:'rm'};
+    const arcOn=!!(window.HomeArc&&HomeArc.active&&HomeArc.active()),ar=arcOn?rc($('asArc')):null,inArc=!!ar&&p.y>=ar.t-14&&p.y<=ar.b+30&&p.x>=ar.l&&p.x<=ar.r;
+    if(t){}else if(inArc){t={type:'arc',i:HomeArc.slotAt(e.clientX).i}}else if(inDock){const ds=[...$('dock').querySelectorAll('.app')];let bi=0,bd=1e9;ds.forEach((e,i)=>{const r=rc(e),d=Math.abs((r.l+r.r)/2-p.x);if(d<bd){bd=d;bi=i}});t={type:'dock',i:bi}}
+    else if((DRG.fh||DRG.fa)&&p.y<TOP-50)t={type:DRG.fa?'arcrm':'rm'};
     else if(S.hfree){   /* v1.67: free placement - the icon lands exactly where you let go (not under the clock or date) */
       const W=phone.offsetWidth||320,fx=Math.max(0,Math.min(W-CW,p.x-CW/2)),fy=Math.max(44,Math.min(dk.t-CH+6,p.y-CH/2-6));
       const me={l:fx,t:fy,r:fx+CW,b:fy+CH};if(!blockers().some(b=>ov(me,b,-10)))t={type:'free',x:Math.round(fx),y:Math.round(fy)};
@@ -4324,15 +4321,16 @@ try{ENG.init()}catch(e){console.error(e)}
     document.querySelectorAll('#hpg .hpd').forEach((e,i)=>e.classList.toggle('dslot',!!t&&t.type==='pg'&&t.i===i));
     {const ds=[...$('dock').querySelectorAll('.app')];ds.forEach((e,i)=>e.classList.toggle('dslot',!!t&&t.type==='dock'&&t.i===i))}
     DRG.cells.forEach(c=>c.e.classList.toggle('on',!!t&&t.type==='cell'&&t.c===c.c&&t.r===c.r));
-    DRG.rm.classList.toggle('on',!!t&&t.type==='rm');$('dock').classList.toggle('dk',!!t&&t.type==='dock');
+    DRG.rm.classList.toggle('on',!!t&&(t.type==='rm'||t.type==='arcrm'));
+    {const w=$('asArc');if(w){w.classList.toggle('dk',!!t&&t.type==='arc');try{HomeArc.mark(t&&t.type==='arc'?t.i:-1)}catch(_){}}}$('dock').classList.toggle('dk',!!t&&t.type==='dock');
   }
   /* drop on a dock slot: room -> insert there; dock full -> replace that slot (old app stays in Favs); already docked -> move to that slot */
-  function dockDrop(a,idx){
+  function dockDrop(a,idx,lbl){lbl=lbl||'dock';
     const n=+S.dn||4,cur=vf().filter(p=>p!==a.p),was=shown().includes(a.p),room=shown().length<n||was;
     idx=Math.max(0,Math.min(idx,room?Math.min(n-1,cur.length):n-1));
     let msg;
-    if(room){cur.splice(idx,0,a.p);msg=was?a.n+' moved in the dock':a.n+' added to the dock'}
-    else{const old=cur[idx],oa=apps.find(x=>x.p===old);cur[idx]=a.p;if(old)cur.splice(n,0,old);msg=a.n+' replaced '+(oa?oa.n:'an app')+' in the dock'}
+    if(room){cur.splice(idx,0,a.p);msg=was?a.n+' moved in the '+lbl:a.n+' added to the '+lbl}
+    else{const old=cur[idx],oa=apps.find(x=>x.p===old);cur[idx]=a.p;if(old)cur.splice(n,0,old);msg=a.n+' replaced '+(oa?oa.n:'an app')+' in the '+lbl}
     favs=cur;sv('mdc-favs',favs);sv('mdc-fseeded',true);
     try{renderDock();renderChips()}catch(e){ERR(e,'dock-drop')}
     document.querySelectorAll('.gapp').forEach(b=>b.classList.toggle('pin',shown().includes(b._p)));
@@ -4344,7 +4342,7 @@ try{ENG.init()}catch(e){console.error(e)}
     DRG.on=false;DRG.armed=null;
     if(DRG.ghost){DRG.ghost.remove();DRG.ghost=null}
     if(DRG.src){DRG.src.classList.remove('lift');DRG.src=null}
-    $('dock').classList.remove('dk');$('dock').querySelectorAll('.dslot').forEach(e=>e.classList.remove('dslot'));document.querySelectorAll('#hpg .dslot').forEach(e=>e.classList.remove('dslot'));phone.classList.remove('dragging');
+    {const w=$('asArc');if(w)w.classList.remove('dk');try{HomeArc.mark(-1)}catch(_){}}$('dock').classList.remove('dk');$('dock').querySelectorAll('.dslot').forEach(e=>e.classList.remove('dslot'));document.querySelectorAll('#hpg .dslot').forEach(e=>e.classList.remove('dslot'));phone.classList.remove('dragging');
     if(DRG.imm&&!DRG.moved&&!cancel){DRG.imm=false;restore();setTimeout(()=>openMenu(a),120);return}
     DRG.imm=false;
     if(t&&t.type==='free'){closeAll();place(a.p,0,0,null,{x:t.x,y:t.y});vib(10);toast(a.n+(DRG.fh?' moved':' added to home screen'))}
@@ -4352,6 +4350,8 @@ try{ENG.init()}catch(e){console.error(e)}
     else if(t&&t.type==='pg'){const f=freeCells(a.p,t.i)[0];closeAll();if(f){setPage(t.i);place(a.p,f.c,f.r,t.i);vib(10);toast(a.n+(DRG.fh?' moved':' added')+' to page '+(t.i+1))}else{toast('Page '+(t.i+1)+' is full');restore()}}
     else if(t&&t.type==='rm'){remove(a.p);toast(a.n+' removed from home screen')}
     else if(t&&t.type==='dock'){dockDrop(a,t.i||0);closeAll()}
+    else if(t&&t.type==='arc'){{const cur=vf(),j=cur.indexOf(a.p),rest=cur.filter(x=>x!==a.p);let i=(j>=0&&j<t.i)?t.i-1:t.i;i=Math.max(0,Math.min(i,rest.length));rest.splice(i,0,a.p);favs=rest;sv('mdc-favs',favs);sv('mdc-fseeded',true);try{renderDock();renderChips()}catch(e){ERR(e,'arc-drop')}document.querySelectorAll('.gapp').forEach(b=>b.classList.toggle('pin',shown().includes(b._p)));vib(10);toast(a.n+(j>=0?' moved in the home arc':' added to the home arc'))}closeAll()}
+    else if(t&&t.type==='arcrm'){favs=vf().filter(x=>x!==a.p);sv('mdc-favs',favs);sv('mdc-fseeded',true);try{renderDock();renderChips()}catch(e){ERR(e,'arc-rm')}document.querySelectorAll('.gapp').forEach(b=>b.classList.toggle('pin',shown().includes(b._p)));vib(10);toast(a.n+' removed from home arc')}
     else restore();
   }
   document.addEventListener('pointermove',e=>{
@@ -4761,7 +4761,7 @@ try{ENG.init()}catch(e){console.error(e)}
     let n=0,full=0;l.forEach(a=>{try{const r=window.homeAdd?homeAdd(a):'full';if(r==='ok')n++;else if(r==='full')full++}catch(e){ERR(e,'c66')}});
     toast(n?n+(n===1?' app added to the home screen':' apps added to the home screen')+(full?' \u2022 '+full+' did not fit':''):full?'Home screen is full':'Already on the home screen');
     try{renderHome()}catch(_){}mode(false)},1);
-  act('Pin',()=>{const l=picked();if(!l.length){toast('Select apps first');return}let n=0;l.forEach(a=>{try{if(!shown().includes(a.p)){togglePin(a);n++}}catch(e){ERR(e,"c62")}});toast(n?n+(n===1?' app pinned':' apps pinned'):'Already pinned');mode(false)},1);
+  act('Arc',()=>{const l=picked();if(!l.length){toast('Select apps first');return}let n=0;l.forEach(a=>{try{if(!shown().includes(a.p)){togglePin(a);n++}}catch(e){ERR(e,"c62")}});toast(n?n+(n===1?' app added to the home arc':' apps added to the home arc'):'Already on the home arc');mode(false)},1);
   act('Hide',()=>{const l=picked();if(!l.length){toast('Select apps first');return}let n=0;l.forEach(a=>{if(!window.HID.includes(a.p)){window.HID.push(a.p);n++}});sv('mdc-hid',window.HID);toast(n?n+(n===1?' app hidden':' apps hidden'):'Already hidden');mode(false);refreshApps()},1);
   act('Uninstall',()=>{const l=picked();if(!l.length){toast('Select apps first');return}if(!(window.Android&&typeof Android.uninstall==='function')){toast('Uninstall needs the Android app');return}
     if(l.length&&!confirm(l.length===1?'Uninstall "'+l[0].n+'"?':'Uninstall '+l.length+' apps?'))return;
@@ -6418,7 +6418,7 @@ html.dmv .drawer .gapp span{text-shadow:none!important}
 
   /* ---- B) swipe up on Home (when that gesture opens All apps): drawer rises with the finger ---- */
   let O=null,swallow=0;
-  const HOME_SKIP='button,input,select,textarea,a,#hour,.dock,.sheet,.smart-card,.pg,.drawer,.command,.amenu,#lockscr';
+  const HOME_SKIP='button,input,select,textarea,a,#hour,#read,#asArc,.dock,.sheet,.smart-card,.pg,.drawer,.command,.amenu,#lockscr';
   const homeBusy=()=>['drawer','sheet','command','amenu','pgW','pgF'].some(i=>{const el=document.getElementById(i);return el&&el.classList.contains('open')})
     ||(document.getElementById('pvbar')&&document.getElementById('pvbar').classList.contains('on'))||ph.classList.contains('lay');
   ph.addEventListener('touchstart',e=>{
@@ -7715,11 +7715,11 @@ html.nbdoff #aw .awbd,html.shin #aw .awbd,html.shin #aw .awnw{display:none}
 (function(){try{
  let st=null,lastFire=0;
  const busy=()=>['drawer','sheet','command','amenu','pgW','pgF','emode'].some(i=>{const e=document.getElementById(i);return e&&e.classList.contains('open')})||phone.classList.contains('lay');
- const skip=t=>t&&t.closest&&t.closest('input,select,textarea,.dock,.sheet,.smart-card,.pg,.drawer,.command,.amenu,.hsearch');
+ const skip=t=>t&&t.closest&&t.closest('input,select,textarea,.dock,.sheet,.smart-card,.pg,.drawer,.command,.amenu,.hsearch,#asArc');
  const sc=()=>(phone.getBoundingClientRect().width/phone.offsetWidth)||1;
  const fire=()=>{const n=performance.now();if(n-lastFire<500)return;lastFire=n;st=null;try{(typeof ARUN!=='undefined'&&ARUN[S.gsr]||ARUN.apps)()}catch(e){try{ERR(e,'v66')}catch(_){}}};
  const rv=()=>S.hpo==='rev'?-1:1;
- const onPg1=()=>{const H=window.HOMEPG;return !H||H.n<2||!S.hic||H.i===0};   /* v1.86: only Page 1 hands a right swipe to the drawer; later pages swipe back one page first */
+ const onPg1=()=>{const H=window.HOMEPG;return !H||H.n<2||H.i===0};   /* v1.86: only Page 1 hands a right swipe to the drawer; later pages swipe back one page first */
  const down=(x,y,t)=>{st=(!S.gon||busy()||skip(t)||!onPg1())?null:{x,y,t:performance.now()}};
  const move=(x,y)=>{if(!st)return;if(!onPg1()){st=null;return}const k=sc(),dx=(x-st.x)/k*rv(),dy=(y-st.y)/k;
   if(performance.now()-st.t>900){st=null;return}
@@ -7749,50 +7749,20 @@ html.nbdoff #aw .awbd,html.shin #aw .awbd,html.shin #aw .awnw{display:none}
 </script>
 <style id="v74-drawer-layout-css">#drawer:not(.aw) #aw{display:none!important}#dLay .seg{margin:4px 0 8px;flex-wrap:wrap;gap:6px}#dLay .seg button{flex:1 1 28%;padding:8px 4px;font-size:11px}#dLay [hidden]{display:none}</style>
 <script id="v74-drawer-layout">
-/* v74 / v1.56: Settings > App drawer > Drawer layout.
-   Arc Wave (default), Crescent (the original curved wheel), and the flat styles Grid, List, Smart, Pages.
-   The Arc Wave functions and the classic ones are swapped on YD, so both stay intact. Crescent, Grid, List, Smart and Pages are all
-   styles of the classic drawer (drawerStyle: 'arc' is Crescent). The choice is saved in 'yoga-dlay' ('arc' | 'crescent' | 'grid') and the flat style in 'mdc-dstl'. */
+/* The app drawer has one layout: Grid (classic icons with an A-Z rail). The Arc Wave engine is switched off at boot
+   and the old layout picker is gone; drawerLayout stays as a fixed shim so older code keeps working. */
 (function(){try{
- const $=id=>document.getElementById(id),dr=$('drawer'),O=window.__YD0,box=$('drawerOpts');
- if(!dr||!O||!window.YD||!box)return;
- const A=Object.assign({},YD),K='yoga-dlay';
- let LAY='arc';try{const v=localStorage.getItem(K);LAY=v==='grid'?v:'arc'}catch(e){}
- const OPT=[['arc','Thumb arc'],['orbit','Orbit dial'],['wave','Wave ribbon'],['fan','Fan stack'],['grid','Grid'],['list','List'],['smart','Smart'],['pages','Pages']];
- const wrap=document.createElement('div');wrap.id='dLay';
- wrap.innerHTML='<div class="sl">Drawer layout</div><div class="seg" id="dLaySeg" role="group" aria-label="Drawer layout">'+OPT.map(([v,t])=>'<button type="button" data-v="'+v+'">'+t+'</button>').join('')+'</div>'
-  +'<div class="sl" id="dLayNote" style="opacity:.7">Arc: apps flow along a curve (it replaces the old Crescent). Grid, List, Smart and Pages scroll the normal way.</div>';
- box.prepend(wrap);
- const arcRow=(()=>{const c=$('awMinSet');return c?c.closest('div'):null})();
- const cur=()=>LAY==='arc'?(window.AWDES?AWDES.get():'arc'):LAY==='crescent'?'crescent':(window.drawerStyle?drawerStyle.get():'grid');
- function sync(){
-  const c=cur();
-  [...$('dLaySeg').children].forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===c)));
-  if(arcRow)arcRow.hidden=LAY!=='arc';
- }
- /* l: 'arc' | 'crescent' | 'grid' | 'list' | 'smart' | 'pages' */
- function use(l){
-  if(l==='orbit'||l==='wave'||l==='fan'||l==='arc'){try{AWDES.set(l)}catch(e){}l='arc'}
-  const flat=l!=='arc',want=l==='crescent'?'arc':(l==='arc'?null:l);
-  const lay=l==='arc'?'arc':l==='crescent'?'crescent':'grid';
+ const $=id=>document.getElementById(id),dr=$('drawer'),O=window.__YD0;
+ if(!dr||!O||!window.YD)return;
+ try{localStorage.setItem('yoga-dlay','grid')}catch(e){}
+ if(dr.classList.contains('aw')){
   const was=dr.classList.contains('open');
-  const swap=flat===dr.classList.contains('aw');
-  if(!swap&&lay===LAY&&(!want||(window.drawerStyle&&drawerStyle.get()===want))){sync();return}
-  LAY=lay;try{localStorage.setItem(K,LAY)}catch(e){}
-  if(swap){
-   if(was){try{YD.stop(false)}catch(e){}}
-   dr.classList.toggle('aw',!flat);
-   Object.assign(YD,flat?O:A);
-   if(flat){const ct=$('awCt');if(ct)ct.classList.remove('on');const c=$('awCfg');if(c)c.classList.remove('on')}
-  }
-  if(want){try{if(window.drawerStyle&&drawerStyle.get()!==want)drawerStyle.set(want)}catch(e){try{ERR(e,'v74s')}catch(_){}}}
-  if(swap&&was){try{YD.open()}catch(e){}}
-  sync();
+  if(was){try{YD.stop(false)}catch(e){}}
+  dr.classList.remove('aw');Object.assign(YD,O);
+  const ct=$('awCt');if(ct)ct.classList.remove('on');const c=$('awCfg');if(c)c.classList.remove('on');
+  if(was){try{YD.open()}catch(e){}}
  }
- $('dLaySeg').onclick=e=>{const b=e.target.closest('button');if(b)use(b.dataset.v)};
- window.drawerLayout={get:()=>LAY,style:cur,set:use};
- const sh=$('sheet');if(sh)new MutationObserver(sync).observe(sh,{attributes:true,attributeFilter:['class']});
- if(LAY==='crescent')use('crescent');else if(LAY==='grid'){const c=window.drawerStyle?drawerStyle.get():'grid';use(c==='arc'?'grid':c)}else sync();
+ window.drawerLayout={get:()=>'grid',style:()=>'grid',set:()=>{}};
 }catch(e){try{ERR(e,'v74')}catch(_){}}})();
 </script>
 <style id="v70-polish">
@@ -8475,7 +8445,7 @@ html.cyber .ydr-search .in,html .ydr-search .in{background:none!important;border
  if(crNote){H('arc','Crescent');add('arc',crNote)}
  /* ---- Order ---- */
  H('order','Sort and recents');add('order',sortBlk);
- N('order','In the Arc Wave drawer, use Sort, Reorder and Select at the top right to sort, drag apps into your own order, or tick several apps to add to home, hide or uninstall.');
+ N('order','Use Sort, Reorder and Select at the top of the drawer to sort, drag apps into your own order, or tick several apps to add to home, hide or uninstall.');
  /* ---- Apps ---- */
  H('apps','Badges');
  if(nAcc){add('apps',lab('nbd'));add('apps',lab('nbn'));add('apps',lab('nbp'))}
@@ -8490,7 +8460,7 @@ html.cyber .ydr-search .in,html .ydr-search .in{background:none!important;border
  /* anything else that was in the drawer section stays with the layout */
  kids.forEach(k=>{if(!used.has(k)&&!k.classList.contains('srs')){used.add(k);P.layout.push(k)}});
  /* ---- build ---- */
- const TABS=[['layout','Layout'],['arc','Arc'],['order','Order'],['apps','Apps'],['search','Search']];
+ const TABS=[['layout','Layout'],['order','Order'],['apps','Apps'],['search','Search']];
  box.querySelectorAll('.srs').forEach(x=>x.remove());
  box.textContent='';
  const tabs=document.createElement('div');tabs.className='dtabs';tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','App drawer settings');box.appendChild(tabs);
@@ -8500,7 +8470,6 @@ html.cyber .ydr-search .in,html .ydr-search .in{background:none!important;border
  let cur='layout';try{const v=localStorage.getItem('yoga-dtab');if(panes[v])cur=v}catch(e){}
  function sync(){
   const lay=window.drawerLayout?drawerLayout.get():'arc';
-  panes.arc.classList.toggle('noarc',lay!=='arc');
   try{const c=AWCFG.get();for(const k in cfgIn)cfgIn[k].checked=c[k]!==false}catch(e){}
  }
  function tab(id){if(!panes[id])return;cur=id;try{localStorage.setItem('yoga-dtab',id)}catch(e){}
@@ -9128,9 +9097,9 @@ void main(){
 (function(){try{
  const ph=document.querySelector('.phone');let st=null,hit=0,eat=false;
  const busy=()=>['drawer','sheet','command','amenu','pgW','pgF','emode'].some(i=>{const e=document.getElementById(i);return e&&e.classList.contains('open')})||ph.classList.contains('lay')||ph.classList.contains('dragging')||!!document.getElementById('v75help')||(window.DRG&&DRG.on);
- const skip=t=>!t||!t.closest||t.closest('input,select,textarea,.dock,.sheet,.smart-card,.pg,.drawer,.command,.amenu,#hsearch,#hpg,.laybar,.pvbar,.xrp,.xban');
+ const skip=t=>!t||!t.closest||t.closest('input,select,textarea,.dock,.sheet,.smart-card,.pg,.drawer,.command,.amenu,#hsearch,#hpg,#asArc,.laybar,.pvbar,.xrp,.xban');
  const sc=()=>(ph.getBoundingClientRect().width/ph.offsetWidth)||1;
- const down=(x,y,t,id)=>{eat=false;const H=window.HOMEPG;st=(!H||H.n<2||!S.hic||busy()||skip(t)||!ph.contains(t))?null:{x,y,t:performance.now(),id}};
+ const down=(x,y,t,id)=>{eat=false;const H=window.HOMEPG;st=(!H||H.n<2||busy()||skip(t)||!ph.contains(t))?null:{x,y,t:performance.now(),id}};
  const move=(x,y,e)=>{
   if(eat){e.stopPropagation();return}
   if(!st)return;const k=sc(),dx=(x-st.x)/k,dy=(y-st.y)/k,H=window.HOMEPG;
@@ -9526,5 +9495,528 @@ window.addEventListener('resize',paint);
 }catch(e){console.error('v70',e)}})();
 </script>
 
+<style id="arc-studio-2-css">
+/* ============ Arc Studio 2.0 (ported from yoga_launcher_arc_studio_2_0.html) ============ */
+:root{--as-glow:9px;--as-icon:36px}
+#asTint{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(ellipse at 50% 42%,color-mix(in srgb,var(--as-g,#ffb31f) 28%,transparent),transparent 72%)}
+html[data-studio] #asTint{opacity:.85}
+html.minimal #asTint,html.lite #asTint,html.rm #asTint{transition:none}
+html.minimal #asTint{display:none}
+html[data-studio] #yArt>path{stroke-dasharray:var(--as-dash,none)}
+html.as-icon .dock .ic,html.as-icon #hicons .ic{width:var(--as-icon)!important;height:var(--as-icon)!important}
+html[data-studio] .smart-card,html[data-studio] .as-chip.on,html[data-studio] .as-skin.on{box-shadow:0 0 var(--as-glow) rgba(var(--c1rgb),.28)}
+/* mode rail */
+.as-rail{position:absolute;left:14px;right:14px;top:176px;z-index:6;display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none;touch-action:pan-x}
+.as-rail::-webkit-scrollbar{display:none}
+html.as-norail .as-rail{display:none}
+.as-rail{display:none!important}
+label.tg:has(#asRailT){display:none!important}
+.as-chip{flex:0 0 auto;border:1px solid rgba(255,255,255,.14);background:rgba(22,24,32,.72);color:var(--dim);border-radius:18px;padding:7px 10px;font:600 10px var(--f);white-space:nowrap;cursor:pointer;transition:background .2s,border-color .2s,color .2s}
+.as-chip.on{background:rgba(var(--c1rgb),.14);border-color:var(--c1);color:var(--c1)}
+.as-chip:focus-visible,.as-skin:focus-visible,.as-pbtn:focus-visible{outline:2px solid var(--c1);outline-offset:2px}
+/* insight card additions */
+.smart-card .as-ico{width:27px;height:27px;border-radius:9px;background:rgba(var(--c1rgb),.14);color:var(--c1);display:grid;place-items:center;font-size:15px;flex:none}
+.smart-card .as-meta{display:block;font-size:7px;letter-spacing:1.2px;color:var(--c1);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.smart-card .as-brief{border:1px solid rgba(var(--c1rgb),.35);background:rgba(var(--c1rgb),.1);color:var(--c1);border-radius:9px;width:27px;height:27px;font-size:13px;flex:none;pointer-events:none;cursor:pointer}
+.smart-card.show .as-brief{pointer-events:auto}
+.smart-card.as-flash{animation:asPulse .5s ease}
+@keyframes asPulse{0%,100%{transform:none}45%{transform:scale(1.015)}}
+html[data-asmode=focus] #hsearch,html[data-asmode=focus] .date{opacity:.55}
+html.as-quiet .as-rail,html.as-quiet .date{opacity:.35}
+/* panels */
+.as-panel{display:none;position:absolute;z-index:88;left:8px;right:8px;top:12%;bottom:6%;padding:14px 12px;border:1px solid rgba(255,255,255,.16);border-radius:25px;background:linear-gradient(155deg,rgba(32,33,36,.97),rgba(14,15,17,.98));box-shadow:0 18px 50px rgba(0,0,0,.7);overflow-y:auto;color:var(--fg);font-family:var(--f)}
+.as-panel.open{display:block;animation:asIn .22s ease-out}
+@keyframes asIn{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
+html.rm .as-panel.open{animation:none}
+.as-ph{display:flex;align-items:flex-start;justify-content:space-between;margin:2px 2px 12px}
+.as-ph small{display:block;color:var(--dim);font-size:10px;margin-top:4px}
+.as-eye{font-size:8px;letter-spacing:2px;color:var(--c1);font-weight:700;display:block;margin-bottom:5px}
+.as-ph b{font-size:17px;letter-spacing:-.3px}
+.as-x{border:0;border-radius:50%;width:30px;height:30px;background:rgba(255,255,255,.12);color:#fff;font-size:20px;cursor:pointer}
+.as-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.as-stats>div{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);border-radius:12px;padding:10px 8px;min-width:0}
+.as-stats strong{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.as-stats small{display:block;font-size:7px;color:var(--dim);letter-spacing:1px;margin-top:5px}
+.as-rec{display:flex;align-items:center;gap:10px;padding:12px;margin-top:10px;border:1px solid rgba(var(--c1rgb),.35);background:linear-gradient(100deg,rgba(var(--c1rgb),.1),rgba(255,255,255,.03));border-radius:14px}
+.as-rec .as-ico{width:34px;height:34px;border-radius:11px;background:rgba(var(--c1rgb),.16);color:var(--c1);display:grid;place-items:center;font-size:17px;flex:none}
+.as-rec b{display:block;font-size:11px}.as-rec small{display:block;font-size:9px;color:var(--dim);line-height:1.4;margin-top:4px}
+.as-acts{display:flex;gap:7px;margin-top:10px}
+.as-pbtn{flex:1;border:1px solid rgba(255,255,255,.16);border-radius:11px;padding:10px 6px;background:rgba(255,255,255,.08);color:var(--fg);font:600 9px var(--f);cursor:pointer}
+.as-pbtn.pri{background:var(--c1);border-color:var(--c1);color:#06070b;font-weight:700}
+.as-sec{font-size:8px;letter-spacing:1.7px;color:var(--dim);margin:16px 2px 8px}
+.as-tog{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 9px;border:1px solid rgba(255,255,255,.1);border-radius:12px;margin-top:7px;background:rgba(255,255,255,.04);cursor:pointer}
+.as-tog span{flex:1}.as-tog b{display:block;font-size:10px}.as-tog small{display:block;font-size:9px;color:var(--dim);margin-top:4px}
+.as-tog input{position:absolute;opacity:0;pointer-events:none}
+.as-tog i{width:31px;height:18px;border-radius:12px;background:rgba(255,255,255,.2);position:relative;flex:none;transition:background .2s}
+.as-tog i:after{content:"";position:absolute;top:3px;left:3px;width:12px;height:12px;border-radius:50%;background:#fff;transition:transform .2s}
+.as-tog input:checked+i{background:var(--c1)}.as-tog input:checked+i:after{transform:translateX(13px)}
+.as-note{font-size:8px;line-height:1.5;color:var(--dim);margin:12px 2px 2px}
+.as-stat{display:flex;align-items:center;gap:9px;padding:11px;border-radius:14px;background:rgba(255,255,255,.07);margin-bottom:10px}
+.as-stat .dot{width:9px;height:9px;border-radius:50%;background:#777;box-shadow:0 0 0 4px rgba(119,119,119,.2)}
+.as-stat.on .dot{background:var(--c1);box-shadow:0 0 0 4px rgba(var(--c1rgb),.2)}
+.as-stat div{flex:1;min-width:0}.as-stat b{font-size:11px;display:block}.as-stat small{font-size:9px;color:var(--dim);display:block;margin-top:3px}
+.as-rule{display:flex;align-items:center;gap:9px;padding:10px 8px;border:1px solid rgba(255,255,255,.1);border-radius:13px;background:rgba(255,255,255,.04);margin-top:7px}
+.as-rule .e{width:31px;height:31px;border-radius:10px;background:rgba(255,255,255,.08);display:grid;place-items:center;font-size:15px;flex:none}
+.as-rule span.t{flex:1;min-width:0}.as-rule b{font-size:10px;display:block}.as-rule small{font-size:9px;color:var(--dim);display:block;margin-top:3px}
+.as-rule select{max-width:88px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:var(--fg);border-radius:8px;padding:6px 3px;font-size:9px}
+/* settings block */
+.as-skins{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:6px 0 8px}
+.as-skin{display:flex;align-items:center;gap:7px;min-width:0;padding:8px;border:1px solid rgba(255,255,255,.14);border-radius:11px;background:rgba(255,255,255,.04);color:var(--fg);text-align:left;font:600 10px var(--f);cursor:pointer}
+.as-skin b{font-size:9px;color:var(--dim)}.as-skin span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.as-skin i{width:10px;height:10px;border-radius:50%;flex:none;background:var(--sk)}
+.as-skin.on{border-color:var(--c1);background:rgba(var(--c1rgb),.1)}
+</style>
+<script id="arc-studio-2-js">
+(function(){
+'use strict';
+var KEY='yg-arcstudio2',de=document.documentElement;
+function $(id){return document.getElementById(id)}
+function say(t){try{if(window.toast)window.toast(t)}catch(e){}}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+/* ---- the 12 Arc Studio designs: accent, glow, tint, arc line style ---- */
+var SKINS=[
+ {id:'lotus',n:'Golden Lotus',a:'#ffd76a',g:'#ffb31f',d:'none'},
+ {id:'precision',n:'Precision Arc',a:'#8edcff',g:'#2c9bd8',d:'none'},
+ {id:'holo',n:'Holo Glass',a:'#66c9ff',g:'#236eff',d:'none'},
+ {id:'context',n:'Context Modes',a:'#42dfbd',g:'#218f89',d:'none'},
+ {id:'quiet',n:'Quiet Premium',a:'#e3e5ea',g:'#8c929e',d:'none'},
+ {id:'orbital',n:'Orbital Gestures',a:'#9d8cff',g:'#167eff',d:'3 5'},
+ {id:'titanium',n:'Titanium Orbit',a:'#d5e0e9',g:'#9bb3c9',d:'22 4'},
+ {id:'emerald',n:'Emerald Zen',a:'#6ce6b5',g:'#1dbb83',d:'2 3'},
+ {id:'quantum',n:'Quantum HUD',a:'#50e9ff',g:'#3a70ff',d:'4 5'},
+ {id:'pearl',n:'Pearl Glass',a:'#e9f3ff',g:'#9dbbdf',d:'none'},
+ {id:'neon',n:'Neon Pulse',a:'#ff55d9',g:'#a83dff',d:'9 4'},
+ {id:'space',n:'Deep Space',a:'#68c9ff',g:'#356cff',d:'1 5'}];
+/* ---- context modes ---- */
+var MODES={
+ Everyday:{ic:'\u2726',t:'Your day, at a glance',x:'Favorites ready \u00b7 swipe to explore',m:'READY \u00b7 EVERYDAY',act:'Explore favorites',q:'',rec:['Start with your essentials','Your most-used apps are one swipe away.']},
+ Drive:{ic:'\u2301',t:'Drive mode is ready',x:'Navigation-first \u00b7 large, calm controls',m:'SAFETY \u00b7 DRIVE',act:'Open navigation',q:'Maps',rec:['Keep navigation within reach','Maps and audio are prioritized for your drive.']},
+ Work:{ic:'\u25a6',t:'Work focus',x:'Calendar, notes and team tools nearby',m:'PRODUCTIVITY \u00b7 WORK',act:'Review schedule',q:'Calendar',rec:['Protect your work flow','Keep Calendar, Notes and team tools close.']},
+ Music:{ic:'\u266b',t:'Listening space',x:'Music and audio apps at your fingertips',m:'AUDIO \u00b7 MUSIC',act:'Open music',q:'Music',rec:['Make room for listening','Your audio shortcuts are grouped in this mode.']},
+ Focus:{ic:'\u25cc',t:'Focus session',x:'A quieter home \u00b7 fewer distractions',m:'QUIET \u00b7 FOCUS',act:'Start focus session',q:'',rec:['Keep the screen calm','A smaller set of apps helps reduce distractions.']}};
+var ORDER=['Everyday','Drive','Work','Music','Focus'];
+var RULES=[['drive','\ud83d\ude97','Driving','When car Bluetooth connects (needs Android bridge)','Drive'],['work','\ud83d\udcbc','Work hours','Weekdays \u00b7 9:00 AM\u20135:00 PM','Work'],['audio','\ud83c\udfa7','Headphones connected','When audio device connects (needs Android bridge)','Music'],['evening','\ud83c\udf19','Evening wind-down','Every day \u00b7 after 9:00 PM','Focus']];
+var D={skin:'lotus',glow:70,icon:36,rm:false,rail:true,quiet:false,sticky:false,mode:'Everyday',auto:false,rules:{drive:'Drive',work:'Work',audio:'Music',evening:'Focus'}};
+var C=(function(){try{var o=JSON.parse(localStorage.getItem(KEY));if(o&&typeof o==='object'){var r=Object.assign({},D,o);r.rules=Object.assign({},D.rules,o.rules||{});return r}}catch(e){}return JSON.parse(JSON.stringify(D))})();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(C))}catch(e){}}
+function mix(h,p){var n=[1,3,5].map(function(i){var v=parseInt(h.slice(i,i+2),16);return Math.round(v+(255-v)*p)});return '#'+n.map(function(v){return('0'+v.toString(16)).slice(-2)}).join('')}
+function skinOf(id){for(var i=0;i<SKINS.length;i++)if(SKINS[i].id===id)return SKINS[i];return SKINS[0]}
+var baseTheme=null;
+try{if(typeof cur!=='undefined'&&Array.isArray(cur))baseTheme=cur.slice()}catch(e){}
+/* ---- skins, glow, icon size, motion ---- */
+function applySkin(id,quiet){
+ var s=skinOf(id);C.skin=s.id;
+ de.setAttribute('data-studio',s.id);
+ de.style.setProperty('--as-g',s.g);de.style.setProperty('--as-dash',s.d);
+ try{if(typeof applyTheme==='function')applyTheme([mix(s.a,.82),s.a,s.g],false)}catch(e){}
+ document.querySelectorAll('.as-skin').forEach(function(b){var on=b.dataset.skin===s.id;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on))});
+ var st=$('asStatus');if(st)st.textContent=s.n+' \u00b7 Active';
+ save();if(!quiet)say(s.n+' design selected');
+}
+function applyLive(){
+ de.style.setProperty('--as-glow',(2+C.glow*.12).toFixed(1)+'px');
+ de.style.setProperty('--as-icon',C.icon+'px');
+ de.classList.toggle('as-icon',C.icon!==36);
+ var gv=$('asGlowV'),iv=$('asIconV');if(gv)gv.textContent=C.glow+'%';if(iv)iv.textContent=C.icon+' px';
+ de.classList.toggle('as-norail',!C.rail);
+ de.classList.toggle('as-quiet',!!C.quiet);
+ save();
+}
+function applyMotion(on,quiet){
+ C.rm=!!on;
+ try{if(on){S.rmo='on';}else if(S.rmo==='on'){S.rmo='auto'}if(typeof saveS==='function')saveS()}catch(e){}
+ de.classList.toggle('rm',on||(function(){try{return matchMedia('(prefers-reduced-motion:reduce)').matches}catch(e){return false}})());
+ save();if(!quiet)say(on?'Reduce motion on':'Reduce motion off');
+}
+/* ---- build DOM ---- */
+var phone=document.querySelector('.phone');
+if(!phone){return}
+var tint=document.createElement('div');tint.id='asTint';tint.setAttribute('aria-hidden','true');phone.insertBefore(tint,phone.firstChild);
+var rail=document.createElement('div');rail.className='as-rail';rail.id='asRail';rail.setAttribute('role','group');rail.setAttribute('aria-label','Context modes');
+rail.innerHTML=ORDER.map(function(m){return '<button type="button" class="as-chip" data-mode="'+m+'" aria-pressed="false">'+m+'</button>'}).join('')+'<button type="button" class="as-chip" id="asAutoBtn" aria-label="Context automation">\u2699 Auto</button>';
+phone.appendChild(rail);
+/* upgraded insight card: icon, meta line, brief button */
+var card=$('smartCard');
+if(card){
+ var ico=document.createElement('span');ico.className='as-ico';ico.id='asIco';ico.setAttribute('aria-hidden','true');
+ var dot=card.querySelector('.smart-dot');if(dot)card.replaceChild(ico,dot);else card.insertBefore(ico,card.firstChild);
+ var meta=document.createElement('small');meta.className='as-meta';meta.id='asMeta';
+ var copy=$('smartCopy');if(copy&&copy.parentNode===card)copy.after(meta);
+ var bb=document.createElement('button');bb.type='button';bb.className='as-brief';bb.id='asBriefOpen';bb.setAttribute('aria-label','Open daily brief');bb.textContent='\u2197';
+ card.appendChild(bb);
+}
+function mkPanel(id,label,html){var p=document.createElement('div');p.className='as-panel';p.id=id;p.setAttribute('role','dialog');p.setAttribute('aria-label',label);p.setAttribute('aria-modal','true');p.innerHTML=html;phone.appendChild(p);['pointerdown','touchstart','touchmove','wheel'].forEach(function(ev){p.addEventListener(ev,function(e){e.stopPropagation()},{passive:true})});return p}
+var brief=mkPanel('asBrief','Daily brief',
+ '<div class="as-ph"><div><span class="as-eye">ARC INTELLIGENCE</span><b id="asBH">Your day, in rhythm</b></div><button type="button" class="as-x" id="asBX" aria-label="Close daily brief">\u00d7</button></div>'
+ +'<div class="as-stats"><div><strong id="asBMode">EVERYDAY</strong><small>ACTIVE MODE</small></div><div><strong id="asBFav">00</strong><small>QUICK APPS</small></div><div><strong id="asBSt">READY</strong><small>STATUS</small></div></div>'
+ +'<div class="as-rec"><span class="as-ico" id="asBSym">\u2726</span><div><b id="asBRT"></b><small id="asBRX"></small></div></div>'
+ +'<div class="as-acts"><button type="button" class="as-pbtn pri" id="asApply">Apply suggestion \u2197</button><button type="button" class="as-pbtn" id="asCycle">Change mode \u21c4</button></div>'
+ +'<div class="as-sec">QUICK AUTOMATIONS</div>'
+ +'<label class="as-tog"><span><b>Reduce visual noise</b><small>Dim nonessential home details</small></span><input type="checkbox" id="asQuiet"><i></i></label>'
+ +'<label class="as-tog"><span><b>Keep current mode sticky</b><small>Don\u2019t switch modes automatically</small></span><input type="checkbox" id="asSticky"><i></i></label>'
+ +'<div class="as-acts"><button type="button" class="as-pbtn" id="asToAuto">Context automation \u203a</button></div>'
+ +'<p class="as-note">Suggestions are based on the selected mode. Usage analytics and device context need Android integrations.</p>');
+var auto=mkPanel('asAuto','Context automation',
+ '<div class="as-ph"><div><b>Context automation</b><small>Choose when your launcher adapts</small></div><button type="button" class="as-x" id="asAX" aria-label="Close automation settings">\u00d7</button></div>'
+ +'<div class="as-stat" id="asAStat"><span class="dot"></span><div><b id="asAT">Manual mode</b><small id="asAS">Automatic switching is off</small></div><button type="button" class="as-pbtn pri" id="asMaster" aria-pressed="false" style="flex:none;padding:7px 11px">OFF</button></div>'
+ +RULES.map(function(r){return '<label class="as-rule"><span class="e">'+r[1]+'</span><span class="t"><b>'+r[2]+'</b><small>'+r[3]+'</small></span><select data-rule="'+r[0]+'" aria-label="'+r[2]+' mode">'+ORDER.map(function(m){return '<option value="'+m+'">'+m+'</option>'}).join('')+'</select></label>'}).join('')
+ +'<div class="as-acts"><button type="button" class="as-pbtn" id="asSim">Simulate a trigger \u2197</button></div>'
+ +'<p class="as-note">Work hours and Evening wind-down run from the clock while automation is ON. Driving and Headphones need Bluetooth/audio events from the Android bridge; use \u201cSimulate\u201d to preview them.</p>');
+/* ---- modes ---- */
+function setMode(mode,why){
+ var c=MODES[mode];if(!c)return;C.mode=mode;
+ de.setAttribute('data-asmode',mode.toLowerCase());
+ rail.querySelectorAll('[data-mode]').forEach(function(b){var on=b.dataset.mode===mode;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on))});
+ var i=$('asIco');if(i)i.textContent=c.ic;var m=$('asMeta');if(m)m.textContent=c.m;
+ var sc=$('smartCopy');if(sc&&card){sc.textContent='';var b=document.createElement('b');b.textContent=c.t;sc.append(b,c.x)}
+ var sa=$('smartAction');if(sa&&mode!=='Everyday'){sa.textContent=c.act;sa.dataset.asq=c.q}else if(sa){delete sa.dataset.asq}
+ if(card){card.classList.add('show','as-flash');clearTimeout(setMode._t);setMode._t=setTimeout(function(){card.classList.remove('show','as-flash')},7000)}
+ save();refreshBrief();say((why||mode)+(why?'':' mode enabled'));
+}
+function refreshBrief(){
+ var c=MODES[C.mode]||MODES.Everyday;
+ $('asBMode').textContent=C.mode.toUpperCase();
+ var n=document.querySelectorAll('#dock .app').length;$('asBFav').textContent=(n<10?'0':'')+n;
+ $('asBSt').textContent=C.sticky?'STICKY':(C.mode==='Focus'?'QUIET':'READY');
+ $('asBH').textContent=C.mode==='Focus'?'A quieter kind of productivity':'Your day, in rhythm';
+ $('asBRT').textContent=c.rec[0];$('asBRX').textContent=c.rec[1];$('asBSym').textContent=c.ic;
+ $('asQuiet').checked=!!C.quiet;$('asSticky').checked=!!C.sticky;
+}
+function openPanel(p){[brief,auto].forEach(function(x){x.classList.toggle('open',x===p)});if(p===brief)refreshBrief()}
+function closePanels(){brief.classList.remove('open');auto.classList.remove('open')}
+function openQuery(q){try{if(q&&window.__voice){window.__voice(q)}else if(window.openCommand){window.openCommand()}}catch(e){}}
+function setAuto(on,quiet){
+ C.auto=!!on;var mb=$('asMaster');mb.textContent=on?'ON':'OFF';mb.setAttribute('aria-pressed',String(!!on));
+ $('asAStat').classList.toggle('on',!!on);
+ $('asAT').textContent=on?'Smart switching enabled':'Manual mode';
+ $('asAS').textContent=on?'Work-hours and evening rules are armed':'Automatic switching is off';
+ save();if(!quiet)say(on?'Context automation enabled':'Context automation paused');
+}
+function timeRule(){
+ if(!C.auto||C.sticky)return;
+ var d=new Date(),h=d.getHours(),wk=d.getDay()>0&&d.getDay()<6,key=null;
+ if(h>=21)key='evening';else if(wk&&h>=9&&h<17)key='work';
+ if(!key)return;
+ var tgt=C.rules[key];if(tgt&&tgt!==C.mode&&timeRule._k!==key){timeRule._k=key;setMode(tgt,(key==='work'?'Work-hours':'Evening')+' rule \u00b7 '+tgt)}
+ else if(tgt===C.mode)timeRule._k=key;
+}
+/* ---- wire events ---- */
+rail.addEventListener('click',function(e){var b=e.target.closest('[data-mode]');if(b){setMode(b.dataset.mode);return}if(e.target.closest('#asAutoBtn'))openPanel(auto)});
+['pointerdown','touchstart','touchmove'].forEach(function(ev){rail.addEventListener(ev,function(e){e.stopPropagation()},{passive:true})});
+if($('asBriefOpen'))$('asBriefOpen').addEventListener('click',function(e){e.stopPropagation();openPanel(brief)});
+var sact=$('smartAction');
+if(sact)sact.addEventListener('click',function(e){var q=sact.dataset.asq;if(q){e.stopImmediatePropagation();e.stopPropagation();openQuery(q)}},true);
+$('asBX').onclick=closePanels;$('asAX').onclick=closePanels;
+$('asToAuto').onclick=function(){openPanel(auto)};
+$('asCycle').onclick=function(){setMode(ORDER[(ORDER.indexOf(C.mode)+1)%ORDER.length])};
+$('asApply').onclick=function(){
+ var c=MODES[C.mode]||MODES.Everyday;
+ if(C.mode==='Focus'){C.quiet=true;applyLive();say('Quiet visuals applied')}
+ else if(c.q){closePanels();openQuery(c.q)}
+ else{closePanels();openQuery('')}
+ refreshBrief();
+};
+$('asQuiet').onchange=function(){C.quiet=this.checked;applyLive();say(C.quiet?'Reduced visual noise':'Full visuals restored')};
+$('asSticky').onchange=function(){C.sticky=this.checked;save();say(C.sticky?'Mode will stay selected':'Mode switching unlocked');refreshBrief()};
+$('asMaster').onclick=function(){setAuto(!C.auto)};
+auto.querySelectorAll('[data-rule]').forEach(function(sel){sel.value=C.rules[sel.dataset.rule]||sel.value;sel.addEventListener('change',function(){C.rules[sel.dataset.rule]=sel.value;save();say('Rule updated \u00b7 '+sel.closest('.as-rule').querySelector('b').textContent)})});
+$('asSim').onclick=function(){
+ var k=RULES[Math.floor(Math.random()*RULES.length)],mode=C.rules[k[0]];
+ setMode(mode,k[2]+' trigger \u00b7 '+mode);
+ $('asAT').textContent=k[2]+' trigger \u00b7 '+mode;$('asAS').textContent='Simulated locally \u00b7 no device sensors used';closePanels();
+};
+document.addEventListener('keydown',function(e){
+ if(e.target&&e.target.matches&&e.target.matches('input,textarea,select'))return;
+ if(e.key==='Escape'&&(brief.classList.contains('open')||auto.classList.contains('open'))){closePanels();e.stopPropagation();return}
+ if(e.ctrlKey||e.metaKey||e.altKey)return;
+ if(document.querySelector('.command.open,.drawer.open,.sheet.open,.pg.open'))return;
+ var i='12345'.indexOf(e.key);if(i>=0)setMode(ORDER[i]);
+},true);
+/* ---- Settings > Arc Studio 2.0 ---- */
+function buildSettings(){
+ if($('asAcc'))return true;
+ var sums=document.querySelectorAll('details.acc>summary'),anchor=null;
+ for(var i=0;i<sums.length;i++)if(/^Launcher$/.test(sums[i].textContent.trim())){anchor=sums[i].parentNode;break}
+ if(!anchor){var all=document.querySelectorAll('details.acc');anchor=all[all.length-1]||null}
+ if(!anchor)return false;
+ var d=document.createElement('details');d.className='acc';d.id='asAcc';
+ d.innerHTML='<summary>Arc Studio 2.0</summary><div class="acc-b">'
+  +'<div class="statusline"><span id="asStatus">Golden Lotus \u00b7 Ready</span></div>'
+  +'<div class="sl">Design language</div><div class="as-skins" role="group" aria-label="Arc design styles">'
+  +SKINS.map(function(s,i){return '<button type="button" class="as-skin" data-skin="'+s.id+'" style="--sk:'+s.a+'" aria-pressed="false"><b>'+(i<9?'0':'')+(i+1)+'</b><i></i><span>'+esc(s.n)+'</span></button>'}).join('')+'</div>'
+  +'<div class="sl">Arc glow <b id="asGlowV" style="color:var(--c1)">70%</b></div><input type="range" id="asGlow" min="0" max="100" value="70" aria-label="Arc glow">'
+  +'<div class="sl">Icon size <b id="asIconV" style="color:var(--c1)">36 px</b></div><input type="range" id="asIcon" min="28" max="48" value="36" aria-label="Icon size">'
+  +'<label class="tg"><span>Show context-mode rail on home</span><input type="checkbox" id="asRailT"><i></i></label>'
+  +'<label class="tg"><span>Reduce motion</span><input type="checkbox" id="asRmT"><i></i></label>'
+  +'<div class="row" style="margin:8px 0 2px;display:flex;gap:6px"><button type="button" class="mini ghost" id="asBriefB" style="flex:1">Daily brief</button><button type="button" class="mini ghost" id="asAutoB" style="flex:1">Automation</button><button type="button" class="mini ghost" id="asReset" style="flex:1">Reset studio</button></div>'
+  +'</div>';
+ anchor.parentNode.insertBefore(d,anchor);
+ d.addEventListener('click',function(e){var b=e.target.closest('.as-skin');if(b)applySkin(b.dataset.skin)});
+ $('asGlow').oninput=function(){C.glow=+this.value;applyLive()};
+ $('asIcon').oninput=function(){C.icon=+this.value;applyLive()};
+ $('asRailT').onchange=function(){C.rail=this.checked;applyLive()};
+ $('asRmT').onchange=function(){applyMotion(this.checked)};
+ $('asBriefB').onclick=function(){var dn=$('done');if(dn)dn.click();openPanel(brief)};
+ $('asAutoB').onclick=function(){var dn=$('done');if(dn)dn.click();openPanel(auto)};
+ $('asReset').onclick=function(){
+  C.glow=D.glow;C.icon=D.icon;C.rail=true;C.quiet=false;C.sticky=false;
+  $('asGlow').value=D.glow;$('asIcon').value=D.icon;$('asRailT').checked=true;
+  de.removeAttribute('data-studio');de.style.removeProperty('--as-g');de.style.removeProperty('--as-dash');
+  try{if(baseTheme&&typeof applyTheme==='function')applyTheme(baseTheme,false)}catch(e){}
+  C.skin='';document.querySelectorAll('.as-skin').forEach(function(b){b.classList.remove('on');b.setAttribute('aria-pressed','false')});
+  $('asStatus').textContent='Default look \u00b7 Ready';
+  applyLive();setMode('Everyday','Studio reset');
+ };
+ /* sync controls with saved state */
+ $('asGlow').value=C.glow;$('asIcon').value=C.icon;$('asRailT').checked=!!C.rail;$('asRmT').checked=!!C.rm;
+ document.querySelectorAll('.as-skin').forEach(function(b){var on=b.dataset.skin===C.skin;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on))});
+ var s=C.skin?skinOf(C.skin):null;if(s)$('asStatus').textContent=s.n+' \u00b7 Active';
+ return true;
+}
+/* ---- boot ---- */
+buildSettings();
+if(!$('asAcc'))window.addEventListener('load',buildSettings);
+applyLive();
+if(C.skin)applySkin(C.skin,true);
+if(C.rm)applyMotion(true,true);
+setAuto(C.auto,true);
+/* restore the saved mode without a toast or a card flash */
+(function(){var c=MODES[C.mode]||MODES.Everyday;de.setAttribute('data-asmode',C.mode.toLowerCase());
+ rail.querySelectorAll('[data-mode]').forEach(function(b){var on=b.dataset.mode===C.mode;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on))});
+ var i=$('asIco');if(i)i.textContent=c.ic;var m=$('asMeta');if(m)m.textContent=c.m;
+ var sa=$('smartAction');if(sa&&C.mode!=='Everyday'){sa.dataset.asq=c.q}})();
+refreshBrief();
+setInterval(timeRule,60000);setTimeout(timeRule,4000);
+window.ArcStudio={setMode:setMode,setSkin:applySkin,openBrief:function(){openPanel(brief)},openAutomation:function(){openPanel(auto)}};
+})();
+</script>
+
+<style id="arc-home-css">
+/* ============ Home arc (replaces the dock) — from Arc Studio 2.0 ============ */
+html:not(.as-noarc) #dock{display:none!important}
+html.as-noarc #asArc{display:none}
+#asArc{--asz:calc(var(--as-icon,36px) + 8px);position:absolute;left:0;right:0;bottom:calc(14px + env(safe-area-inset-bottom,0px));height:190px;z-index:7;pointer-events:none;font-family:var(--f)}
+#asArc>*{pointer-events:auto}
+#asArc .aa-ctl{position:absolute;left:12%;right:12%;top:0;height:30px;display:flex;align-items:center;justify-content:space-between;pointer-events:none}
+#asArc .aa-ctl button{pointer-events:auto;width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.16);background:rgba(22,24,32,.8);color:#eee;font-size:18px;line-height:1;cursor:pointer;display:grid;place-items:center;transition:transform .15s,border-color .15s}
+#asArc .aa-ctl button:active{transform:scale(.88);border-color:var(--c1)}
+#asArc .aa-lab{pointer-events:none;font-size:9px;letter-spacing:2px;color:var(--dim);background:rgba(17,18,22,.78);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:7px 14px;white-space:nowrap}
+#asArc svg.aa-line{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+#asArc .aa-line path{fill:none;stroke:var(--c1);stroke-linecap:round}
+#asArc .aa-line .a{stroke-width:2;opacity:.95}
+#asArc .aa-line .b{stroke-width:7;opacity:.12}
+#asArc .aa-stage{position:absolute;inset:0;touch-action:none;outline:none}
+#asArc .aa-app{position:absolute;left:0;top:0;width:66px;margin:0;padding:0;border:0;background:none;color:var(--fg);display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;will-change:transform;-webkit-tap-highlight-color:transparent}
+#asArc .aa-app .ic{width:var(--asz);height:var(--asz);transition:transform .2s,outline-color .2s,box-shadow .2s;flex:none}
+#asArc .aa-app span.n{font:500 10.5px var(--f);max-width:66px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+#asArc .aa-app.off{opacity:0;pointer-events:none}
+#asArc .aa-app.f .ic{outline:2px solid var(--c1);outline-offset:3px;transform:scale(1.08);box-shadow:0 0 var(--as-glow,9px) rgba(var(--c1rgb),.55)}
+#asArc .aa-app.f span.n{color:var(--c1)}
+#asArc .aa-dots{position:absolute;left:0;right:0;top:136px;display:flex;justify-content:center;gap:5px;pointer-events:none}
+.aa-dots{display:none!important}
+#asArc .aa-dots i{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.25)}
+#asArc .aa-dots i.on{background:var(--c1);box-shadow:0 0 6px var(--c1)}
+#asArc .aa-all{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(22,24,32,.85);display:grid;place-items:center;cursor:pointer;padding:0}
+#asArc .aa-all:active{transform:translateX(-50%) scale(.92)}
+#asArc .aa-all .lg{--lw:26px}
+#asArc .aa-app:focus-visible,#asArc .aa-all:focus-visible,#asArc .aa-ctl button:focus-visible{outline:2px solid var(--c1);outline-offset:2px}
+html.rm #asArc .aa-app .ic,html.rm #asArc .aa-ctl button{transition:none}
+/* search bar removed from the home screen; page dots sit under the arc */
+#hsearch{display:none!important}
+label.tg:has(input[data-k="hsb"]){display:none!important}
+html:not(.as-noarc) #hpg,html:not(.as-noarc) .phone.hsd #hpg{bottom:calc(206px + env(safe-area-inset-bottom,0px))}
+.as-pgrow{display:flex;gap:6px;margin:6px 0}.as-pgrow .mini{flex:1;padding:9px 6px;font-size:11px}
+.as-pgst{font-size:10px;color:var(--dim);margin:4px 0}
+</style>
+<script id="arc-home-js">
+(function(){
+'use strict';
+var de=document.documentElement,phone=document.querySelector('.phone');
+if(!phone||document.getElementById('asArc'))return;
+var KEY='yg-homearc';
+function $(id){return document.getElementById(id)}
+var cfg={on:true};try{var o=JSON.parse(localStorage.getItem(KEY));if(o&&typeof o==='object')cfg.on=o.on!==false}catch(e){}
+function saveCfg(){try{localStorage.setItem(KEY,JSON.stringify(cfg))}catch(e){}}
+try{if(typeof S!=='undefined'&&S.hsb!==false){S.hsb=false;if(typeof saveS==='function')saveS();window.dispatchEvent(new Event('yogahs'))}}catch(e){}
+function refit(){try{window.dispatchEvent(new Event('yogahs'))}catch(e){}}
+function toastIt(t){try{if(window.toast)window.toast(t)}catch(e){}}
+var wrap=document.createElement('div');wrap.id='asArc';wrap.setAttribute('role','group');wrap.setAttribute('aria-label','Favourite apps arc');
+wrap.innerHTML='<svg class="aa-line" aria-hidden="true"><path class="b"></path><path class="a"></path></svg>'
+ +'<div class="aa-stage" id="aaStage" tabindex="0" aria-label="App arc: swipe, or use arrow keys"></div>'
+ +'<div class="aa-dots" id="aaDots" aria-hidden="true"></div>';
+phone.appendChild(wrap);
+['pointerdown','touchstart','touchmove','wheel'].forEach(function(ev){wrap.addEventListener(ev,function(e){e.stopPropagation()},{passive:true})});
+de.classList.toggle('as-noarc',!cfg.on);
+var stage=$('aaStage'),list=[],btns=[],pos=0,target=0,raf=0,W=360,H=196;
+var pa=wrap.querySelector('path.a'),pb=wrap.querySelector('path.b');
+var YE=152,YC=-4;                       /* edge height and control height of the curve */
+function curveY(x){var t=(x+16)/(W+32);return (1-t)*(1-t)*YE+2*(1-t)*t*YC+t*t*YE}
+function measure(){var r=wrap.getBoundingClientRect();W=Math.max(200,wrap.offsetWidth||r.width||360)}
+function drawLine(){
+ var d='M-16 '+YE+' Q'+(W/2)+' '+YC+' '+(W+16)+' '+YE;pa.setAttribute('d',d);pb.setAttribute('d',d);
+}
+function getApps(){
+ var out=[];try{var s=typeof vf==='function'?vf:(typeof shown==='function'?shown:null),A=typeof apps!=='undefined'?apps:null;if(s&&A){s().forEach(function(p){var a=A.find(function(x){return x.p===p});if(a)out.push(a)})}}catch(e){}
+ return out;
+}
+function launchApp(a){try{if(typeof launch==='function')launch(a)}catch(e){}}
+function openAll(){
+ try{if(typeof openApps==='function'){openApps();return}}catch(e){}
+ var b=document.querySelector('#dock .dab');if(b)b.click();
+}
+var keepP=null;
+function render(){
+ measure();drawLine();
+ var prev=list[Math.round(pos)];if(prev)keepP=prev.p;
+ list=getApps();
+ stage.textContent='';btns=[];
+ list.forEach(function(a,i){
+  var b=document.createElement('button');b.type='button';b.className='aa-app';b.dataset.i=i;b.setAttribute('aria-label',a.n);
+  var ic=null;try{if(typeof icon==='function')ic=icon(a)}catch(e){}
+  if(!ic){ic=document.createElement('span');ic.className='ic';ic.textContent=(a.n||'?').charAt(0)}
+  b.appendChild(ic);var n=document.createElement('span');n.className='n';n.textContent=a.n;b.appendChild(n);
+  stage.appendChild(b);btns.push(b);
+ });
+ var ix=keepP?list.findIndex(function(a){return a.p===keepP}):-1;
+ pos=target=ix>=0?ix:Math.floor((list.length-1)/2);if(pos<0)pos=target=0;
+ var ds=$('aaDots');ds.textContent='';list.forEach(function(){ds.appendChild(document.createElement('i'))});
+ layout();
+}
+function layout(){
+ var n=list.length,step=W/6.2,cx=W/2,fi=Math.round(pos),hw=33;
+ for(var i=0;i<n;i++){
+  var s=i-pos,x=cx+s*step,y=curveY(x),b=btns[i],as=Math.abs(s);
+  var off=as>3.25;
+  b.style.transform='translate('+(x-hw).toFixed(1)+'px,'+(y-22).toFixed(1)+'px)';
+  b.style.opacity=off?0:(as>2.4?(1-(as-2.4)/.85).toFixed(2):1);
+  b.classList.toggle('off',off);b.classList.toggle('f',i===fi);
+  b.tabIndex=i===fi?0:-1;
+ }
+ var ds=$('aaDots').children;for(var k=0;k<ds.length;k++)ds[k].classList.toggle('on',k===fi);
+}
+function clampT(t){return Math.max(0,Math.min(list.length-1,t))}
+function loop(){
+ var d=target-pos;
+ if(Math.abs(d)<.002){pos=target;layout();raf=0;return}
+ pos+=d*(de.classList.contains('rm')?1:.22);layout();raf=requestAnimationFrame(loop);
+}
+function go(t){target=clampT(Math.round(t));if(!raf)raf=requestAnimationFrame(loop)}
+/* ---- gestures: drag / inertia / snap / tap ---- */
+var down=null,vel=0,lastX=0,lastT=0,moved=false,lpT=0;
+function lpClear(){if(lpT){clearTimeout(lpT);lpT=0}}
+stage.addEventListener('pointerdown',function(e){
+ lpClear();var bt=e.target&&e.target.closest?e.target.closest('.aa-app'):null;
+ if(bt&&!bt.classList.contains('off')&&window.DRG&&DRG.go){var cx0=e.clientX,cy0=e.clientY,pid=e.pointerId,ii=+bt.dataset.i;
+  lpT=setTimeout(function(){lpT=0;if(!down||moved)return;down=null;try{stage.releasePointerCapture(pid)}catch(_){}var a=list[ii];if(a)DRG.go(a,bt,cx0,cy0,pid)},420)}
+ down={x:e.clientX,p:pos,id:e.pointerId};lastX=e.clientX;lastT=performance.now();vel=0;moved=false;
+ if(raf){cancelAnimationFrame(raf);raf=0}
+ try{stage.setPointerCapture(e.pointerId)}catch(_){}
+});
+stage.addEventListener('pointermove',function(e){
+ if(!down)return;var dx=e.clientX-down.x;
+ if(Math.abs(dx)>6){moved=true;lpClear()}if(!moved)return;
+ var step=W/6.2,now=performance.now();
+ pos=Math.max(-.4,Math.min(list.length-.6,down.p-dx/step));
+ vel=(lastX-e.clientX)/step/Math.max(1,now-lastT);lastX=e.clientX;lastT=now;layout();
+});
+function end(e){
+ lpClear();if(!down)return;var d=down;down=null;
+ if(moved){target=clampT(Math.round(pos+vel*160));go(target);return}
+ var b=e&&e.target&&e.target.closest?document.elementFromPoint(e.clientX,e.clientY):null;
+ b=b&&b.closest?b.closest('.aa-app'):null;
+ if(b&&!b.classList.contains('off')){var i=+b.dataset.i;if(i===Math.round(pos)){launchApp(list[i])}else{go(i)}}
+}
+stage.addEventListener('pointerup',end);
+stage.addEventListener('pointercancel',function(){lpClear();down=null;go(pos)});
+stage.addEventListener('keydown',function(e){
+ if(e.key==='ArrowLeft'){e.preventDefault();go(Math.round(pos)-1)}
+ else if(e.key==='ArrowRight'){e.preventDefault();go(Math.round(pos)+1)}
+ else if(e.key==='Enter'){var a=list[Math.round(pos)];if(a)launchApp(a)}
+});
+/* refresh whenever the launcher re-renders its dock (apps/favourites changed) */
+(function hook(){
+ var rd=window.renderDock;
+ if(typeof rd==='function'&&!rd.__aa){var w=function(){var r=rd.apply(this,arguments);try{render()}catch(e){}return r};w.__aa=1;window.renderDock=w}
+})();
+window.addEventListener('resize',function(){render()});
+window.addEventListener('load',function(){render()});
+/* Settings toggle */
+function addToggle(){
+ var acc=$('asAcc');if(!acc||$('asArcT'))return !!$('asArcT');
+ var l=document.createElement('label');l.className='tg';l.innerHTML='<span>Home arc instead of dock</span><input type="checkbox" id="asArcT"><i></i>';
+ var body=acc.querySelector('.acc-b'),first=body.querySelector('label.tg');body.insertBefore(l,first);
+ var cb=l.querySelector('input');cb.checked=cfg.on;
+ cb.onchange=function(){cfg.on=cb.checked;saveCfg();de.classList.toggle('as-noarc',!cfg.on);toastIt(cfg.on?'Home arc on':'Dock restored');if(cfg.on)render();try{renderDock()}catch(e){}refit()};
+ /* home pages controls */
+ var pg=document.createElement('div');pg.id='asPg';
+ pg.innerHTML='<div class="sl">Home pages</div><div class="as-pgst" id="asPgSt"></div><div class="as-pgrow"><button type="button" class="mini ghost" id="asPgP" aria-label="Previous page">\u2039 Prev</button><button type="button" class="mini ghost" id="asPgN" aria-label="Next page">Next \u203a</button></div><div class="as-pgrow"><button type="button" class="mini ghost" id="asPgA">+ Add page</button><button type="button" class="mini ghost" id="asPgR">\u2212 Remove empty page</button></div>';
+ body.insertBefore(pg,l.nextSibling);
+ var dots=function(){return [].slice.call(document.querySelectorAll('#hpg .hpd:not(.hpdr)'))};
+ var pgState=function(){var d=dots(),i=d.findIndex(function(x){return x.classList.contains('on')});var s=document.getElementById('asPgSt');if(s)s.textContent=d.length?('Page '+(i+1)+' of '+d.length+' \u00b7 up to 5 pages'):'Home icons are off, so pages are hidden';return {d:d,i:i}};
+ var go=function(k){var st=pgState();var t=st.d[st.i+k];if(t)t.click();else toastIt(k<0?'First page':'Last page');setTimeout(pgState,60)};
+ document.getElementById('asPgP').onclick=function(){go(-1)};document.getElementById('asPgN').onclick=function(){go(1)};
+ document.getElementById('asPgA').onclick=function(){var a=document.querySelector('#hpg .hpa');if(a)a.click();else toastIt('Maximum pages reached');setTimeout(pgState,60)};
+ document.getElementById('asPgR').onclick=function(){var r=document.querySelector('#hpg .hpr');if(r)r.click();else toastIt('Only an empty page can be removed');setTimeout(pgState,60)};
+ window.addEventListener('yogahpage',pgState);acc.addEventListener('toggle',pgState);pgState();
+ return true;
+}
+if(!addToggle())window.addEventListener('load',addToggle);
+setTimeout(addToggle,300);
+render();refit();
+window.HomeArc={render:render,focus:go,
+ active:function(){return !de.classList.contains('as-noarc')&&wrap.offsetWidth>0},
+ slotAt:function(x){var n=btns.length,i=0,near=-1,bd=1e9;for(var k=0;k<n;k++){var r=btns[k].getBoundingClientRect(),c=(r.left+r.right)/2;if(c<x)i++;var d=Math.abs(c-x);if(!btns[k].classList.contains('off')&&d<bd){bd=d;near=k}}return {i:i,near:near}},
+ mark:function(i){for(var k=0;k<btns.length;k++)btns[k].classList.toggle('dslot',i>=0&&k===Math.min(btns.length-1,i))}};
+})();
+</script>
+
+<style id="curved-grid-css">
+/* Curved grid drawer: scroll-driven bowl. Icons are scaled and pulled toward the centre by their distance from the middle of the view
+   (individual scale/translate properties, so nothing else that uses transform is disturbed). Names sit under every icon. */
+.drawer.flow .grid::after{content:"";display:block;height:34%;flex:none}
+.drawer.flow .gapp{will-change:scale,translate,opacity}
+.drawer.flow .gapp span{display:block;margin-top:1px}
+.drawer.flow .fl-rail{width:26px}
+.drawer.flow .fl-rail span{font-size:10px;color:rgba(255,255,255,.62)}
+html.light .drawer.flow .fl-rail span{color:rgba(0,0,0,.55)}
+.phone.dragging #asArc{z-index:126}
+#asArc.dk .aa-line{filter:drop-shadow(0 0 8px rgba(var(--c1rgb),.9))}
+#asArc .aa-app.dslot .ic{outline:2px dashed var(--c1);outline-offset:4px;transform:scale(1.12)}
+#asArc .aa-app.lift{opacity:.25!important}
+</style>
+<script id="curved-grid-js">
+(function(){try{
+ const $=id=>document.getElementById(id),dr=$('drawer'),st=$('grid');
+ if(!dr||!st)return;
+ let items=[],raf=0,dirty=true,H=0,W=0;
+ function measure(){
+  H=st.clientHeight;W=st.clientWidth;
+  items=[...st.querySelectorAll('.gapp')].map(el=>({el,cy:el.offsetTop+el.offsetHeight/2,cx:el.offsetLeft+el.offsetWidth/2,on:0}));
+ }
+ function paint(){
+  raf=0;
+  if(!dr.classList.contains('open'))return;
+  if(dirty){measure();dirty=false}
+  if(!H||!W)return;
+  const mid=st.scrollTop+H*.46,half=H*.5,midX=W/2;
+  for(let i=0;i<items.length;i++){
+   const it=items[i],t=(it.cy-mid)/half,q=Math.min(1,t*t);
+   const sc=.72+.4*(1-q);                 /* 1.12 in the middle, .72 at the rim */
+   const k=Math.min(1,1+.95*(sc-1));       /* edge rows pulled toward the centre line, the middle row stays full width */
+   const dx=(it.cx-midX)*(k-1);
+   const e=it.el.style;
+   e.scale=sc.toFixed(3);e.translate=dx.toFixed(1)+'px 0';e.opacity=(.5+.5*(1-q)).toFixed(2);
+   it.on=1;
+  }
+ }
+ function ask(){if(!raf)raf=requestAnimationFrame(paint)}
+ st.addEventListener('scroll',ask,{passive:true});
+ addEventListener('resize',()=>{dirty=true;ask()});
+ new MutationObserver(()=>{dirty=true;ask()}).observe(st,{childList:true,subtree:true});
+ new MutationObserver(()=>{dirty=true;ask();setTimeout(()=>{dirty=true;ask()},120);setTimeout(()=>{dirty=true;ask()},520)}).observe(dr,{attributes:true,attributeFilter:['class']});
+ window.curvedGrid={refresh:()=>{dirty=true;ask()}};
+ ask();
+}catch(e){try{ERR(e,'curvedgrid')}catch(_){}}})();
+</script>
 </body>
 </html>

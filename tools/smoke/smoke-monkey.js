@@ -4,7 +4,7 @@ const html=fs.readFileSync(file,'utf8');const errs=[];const vc=new VirtualConsol
 vc.on('jsdomError',e=>errs.push('JSDOM: '+String(e.detail&&e.detail.message||e.message).slice(0,160)));
 const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,virtualConsole:vc,url:'https://appassets.test/index.html',
  beforeParse(w){w.matchMedia=q=>({matches:false,addEventListener(){},removeEventListener(){},addListener(){},removeListener(){}});
-  w.HTMLCanvasElement.prototype.getContext=()=>null;w.scrollTo=()=>{};w.ResizeObserver=class{observe(){}unobserve(){}disconnect(){}};w.IntersectionObserver=class{observe(){}unobserve(){}disconnect(){}};
+  w.HTMLCanvasElement.prototype.getContext=()=>null;w.Element.prototype.scrollTo=function(){};w.confirm=()=>true;w.scrollTo=()=>{};w.ResizeObserver=class{observe(){}unobserve(){}disconnect(){}};w.IntersectionObserver=class{observe(){}unobserve(){}disconnect(){}};
   w.Element.prototype.animate=function(){return{cancel(){},finish(){},set onfinish(f){}}};w.Element.prototype.scrollIntoView=()=>{};
   w.open=(u)=>{w.__opened=(w.__opened||[]);w.__opened.push(u);return null};
   w.addEventListener('error',e=>errs.push('onerror: '+e.message));

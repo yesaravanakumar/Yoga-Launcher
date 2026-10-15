@@ -16,7 +16,7 @@ with sync_playwright() as p:
     for W,H in [(320,570),(360,740),(390,844),(412,915)]:
         ctx=b.new_context(viewport={'width':W,'height':H},device_scale_factor=2,has_touch=True,is_mobile=True);pg=ctx.new_page();errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
         pg.goto('file://'+HTML);pg.wait_for_timeout(1500);pg.evaluate("()=>document.querySelectorAll('.tips').forEach(e=>e.remove())")
-        pg.evaluate("()=>{AWCFG.set('fxOn',true);AWCFG.set('fxLevel','balanced');AWCFG.set('fx_ripple',true);YD.open()}");pg.wait_for_timeout(700)
+        pg.evaluate("()=>{AWCFG.set('fxOn',true);AWCFG.set('fxLevel','balanced');AWCFG.set('fx_ripple',true);AWCFG.set('fx_trace',false);AWCFG.set('fx_holo',false);AWCFG.set('fx_prism',false);YD.open()}");pg.wait_for_timeout(700)
         cdp=ctx.new_cdp_session(pg)
         def t(ty,x=0,y=0):cdp.send('Input.dispatchTouchEvent',{'type':ty,'touchPoints':[{'x':x,'y':y}] if ty!='touchEnd' else []})
         x,y=pg.evaluate(PT)
@@ -54,7 +54,7 @@ with sync_playwright() as p:
             pg.evaluate("()=>{"+js+"}");x,y=pg.evaluate(PT);t('touchStart',x,y);pg.wait_for_timeout(160)
             ok(not pg.evaluate("()=>!!document.querySelector('#awFx i')"),f'{W}x{H}: no ripple with {lab}');t('touchEnd');pg.wait_for_timeout(100)
         # close during ripple
-        pg.evaluate("()=>{AWCFG.set('fx_ripple',true)}");x,y=pg.evaluate(PT);t('touchStart',x,y);pg.wait_for_timeout(150)
+        pg.evaluate("()=>{AWCFG.set('fx_ripple',true);AWCFG.set('fx_trace',false)}");x,y=pg.evaluate(PT);t('touchStart',x,y);pg.wait_for_timeout(150)
         pg.evaluate("()=>YD.stop()");pg.wait_for_timeout(50)
         ok(pg.evaluate("()=>AWFX._busy()")==0 and pg.evaluate("()=>document.querySelectorAll('#awFx i').length")==0,f'{W}x{H}: closing the drawer mid-ripple cleans up');t('touchEnd')
         ok(not errs,f'{W}x{H}: no page errors {errs[:2]}')

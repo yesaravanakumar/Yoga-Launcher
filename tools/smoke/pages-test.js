@@ -14,17 +14,17 @@ const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,virtua
  w.setApps([{n:'Gmail',p:'com.gmail'},{n:'Camera',p:'com.cam'},{n:'Spotify',p:'com.spot'}]);await sleep(100);
  const g=d.getElementById('hpg');
  ok(!!g,'#hpg exists');
- ok(g.querySelectorAll('.hpd').length===1,'starts with 1 page dot');
+ ok(g.querySelectorAll('.hpd').length===3,'starts with 3 page dots (v1.86 default)');
  ok(!!g.querySelector('.hpa'),'"+" add-page button present');
  g.querySelector('.hpa').click();
- ok(g.querySelectorAll('.hpd').length===2,'+ adds a 2nd page');
- ok(g.querySelectorAll('.hpd')[1].classList.contains('on'),'new page is the current page');
+ ok(g.querySelectorAll('.hpd').length===4,'+ adds a 4th page');
+ ok(g.querySelectorAll('.hpd')[3].classList.contains('on'),'new page is the current page');
  ok(!!g.querySelector('.hpr'),'empty extra page offers the remove button');
  g.querySelectorAll('.hpd')[0].click();
  ok(g.querySelectorAll('.hpd')[0].classList.contains('on'),'tapping dot 1 switches back');
  ok(JSON.parse(w.localStorage.getItem('mdc-hpg'))===0,'current page is remembered (mdc-hpg)');
- g.querySelectorAll('.hpd')[1].click();g.querySelector('.hpr').click();
- ok(g.querySelectorAll('.hpd').length===1,'remove deletes the empty page');
+ g.querySelectorAll('.hpd')[3].click();g.querySelector('.hpr').click();
+ ok(g.querySelectorAll('.hpd').length===3,'remove deletes the empty page');
  // drawer opened from the Home grid page returns there
  w.document.querySelector('.pg-h button[data-pg="pgF"]').click();
  ok(d.getElementById('pgF').classList.contains('open'),'Home grid page opens');

@@ -1,5 +1,5 @@
 // Glass capsule colour option: fake WebGL records the colours the shader would receive
-const {JSDOM,VirtualConsole}=require('/tmp/claude-0/jd/node_modules/jsdom');const fs=require('fs'),path=require('path');
+const {JSDOM,VirtualConsole}=require('jsdom');const fs=require('fs'),path=require('path');
 const html=fs.readFileSync(process.argv[2]||path.join(__dirname,'../../app/src/main/assets/index.html'),'utf8');
 const errs=[];const vc=new VirtualConsole();vc.on('jsdomError',e=>errs.push(String(e.detail&&e.detail.message||e.message)));
 const calls={paint:null,ink:null};
@@ -12,7 +12,8 @@ const fakeGL=new Proxy({},{get(_,k){
  return()=>({})}});
 const fake2d=new Proxy({},{get(_,k){if(k==='measureText')return()=>({width:10,actualBoundingBoxAscent:8,actualBoundingBoxDescent:2});if(k==='getImageData')return()=>({data:new Uint8ClampedArray(4)});return()=>{}},set(){return true}});
 const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,virtualConsole:vc,url:'https://appassets.test/index.html',
- beforeParse(w){w.matchMedia=q=>({matches:false,addEventListener(){},removeEventListener(){},addListener(){},removeListener(){}});
+ beforeParse(w){try{w.localStorage.setItem('mdc-set',JSON.stringify({hck:'capsule'}))}catch(_){}   // v1.84 made the dial the default; this test is about the capsule
+  w.matchMedia=q=>({matches:false,addEventListener(){},removeEventListener(){},addListener(){},removeListener(){}});
   w.HTMLCanvasElement.prototype.getContext=function(t){return t==='webgl2'?fakeGL:(t==='2d'?fake2d:null)};w.scrollTo=()=>{};
   w.ResizeObserver=class{observe(){}unobserve(){}disconnect(){}};w.IntersectionObserver=class{observe(){}unobserve(){}disconnect(){}};w.requestIdleCallback=f=>setTimeout(f,1);
   w.Element.prototype.animate=function(){return{cancel(){},finish(){},set onfinish(f){}}};w.addEventListener('error',e=>errs.push('onerror '+e.message))}});

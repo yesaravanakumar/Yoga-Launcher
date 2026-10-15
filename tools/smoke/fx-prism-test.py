@@ -92,7 +92,10 @@ with sync_playwright() as p:
             ok(mx[0]<=1 and mx[1]==0,f'{tag}: rapid re-selects never stack (max {mx[0]}) and it ends by itself')
             cdp=ctx.new_cdp_session(pg)
             # selecting another app while it shows removes it
-            pg.evaluate("()=>YD.glide(AWENG.st().foc+1)");pg.wait_for_timeout(450)
+            pg.evaluate("()=>YD.glide(AWENG.st().foc+1)")
+            for _ in range(30):   # wait for the glide to settle (slow headless frames), up to 1.5 s
+                pg.wait_for_timeout(50)
+                if pg.evaluate(HAS):break
             ok(pg.evaluate(HAS),f'{tag}: (rim light is up before the touch)')
             cdp.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[{'x':W*.2,'y':H*.45}]});pg.wait_for_timeout(60)
             ok(not pg.evaluate(HAS) and pg.evaluate(BUSY)==0,f'{tag}: a new touch cancels it at once')

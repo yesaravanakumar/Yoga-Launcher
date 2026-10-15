@@ -302,6 +302,7 @@ class MainActivity : Activity() {
     /** Home button pressed while the launcher is already open: close every panel, leave edit modes, go to the clock. */
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
+        if (intent != null) setIntent(intent)
         if (intent?.hasCategory(Intent.CATEGORY_HOME) == true) {
             web.evaluateJavascript("window.onHome&&window.onHome()", null)
         }

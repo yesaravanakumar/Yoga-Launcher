@@ -27,7 +27,7 @@ def maxprobe(pg,ms,js=INFO):
         if v:seen.append(v)
     return seen
 def setup(pg,lv='balanced'):
-    pg.evaluate("()=>{AWCFG.set('fxOn',true);AWCFG.set('fxLevel','%s');AWCFG.set('fx_holo',true);AWCFG.set('fx_ripple',false);AWCFG.set('fx_magnet',false);YD.open()}"%lv);pg.wait_for_timeout(1000)
+    pg.evaluate("()=>{AWCFG.set('fxOn',true);AWCFG.set('fxLevel','%s');AWCFG.set('fx_holo',true);AWCFG.set('fx_ripple',false);AWCFG.set('fx_magnet',false);AWCFG.set('fx_trace',false);AWCFG.set('fx_prism',false);YD.open()}"%lv);pg.wait_for_timeout(1000)
 with sync_playwright() as p:
     b=p.chromium.launch(args=['--no-sandbox'])
     for DES in ['arc','orbit','wave','fan']:

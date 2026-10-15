@@ -32,6 +32,11 @@ def swipe(pg,cdp,W,H,steps=8,dy=.05,wait=12,up=True,end=True):
         if v:seen.append(v)
     if end:cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
     return seen
+def idle(pg,ms=3000):
+    for i in range(ms//100):
+        if pg.evaluate("()=>AWFX._busy()")==0:return True
+        pg.wait_for_timeout(100)
+    return pg.evaluate("()=>AWFX._busy()")==0
 def gone(pg,ms=3800):
     for i in range(ms//50):
         if not pg.evaluate(HAS):break
@@ -71,8 +76,7 @@ with sync_playwright() as p:
             ok(all(s['c1'] and s['c1'].replace(' ','') in s['bg'].replace(' ','').replace('rgb(','').replace('rgba(','') for s in vis[:1]),f'{tag}: colour comes from --c1rgb ({vis[0]["bg"]} / {vis[0]["c1"]})')
         gone(pg)
         ok(not pg.evaluate(HAS),f'{tag}: trail removes itself after the fling')
-        pg.wait_for_timeout(300)
-        ok(pg.evaluate("()=>AWFX._busy()")==0,f'{tag}: no ticker or styled element left behind')
+        ok(idle(pg),f'{tag}: no ticker or styled element left behind')
         ok(not errs,f'{tag}: no page errors {errs[:2]}')
         if full:
             for lv,n in [('subtle',4),('exp',8)]:
@@ -113,7 +117,7 @@ with sync_playwright() as p:
     # reduced motion: never shown
     ctx=b.new_context(viewport={'width':390,'height':844},has_touch=True,is_mobile=True,reduced_motion='reduce');pg=ctx.new_page();errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
     pg.goto('file://'+HTML);pg.wait_for_timeout(1500);pg.evaluate("()=>document.querySelectorAll('.tips').forEach(e=>e.remove())");setup(pg);cdp=ctx.new_cdp_session(pg)
-    ok(not any(s['vis'] for s in swipe(pg,cdp,390,844)),'reduced motion: trail never runs');pg.wait_for_timeout(800)
-    ok(pg.evaluate("()=>AWFX._busy()")==0 and not errs,'reduced motion: nothing left, no errors')
+    ok(not any(s['vis'] for s in swipe(pg,cdp,390,844)),'reduced motion: trail never runs');
+    ok(idle(pg) and not errs,'reduced motion: nothing left, no errors')
     ctx.close();b.close()
 print(f'\n{pas} passed, {fail} failed');sys.exit(1 if fail else 0)

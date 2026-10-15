@@ -597,7 +597,7 @@ class YogaBridge(private val act: Activity, private val web: WebView) {
             act.contentResolver.query(
                 ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
                 arrayOf(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME, ContactsContract.CommonDataKinds.Phone.NUMBER),
-                "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} LIKE ?", arrayOf("%$q%"),
+                "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} LIKE ? ESCAPE '\\'", arrayOf("%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"),
                 "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} ASC")?.use { c ->
                 val seen = HashSet<String>()
                 while (c.moveToNext() && out.length() < 4) {
@@ -1006,7 +1006,8 @@ class BadgeService : NotificationListenerService() {
 class LockService : AccessibilityService() {
     companion object { @Volatile var inst: LockService? = null }
     override fun onServiceConnected() { inst = this }
-    override fun onUnbind(intent: Intent?): Boolean { inst = null; return super.onUnbind(intent) }
+    override fun onUnbind(intent: Intent?): Boolean { if (inst === this) inst = null; return super.onUnbind(intent) }
+    override fun onDestroy() { if (inst === this) inst = null; super.onDestroy() }
     override fun onAccessibilityEvent(e: AccessibilityEvent?) {}
     override fun onInterrupt() {}
 }

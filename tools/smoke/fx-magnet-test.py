@@ -14,8 +14,9 @@ PUSH="""()=>{const f=document.querySelector('#awFi .ic').getBoundingClientRect()
  return [...document.querySelectorAll('#awWave .awi')].filter(e=>e.style.translate&&e.style.translate!=='0px 0px').map(e=>{
   const [tx,ty]=e.style.translate.split(' ').map(parseFloat),r=e.querySelector('.ic').getBoundingClientRect(),dx=fx-(r.left+r.width/2-tx),dy=fy-(r.top+r.height/2-ty);
   return {m:Math.hypot(tx,ty),dot:(tx*dx+ty*dy)/(Math.hypot(dx,dy)||1)}})}"""
+# samples with a near-zero total push are skipped: 0/0 gave NaN and poisoned min()
 SEQJS="""()=>new Promise(res=>{const out=[],P=PUSHFN;YD.glide(AWENG.st().foc+1);const t0=performance.now();
- const step=()=>{const r=P();if(r.length){out.push(r.reduce((s,a)=>s+a.m*a.dot,0)/r.reduce((s,a)=>s+a.m,0))}
+ const step=()=>{const r=P();if(r.length){const tm=r.reduce((s,a)=>s+a.m,0);if(tm>0.02)out.push(r.reduce((s,a)=>s+a.m*a.dot,0)/tm)}
   if(performance.now()-t0<900)requestAnimationFrame(step);else res(out)};requestAnimationFrame(step)})""".replace('PUSHFN',PUSH)
 TL="()=>[...document.querySelectorAll('#awWave .awi')].filter(e=>e.style.translate&&e.style.translate!=='0px 0px').length"
 def state(pg):return pg.evaluate("()=>JSON.stringify({t:[...document.querySelectorAll('#awWave .awi')].map(e=>e.style.transform+'|'+e.style.opacity).sort(),f:document.getElementById('awFi').style.transform})")
@@ -24,7 +25,7 @@ with sync_playwright() as p:
     for W,H in [(320,570),(360,740),(390,844),(412,915)]:
         ctx=b.new_context(viewport={'width':W,'height':H},device_scale_factor=2,has_touch=True,is_mobile=True);pg=ctx.new_page();errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
         pg.goto('file://'+HTML);pg.wait_for_timeout(1500);pg.evaluate("()=>document.querySelectorAll('.tips').forEach(e=>e.remove())")
-        pg.evaluate("()=>{AWCFG.set('fxOn',true);AWCFG.set('fxLevel','balanced');AWCFG.set('fx_magnet',true);AWCFG.set('fx_ripple',false);YD.open()}");pg.wait_for_timeout(1000)
+        pg.evaluate("()=>{AWCFG.set('fxOn',true);AWCFG.set('fxLevel','balanced');AWCFG.set('fx_magnet',true);AWCFG.set('fx_ripple',false);AWCFG.set('fxAuto',false);YD.open()}");pg.wait_for_timeout(1000)
         tag=f'{W}x{H}'
         # selection change by programmatic glide (the same path A-Z jump and taps use)
         pg.evaluate("()=>YD.glide(4)")
@@ -38,7 +39,7 @@ with sync_playwright() as p:
         ok(allpos and max(a['m'] for a in allpos)<=6.5,f'{tag}: displacement stays subtle (max {max([a["m"] for a in allpos] or [0]):.1f}px at Balanced)')
         ok(selfree,f'{tag}: the selected icon is never displaced')
         pg.wait_for_timeout(700)
-        seq=pg.evaluate(SEQJS)
+        seq=[v for v in pg.evaluate(SEQJS) if v is not None and v==v]   # drop 0/0 samples (NaN), they poison min()
         ok(seq and sum(seq[:3])>0,f'{tag}: a one-step selection first pulls neighbours toward the selected icon')
         ok(seq and min(seq)<-0.05,f'{tag}: then a small rebound away from it before settling')
         pg.wait_for_timeout(900)

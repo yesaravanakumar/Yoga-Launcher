@@ -19,7 +19,7 @@ const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,virtua
  await hold('#wxl','Widgets');
  d.getElementById('nt').textContent='Alarm 6:30';
  await hold('#nt','At a glance');
- await hold('#dd','Clock');
+ await hold('#dd','Date bar');
  d.querySelector('#hpg .hpd').dispatchEvent(new w.Event('x'));
  await hold('#hpg .hpd','Widgets');
  console.log(pass+' pass, '+fail+' fail');process.exit(fail?1:0)})();
